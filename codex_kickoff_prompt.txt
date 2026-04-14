@@ -1,0 +1,35 @@
+You are joining an existing repository to implement a paper-faithful new mainline for:
+
+Two-Stage Hybrid DRO-Stochastic Optimization for Resilient EV Charging Station Planning.
+
+Before changing code, read these files in order:
+1. codex_start_here.md
+2. docs/spec/00_freeze_contract.md
+3. docs/spec/01_architecture.md
+4. docs/spec/02_equation_registry.md
+5. docs/spec/03_data_contract.md
+6. docs/spec/04_test_strategy.md
+7. docs/spec/05_round_protocol.md
+8. reference/main_paper.pdf
+9. reference/tex/Section-IV-Solution.tex
+10. reference/tex/Section-Appendix.tex
+11. docs/tasks/<current_round>.md
+
+Important:
+- The paper and TeX files are mathematical reference.
+- The spec files are the implementation contract.
+- The task file defines the current round boundary.
+- Runtime data semantics must follow the source-of-truth hierarchy in the spec.
+- Never infer `critical_buses` from `ambig.w`.
+- Never change files outside the round scope.
+
+Now do exactly one thing:
+- implement the current round only
+- run the required tests
+- write the required round report
+
+When finished, return:
+- changed files
+- tests run and outcomes
+- the round report
+- any open issues for the next round

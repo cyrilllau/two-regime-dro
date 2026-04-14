@@ -1,0 +1,901 @@
+\documentclass[journal]{IEEEtran}
+
+
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage[hidelinks]{hyperref}
+\usepackage[noabbrev]{cleveref}
+\usepackage{array}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\usepackage{array}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\usepackage{caption}
+\captionsetup{font=footnotesize}
+\captionsetup[table]{justification=centering}
+\usepackage{comment}
+\usepackage{booktabs}
+\usepackage{pifont}
+\usepackage{graphicx}
+\usepackage{subfigure}\usepackage{float}
+\usepackage{titlesec}
+\titlespacing*{\subsection}{0pt}{*1}{*0.5}
+\usepackage{siunitx}
+\usepackage{tabularx}
+\usepackage{hyperref}
+%\keepXColumns
+%\usepackage{tabularx}
+\newcommand*{\Scale}[2][4]{\scalebox{#1}{$#2$}}%
+\usepackage{enumitem}
+
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{cite}
+\usepackage{comment}
+\usepackage[linesnumbered,ruled]{algorithm2e}
+\SetKwRepeat{Do}{do}{while}%
+\usepackage{titlesec}
+\captionsetup[table]{skip=3pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{0pt}
+\setlength{\textfloatsep}{4pt}
+\setlength{\intextsep}{4pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{0pt}
+
+\setlength{\dbltextfloatsep}{0pt}
+\usepackage{subcaption}
+\captionsetup[subfigure]{labelformat=parens}
+\usepackage{multirow}
+
+% \usepackage{algorithmicx}
+% \usepackage{algpseudocode}
+
+% \usepackage{algorithm}
+% \usepackage{algpseudocode}
+
+% \newcounter{algctr}
+% \renewcommand{\thealgctr}{\arabic{algctr}}
+% \newcommand{\algcaption}[2]{%
+%   \refstepcounter{algctr}%
+%   \textbf{Algorithm~\thealgctr.} #1\label{#2}\par\vspace{2pt}
+% }
+\usepackage{titlesec}
+
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+\titleformat{\paragraph}[hang]
+  {\normalfont\normalsize\bfseries}
+  {\theparagraph}
+  {1em}
+  {}
+
+\titlespacing*{\paragraph}
+  {0pt}
+  {3.25ex plus 1ex minus .2ex}
+  {1em}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+\input{notation}
+\setcounter{secnumdepth}{3}  % 如果你还想显示 subsubsection 编号
+
+\makeatletter
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}%
+  {1.5ex plus 0.5ex minus .2ex}%
+  {0.8ex plus .2ex}%
+  {\normalfont\normalsize\bfseries}}
+\makeatother
+
+\newtheorem{assumption}{Assumption}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+\providecommand{\R}{\mathbb{R}}
+\providecommand{\1}{\mathbf{1}}
+\providecommand{\Xset}{\mathcal{X}}
+\providecommand{\Ynor}{\mathcal{Y}^{\mathrm{nor}}}
+\providecommand{\YDisa}{\mathcal{Y}^{\mathrm{Disa}}}
+\providecommand{\Pamb}{\mathfrak{P}}
+\providecommand{\OmegaK}{\Omega(K)}
+\DeclareMathOperator{\ext}{ext}
+\usepackage{caption}
+\captionsetup[figure]{font=footnotesize}
+%\usepackage{lmodern}
+
+\begin{document}
+
+\title{Two-Stage Hybrid DRO-Stochastic  Optimization  for Resilient EV Charging Station Planning}
+%Resilience-Oriented Planning of EV Charging Stations Under Disaster and Restoration Uncertainty}
+
+
+%\title{Quantified Uncertainty in Solar Power Forecasts via Residual-Scaled and Adaptive Conformal Prediction}
+
+% \author{%
+% \IEEEauthorblockN{Peter I. Udenze\IEEEauthorrefmark{1},
+% Ravi Raj Shrestha\IEEEauthorrefmark{1},
+% Yuwei Jin\IEEEauthorrefmark{1},
+% Lusha Wang\IEEEauthorrefmark{1},
+% and Dawen Li\IEEEauthorrefmark{1}}
+% \IEEEauthorblockA{\IEEEauthorrefmark{1}Department of Electrical and Computer Engineering, The University of Alabama\\
+% Tuscaloosa, AL, USA}
+% 
+
+\renewcommand{\IEEEmembership}[1]{\textit{#1}}
+
+\author{Yuwei Jin\IEEEauthorrefmark{1}, Shixin Liu\IEEEauthorrefmark{1}, Zhi Zhou,~\fontfamily{lmr}\selectfont\textit{Member,~IEEE,}
+Bo Chen,~\fontfamily{lmr}\selectfont\textit{Member,~IEEE,}
+Lusha Wang,~\fontfamily{lmr}\selectfont\textit{Member,~IEEE}
+\thanks{\IEEEauthorrefmark{1}Y. Jin and S. Liu contributed equally to this work.}
+    \thanks{Y. Jin and L. Wang are with the University of Alabama, Tuscaloosa, AL 35487 USA (e-mail:{yjin29@ua.edu,lusha.wang}@ua.edu)}
+      \thanks{S. Liu is an independent researcher (e-mail: {cyrilllau@gmail.com})}
+      \thanks{Zhi Zhou is with Argonne National Laboratory, Lemont, IL 60439 USA (e-mail: zzhou@anl.gov).}
+    \thanks{B. Chen is with the Commonwealth Edison Company (ComEd), Oakbrook Terrace, IL 60181 USA (e-mail: bo.chen@comed.com).}
+      }
+\maketitle
+\begin{abstract}
+The increasing frequency of extreme weather events has made resilience enhancement a critical concern for distribution networks. At the same time, the rapid deployment of electric vehicle charging stations (EVCSs) and the growing vehicle-to-grid (V2G) capability of electric vehicles (EVs) have created new opportunities for charging infrastructure to support not only daily charging demand but also post-disaster system recovery. This dual role makes EVCS planning important for both normal-operation economy and disaster resilience. To address this challenge, this paper proposes a unified two-stage hybrid distributionally robust optimization (DRO)–stochastic optimization framework for EVCS siting and sizing. In the proposed model, first-stage planning decisions are coordinated with second-stage recourse actions under both normal and disaster conditions. Heterogeneous uncertainty is explicitly modeled by combining sample-based stochastic representations of routine operational variability with distributionally robust outage uncertainty for extreme events. The resulting model is solved through a tractable reformulation and a decomposition-based solution algorithm. Case studies show that, compared with simplified planning approaches, the proposed framework achieves a better balance between economic efficiency and resilience, while improving post-disaster recovery performance.
+
+
+
+
+\end{abstract}
+
+% Note that keywords are not normally used for peerreview papers.
+\begin{IEEEkeywords}
+Resilience, EV charging station planning, Vehicle-to-grid, Distributionally robust optimization
+\end{IEEEkeywords}
+
+\newlength{\nomlabelwidth}
+\setlength{\nomlabelwidth}{3.2cm} % ← 调这个宽度以适配最长符号
+
+\newcommand{\nomgroup}[1]{%
+  \vspace{0.45em}%
+\noindent\textit{#1}\par\vspace{0.25em}%
+}
+
+
+\newcommand{\nomitem}[2]{%
+  \noindent
+  \parbox[t]{\nomlabelwidth}{\raggedright #1}%
+  \parbox[t]{\dimexpr\linewidth-\nomlabelwidth}{#2.\par}%
+  \vspace{0.25em}
+}
+
+\begin{center}\textsc{\textcolor{black}{Nomenclature}}\end{center}
+\nomgroup{1.Sets}
+\nomitem{$\mathcal{N}$}{Set of  distribution network nodes}
+\nomitem{$\mathcal{L}$}{Set of distribution lines}
+\nomitem{$\mathcal{O}$}{Set of EV regions}
+\nomitem{$\mathcal{T}_{nor}$}{Set of all time periods}
+\nomitem{$\mathcal{T}_s$}{Set of time periods during disaster}
+%\nomitem{$\Delta$ }{Set of disaster scenarios}
+%\nomitem{$\mathcal{N}_u$ }{Set of nodes belonging to island block $u\in\mathcal{U}^{island}$}
+%\nomitem{$\mathcal{N}^{cri},   \mathcal{N}^{non-cri} $ }{Set of critical and non-critical nodes}
+
+
+
+
+\nomgroup{2.Parameters}
+\nomitem{$C^{{fix}}$}{Fixed EVCS infrastructure cost}
+\nomitem{$C_{{sl/fa}}^{{cons}}$}{Installation cost per slow/fast EVSE}
+\nomitem{$C^{\mathrm{trans}}$}{Transportation cost(\$/km)}
+\nomitem{$C_{t}^{{pur}}$}{Substation purchase price at time $t$}
+\nomitem{$\gamma$}{Discount rate}
+\nomitem{$\theta$}{Payback period}
+\nomitem{$C^{{unmet}}$}{ Unmet charging demand cost per kWh}
+\nomitem{$FP_{\ell}$}{Failure probability of line $\ell$}
+\nomitem{$D_{o,n}$}{ Distance from EV region 
+$o$ to node 
+$n$}
+\nomitem{$R_{\ell},X_{\ell}$}{Resistance and reactance of line $\ell$}
+\nomitem{$V^{\min}, V^{\max}$}{ Voltage limits}
+\nomitem{$P^{\max}_{\ell},Q^{\max}_{\ell}$}{Line
+${\ell}$ active/reactive power limits }
+\nomitem{$P_{sl}^{EV,rated},P_{fa}^{EV,rated}$}{Rated charging power of slow/fast EVSE}
+\nomitem{$N_{sl}^{max},N_{fa}^{max}$}{Maximum number of slow/fast EVSEs per EVCS}
+\nomgroup{3.Decision Variables}
+\nomgroup{3.1 First stage variables}
+\nomitem{$z_{n}$}{Binary variable for EVCS siting at node $n$ ($z_n \in \{0,1\}$)}
+\nomitem{$n_{n}^{{sl}},n_{n}^{{fa}}$}{Number of slow/fast EVSEs installed at node $n$}
+
+
+\nomgroup{3.2 Second stage variables}
+\nomgroup{(a)Normal status ($\mathcal{Y}^{nor}$)}
+
+\nomitem{$y_{t,o,n}^{ch,sl},y_{t,o,n}^{ch,fa}$}{Slow/fast charging demand from region $o$ assigned to node $n$ at time $t$}
+\nomitem{$u_{t,o,n}^{sl},u_{t,o,n}^{fa}$}{ Unmet slow/fast charging demand from region $o$ assigned to node $n$ at time $t$}
+\nomitem{$p_{t,{\ell}},q_{t,{\ell}}$}{Active /reactive power flow on line ${\ell}$ at time $t$}
+\nomitem{$v_{t,n}$}{Squared voltage magnitude at node $n$ and time $t$}
+\nomitem{$p_{t}^{sub}$}
+{Substation active power at time $t$}
+\nomgroup{(b)Disaster status ($\mathcal{Y}^{Disa}$)}
+\nomitem{$y_{t_s,o,n}^{dis,sl},y_{t_s,o,n}^{dis,fa}$}{ Slow/fast discharging from region $o$ assigned to node $n$ at time $t_s$}
+\nomitem{$y^{ls}_{t_s,n}$}{Load shedding at node $n$ during disaster time period $t_s$ }
+\nomitem{$p^{dis}_{t_s,{\ell}}$}{Active power flow on line ${\ell}$ at disaster time $t_s$}
+\nomgroup{4.Uncertain parameters}
+\nomitem{$N^{ch,sl}_{t,o},N^{ch,fa}_{t,o}$}{Set of EVs in region $o$ at time $t$ with charging demand under normal conditions}
+\nomitem{$N^{dis,sl}_{t_s,o},N^{dis,fa}_{t_s,o}$}{Set of EVs whose energy is available for V2G support in region $o$ at disaster time $t_s$}
+
+\nomitem{$D^{EVch,sl}_{t,o},D^{EVch,fa}_{t,o}$}{Aggregate slow/fast charging demand of EVs in region 
+$o$ at time 
+$t$}
+\nomitem{$D^{EVdis,sl}_{t_s,o},D^{EVdis,fa}_{t_s,o}$}{Aggregate slow/fast V2G capacity of EVs in region 
+$o$ at time 
+$t_s$}
+\nomitem{$P_{t,n}^{Load},Q_{t,n}^{Load}$}{Active and reactive power of the $n$-th node at time $t$}
+\nomitem{$\delta_{\ell}$}{Binary indicator of the operational status of branch $(m,n)$(0 if in service, 1 if out of service)}
+
+
+\IEEEpeerreviewmaketitle
+\section{Introduction}
+\hspace*{0.7em}As extreme weather events become more frequent and severe, improving the resilience of distribution networks has become an increasingly important concern. Meanwhile, the continued deployment of EV charging stations (EVCSs) and the growing vehicle-to-grid (V2G) capability of EVs are transforming charging infrastructure from a purely service-oriented facility into a potential resilience-supporting resource~\cite{Wang2022EVFlexibility}. This means that EVCSs may contribute not only to daily charging demand satisfaction, but also to post-disaster service restoration. Consequently, the planning of EVCS siting and sizing is important not only for economic operation, but also for enhancing system resilience under disruptive conditions.
+
+Conventional EVCS planning studies primarily focus on infrastructure siting and sizing from an economic perspective. For example, \cite{zeng2020bilevel} developed a bilevel programming framework to jointly optimize charging station configuration and pricing decisions while modeling user responses. In addition, \cite{ferro2022coupledEVCS,kapoor2024fastEVCS,ferraz2025pricingEVCS} proposed integrated planning frameworks for EV charging stations in coupled transportation and power distribution networks, where siting and sizing decisions are jointly optimized while accounting for traffic flow assignment, grid operational constraints, and, in some cases, distributed energy resources and pricing strategies. However, these models are generally developed for normal operating conditions under deterministic assumptions, and therefore do not capture the uncertainty and disruption effects that are critical to resilience-oriented EVCS planning.
+
+To overcome the limitations of deterministic EVCS planning, a growing body of literature has incorporated stochastic, robust, and distributionally robust optimization into EV and distribution system planning. For example, \cite{dong2025stochasticEVCS}–\cite{yu2025mallEVCS}  model uncertainties in renewable generation, charging demand, and load to improve operational or planning performance, while \cite{cui2025adaptiveEVCS}–\cite{li2025msdroHCS}  enhance robustness through adaptive robust or distributionally robust optimization (DRO)-based expansion frameworks. However, these uncertainty-aware studies primarily focus on routine operational variability and economic performance under normal conditions. Even when component failures are partially considered, post-disaster support needs, resilience-oriented recourse, and the heterogeneous information structures of normal-operation and disaster-stage uncertainty remain insufficiently addressed.
+
+Emerging studies have begun to incorporate resilience considerations into EV charging infrastructure planning. For example, \cite{Mei2025EVCSResilience} introduced a resilience-oriented siting model that embeds disaster-induced grid failures, V2G support, and lost-load penalties into a cost-minimization framework solved by heuristic optimization. In contrast, \cite{Wen2025RobustEVCS} adopted a two-stage robust co-planning approach to jointly optimize charging deployment and grid reinforcement under demand uncertainty. \cite{Akhgarzarandy2021EVCSResilience} proposed a multi-objective planning framework that integrates wind-induced outage modeling, Monte-Carlo simulation, and profit-sharing mechanisms between utilities and private charging operators. However, these resilience-oriented studies often rely on simplified disaster representations, aggregated EV behavior, heuristic solution methods, or small-scale test systems, which limits their ability to capture realistic large-scale operational complexity and the heterogeneous uncertainty structures arising from both normal-operation variability and disaster-stage disruption.
+
+\begin{table*}[t]
+\centering
+\captionsetup{font=footnotesize}
+\caption{Comparison of representative EVCS planning studies}
+\label{tab:lit_compare}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{1pt}
+\begin{tabular}{M{1.4cm}|M{2.1cm}|M{2.3cm}|M{2.4cm}|M{2.5cm}|M{2.5cm}|M{3.9cm}}
+\hline
+\textbf{Reference} & \textbf{EVCS planning} & \textbf{Normal operation } & \textbf{Disaster resilience} & \textbf{Uncertainty-aware} & \textbf{Hybrid uncertainty} & \textbf{Unified two-stage framework} \\
+\hline
+{\cite{zeng2020bilevel}--\cite{ferro2022coupledEVCS}}  & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ & $\times$ & $\times$ \\
+{\cite{kapoor2024fastEVCS}}  & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\times$ \\
+{\cite{ferraz2025pricingEVCS},\cite{Yao2025PVGridEV}}  & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\triangle$ \\
+{\cite{dong2025stochasticEVCS}}  & $\checkmark$ & $\checkmark$ & $\triangle$ & $\checkmark$ & $\times$ & $\triangle$ \\
+{\cite{alharbi2025jointEVCS}}  & $\checkmark$ & $\checkmark$ & $\times$ & $\checkmark$ & $\times$ & $\triangle$ \\
+{\cite{yu2025mallEVCS}--\cite{cui2025adaptiveEVCS}} & $\checkmark$ & $\triangle$ & $\checkmark$ & $\triangle$ & $\times$ & $\triangle$ \\
+{\cite{li2025msdroHCS}} & $\checkmark$ & $\triangle$ & $\checkmark$ & $\triangle$ & $\times$ & $\times$ \\
+{\cite{Mei2025EVCSResilience}-\cite{Wen2025RobustEVCS}} & $\checkmark$ & $\triangle$ & $\checkmark$ & $\triangle$ & $\times$ & $\triangle$ \\
+{\cite{Akhgarzarandy2021EVCSResilience} } & $\checkmark$ & $\triangle$ & $\checkmark$ & $\checkmark$ & $\times$ & $\times$ \\
+\textbf{Our work} & \textbf{$\checkmark$} & \textbf{$\checkmark$} & \textbf{$\checkmark$} & \textbf{$\checkmark$} & \textbf{$\checkmark$} & \textbf{$\checkmark$} \\
+\hline
+\end{tabular}
+\vspace{2pt}
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\centering
+$\checkmark$: explicitly considered; $\triangle$: partially or simplistically considered; $\times$: not considered.
+\end{minipage}
+\end{table*}
+
+Table~\ref{tab:lit_compare} summarizes the representative EVCS planning studies in terms of planning scope, resilience modeling, and uncertainty treatment. As shown in Table~\ref{tab:lit_compare}, existing studies typically focus on either normal-operation planning, uncertainty-aware economic operation, or resilience-oriented analysis under simplified disaster settings. A unified planning framework that simultaneously captures routine operation, post-disaster support needs, and heterogeneous uncertainty remains largely lacking.
+
+Overall, three key gaps remain in the literature. First, most EVCS planning studies focus either on normal operation or post-disaster response, without jointly considering both in a unified framework. Second, normal-operation and disaster-stage uncertainties have fundamentally different information structures: routine variability can be characterized from historical data, whereas hurricane-induced line outages are rare and difficult to model statistically. Therefore, a single stochastic or robust framework is insufficient for both regimes, motivating the hybrid uncertainty framework adopted in this paper. Third, the resilience value of EVCS planning remains underexplored, as most existing studies emphasize the use of existing charging stations rather than planning their location and capacity for post-disaster support. To address these gaps, this paper develops a unified EVCS planning framework that jointly considers normal-operation economy, disaster-stage resilience, and heterogeneous uncertainty. The main contributions are summarized as follows:
+ 
+\begin{itemize}
+    \item We propose a two-stage resilience-oriented EVCS planning framework that jointly optimizes long-term siting and sizing by explicitly accounting for both normal-operation performance and post-disaster support needs. The model captures heterogeneous uncertainty by combining stochastic representations of routine operational variability with a distributionally robust treatment of rare and hard-to-predict disaster uncertainty.
+    \item We derive a duality-based tractable reformulation for the resulting hybrid uncertain planning problem, converting the worst-case disaster-risk evaluation into a solvable master–separation structure. Based on this reformulation, we develop a Benders-like decomposition algorithm that iteratively updates EVCS planning decisions and identifies the most critical disaster realizations for cut generation.
+    \item Numerical results demonstrate that explicitly incorporating post-disaster support value and heterogeneous uncertainty can substantially alter optimal EVCS deployment strategies relative to conventional planning models, yielding better resilience outcomes without relying on simplified average-scenario approximations.
+\end{itemize}
+
+\section{Hybrid Uncertainty Modeling and Characterization}
+This section develops a hybrid uncertainty modeling framework for the distribution network with EVCSs by combining distribution-known and distribution-unknown uncertainties. Uncertainties supported by sufficient historical data are modeled using probability distributions calibrated from historical observations, whereas uncertainties with limited distributional information are characterized through an ambiguity set. These heterogeneous uncertainties are incorporated into different operational components of the optimization model in the following section.
+\subsection{Distributionally robust uncertainty modeling of hurricane-induced line outages}
+
+\hspace*{0.7em}Under hurricane conditions, distribution lines are vulnerable to wind-induced outages. Since the joint probability distribution of hurricane-induced line failures is difficult to estimate accurately from limited extreme-weather data, a DRO framework is adopted. Instead of assuming a fully known outage distribution, DRO evaluates the worst-case expectation over an ambiguity set of probability distributions consistent with the available outage information.
+
+The failure probability of line ${\ell}$, denoted by $FP_{\ell}$, mainly depends on the hurricane wind speed 
+$v_s$ and line length $A_{\ell}$
+, and is modeled as a power function
+\cite{Shi2021ResilientReconfiguration}:
+\begin{equation}
+FP_{\ell}=\vartheta A_{\ell}(v_s)^\varrho
+\label{eq:FP}
+\end{equation}
+
+For urban distribution networks, the parameters are empirically calibrated as $\vartheta = 2 \times 10^{-17}\,\text{km}^{-1}$ and $\varrho = 9.91$.
+
+Let ${\delta} \in \{0,1\}^{|\mathcal{L}|}$ denote the line outage state vector, where 
+$\delta_{\ell}=0$ indicates line 
+${\ell}$ is in service and 
+$\delta_{\ell}=1$ indicates that it is out of service due to the hurricane. The feasible outage realizations are first restricted by the following support set:
+\begin{equation}
+\Omega(K)
+=
+\left\{
+{\delta}
+\;\middle|\;
+{\delta} \in \{0,1\}^{|\mathcal{L}|},
+\ \mathbf{1}^\top {\delta} \le K
+\right\}
+\label{eq:DR_ambiguity_set}
+\end{equation}
+where at most 
+$K$ lines may be unavailable simultaneously.
+
+Based on this support, the ambiguity set is defined as:
+\begin{equation}
+\mathfrak{P}
+:=
+\left\{
+\mathbb{P} \in \mathcal{P}\!\left(\Omega(K)\right)
+\,\middle|\,
+% \mathbf{0}
+% \le
+\mathbb{E}_{\mathbb{P}}\!\left[{\delta}\right]
+\le
+\mathbf{FP}
+\right\}
+\label{eq:DR_ambiguity_set1}
+\end{equation}
+where $\mathcal{P}(\Omega(K))$ denotes the set of all probability distributions supported on $\Omega(K)$, and $\mathbf{FP}$ gives upper bounds on the marginal outage probabilities of individual branches implied by \eqref{eq:FP}. Accordingly, the ambiguity set captures partial distributional information on hurricane-induced joint outages through the outage support set and the marginal outage probability bounds.
+
+Given a realization 
+$\delta \in \Omega(K)$, the resulting line states determine the post-disaster network topology and enter the disaster-stage recourse model through outage-dependent branch power constraints.
+\subsection{Historical-data-driven probabilistic modeling of EV and Load uncertainties}
+
+\subsubsection{Behavior-based stochastic modeling of EV charging demand and available V2G capability}
+
+To characterize EV-related uncertainty in both normal and disaster conditions, a behavior-based stochastic modeling framework is adopted. Following our prior work ~\cite{jin2020optimal}, key EV attributes, including initial state of charge(SoC), battery capacity, plug-in time, and parking duration, are treated as random variables derived from historical charging behavior data. These uncertainties play different roles in the two operating regimes: under normal conditions, they determine the occurrence and timing of charging demand, while under disaster conditions, they determine the aggregated V2G support available for post-disaster operation.
+
+Specifically, an EV is assumed to require charging when its SoC falls below 50\%, consistent with the literature showing increased charging propensity and range anxiety at relatively low battery levels~\cite{Xu2020RangeAnxiety}. It is considered available for V2G discharging only when its SoC exceeds 30\%, consistent with commonly adopted lower-SoC safeguards in V2G operation to preserve mobility needs and limit deep discharge~\cite{Sains2018V2G}. Accordingly, for each region 
+$o$ and time interval 
+$t$, the regional charging demand under normal conditions and the available V2G capacity under disaster conditions are obtained by aggregating the charging and discharging capabilities of relevant EVs, respectively. The aggregated slow/fast charging demand and available V2G capability are given by:
+\begin{equation}
+\begin{aligned}
+D_{t,o}^{EVch,sl/fa}=\sum_{i\in \mathcal{N}_{t,o}^{ch,sl/fa}} p_{i,t}^{ch,sl/fa}
+\\
+D_{t_s,o}^{EVdis,sl/fa}=\sum_{i\in \mathcal{N}_{t_s,o}^{dis,sl/fa}} p_{i,t_s}^{dis,sl/fa}
+\end{aligned}
+\end{equation}
+
+where $p_{i,t}^{ch,sl/fa}$ and $p_{i,t_s}^{dis,sl/fa}$ denote the slow/fast charging power demand and slow/fast discharging power capability of EV $i$ at time $t$ and $t_s$, respectively.
+
+Since the number of available EVs, their arrival and departure times, SoC levels, and usable charging/discharging energy are all uncertain, the aggregated quantities $D_{t,o}^{EVch,sl/fa}$ and $D_{t_s,o}^{EVdis,sl/fa}$are modeled as stochastic processes:
+\begin{equation}
+D_{t,o}^{EVch,sl/fa} \sim \mathbb{P}_{t,o}^{ch,sl/fa},
+\quad
+D_{t_s,o}^{EVdis,sl/fa} \sim \mathbb{P}_{t_s,o}^{dis,sl/fa}
+\end{equation}
+where $\mathbb{P}_{t,o}^{ch,sl/fa}$ and $\mathbb{P}_{t_s,o}^{dis,sl/fa}$ are the corresponding time-dependent probability distributions estimated from historical charging behavior data. Here, $D_{t,o}^{EVch,sl/fa}$ and $D_{t_s,o}^{EVdis,sl/fa}$ denote regional aggregated charging demand and available V2G discharging capability, respectively, rather than the directly controlled charging/discharging power of individual EVs.
+
+
+
+
+\subsubsection{Time-varying probabilistic load modeling}
+
+For each node $n$ and time interval $t$, one year of historical load observations
+$P^{(e)}_{t,n}$ $(e=1,\dots,E,\;E=365)$ are available. To capture the uncertainty in aggregated nodal demand, the active power load is modeled as a Gaussian random variable:
+\begin{equation}
+P^{\mathrm{Load}}_{t,n} \sim \mathcal{N}^P(\mu_{t,n}, \sigma_{t,n}^2)
+\end{equation}
+where the mean and variance are estimated from historical samples as:
+\begin{equation}
+\mu_{t,n}=\frac{1}{E}\sum_{e=1}^{E} P^{(e)}_{t,n}, \quad
+\sigma_{t,n}^2=\frac{1}{E-1}\sum_{e=1}^{E}\left(P^{(e)}_{t,n}-\mu_{t,n}\right)^2
+\end{equation}
+
+Reactive power demand is modeled in the same manner:
+\begin{equation}
+Q^{\mathrm{Load}}_{t,n} \sim \mathcal{N}^Q(\mu^{Q}_{t,n}, (\sigma^{Q}_{t,n})^2)
+\end{equation}
+where 
+$\mu^{Q}_{t,n}$
+ and 
+$(\sigma^{Q}_{t,n})^2$
+ are estimated from the corresponding historical reactive load observations.
+
+
+
+\section{Mathematical model}
+
+
+Since long-term EVCS planning decisions must be made before uncertain operating conditions are realized, whereas operational responses can be adjusted only after uncertainty is revealed, a two-stage optimization model is adopted. The proposed framework is illustrated in Fig.~\ref{fig:framework}. In the first stage, the model determines long-term EVCS planning decisions and incurs the corresponding construction cost, $F^{\mathrm{cons}}(x)$. In the second stage, the resulting planning decisions are evaluated under two operational regimes: normal operation and disaster operation. The normal-operation component captures day-to-day operational performance, $\mathbb{E}_{\xi}\!\left[\Psi^{\mathrm{nor}}(x,\xi)\right]$, including transportation cost, unmet demand, and substation power purchase cost. The disaster-operation component evaluates resilience-oriented operational loss,
+\(
+\sup_{\mathbb{Q}\in\mathfrak{P}}
+\mathbb{E}_{\delta\sim\mathbb{Q}}
+\left[
+\mathbb{E}_{\zeta \mid \delta}\!\left[\Phi^{\mathrm{dis}}(x,\delta,\zeta)\right]
+\right],
+\)
+which is mainly reflected in load shedding under post-disaster system conditions.
+
+
+\begin{figure}[H]
+    \centering
+\includegraphics[width=0.499\textwidth]{paper/fig/frame.png}
+    \caption{Overall framework of the proposed model}
+\label{fig:framework}
+\end{figure}
+
+The uncertainty structures in the two operational regimes are fundamentally different, which motivates the proposed hybrid uncertainty framework. Under normal operation, uncertainty is represented in a sample-based stochastic manner, where load and EV charging demand are described using historical-data-driven samples or scenarios. This is appropriate because routine operating variability can be statistically characterized from abundant historical data. In contrast, under disaster operation, uncertainty is modeled in a nested manner: the outer layer captures hurricane-induced line outage uncertainty through a distributionally robust ambiguity set, while the inner layer captures conditional disaster-stage uncertainty through sample-based load and EV V2G capability scenarios under each realized outage pattern. This treatment is needed because the joint distribution of hurricane-induced outages is difficult to estimate reliably from limited extreme-event data. Therefore, a single stochastic or robust framework is inadequate for both regimes. The proposed model thus establishes a hybrid uncertainty framework that combines sample-based stochastic uncertainty under normal operation with ambiguity-set-based nested uncertainty under disaster operation within a unified two-stage EVCS planning model.
+
+
+Based on the above framework, the overall planning objective jointly balances long-term investment, day-to-day operational economy, and disaster-stage resilience, and is formulated as follows:
+\begin{equation}
+\begin{aligned}
+\min_{x \in X}
+\left\{
+F^{\mathrm{cons}}(x)
++
+(1-\pi_f)\,\mathbb{E}_{\xi}\!\left[\Psi^{{nor}}(x,\xi)\right] \\
++
+\pi_f \sup_{\mathbb{Q}\in\mathfrak{P}}
+\mathbb{E}_{\delta\sim\mathbb{Q}}
+\left[
+\mathbb{E}_{\zeta \mid \delta}\!\left[\Phi^{{dis}}(x,\delta,\zeta)\right]
+\right]
+\right\}
+\end{aligned}
+\label{eq:overall_objective}
+\end{equation}
+\hspace*{0.5em} Here, $x=(z_n,n_n^{sl},n_n^{fa})$ denotes the first-stage planning decision vector, including EVCS siting decisions and slow/fast charger sizing variables. The normal-operation uncertainty vector is defined as $\xi \coloneqq \left(D_{t,o}^{EV,ch,sl/fa},\; P_{t,n}^{Load},\; Q_{t,n}^{Load}\right)$
+,while the conditional disaster-stage uncertainty vector is defined as
+$\zeta \coloneqq \left(D_{t_s,o}^{EV,dis,sl/fa},\; P_{t_s,n}^{Load}\right).$
+In addition, $\delta$ denotes the line outage realization in the disaster stage, and its probability distribution is governed by the ambiguity set $\mathfrak{P}$. $\pi_f \in [0,1]$ denotes the probability of disaster occurrence. The detailed formulations of the three terms in~\eqref{eq:overall_objective} are presented in the following subsections.
+\subsection{The first-stage planning model}
+
+\hspace*{0.7em} In the first stage, the model determines the long-term planning decisions for EVCSs. The annualized
+construction cost, including the fixed infrastructure cost
+and the installation cost of slow and fast chargers, is
+minimized as follows:
+\begin{equation}
+\begin{aligned}
+F^{\text{cons}}=
+\sum_{n=1}^{\mathcal{N}}
+(C^{{fix}}z_{n}
++n_{n}^{{sl}}
+C_{{sl}}^{{cons}}
++n_{n}^{{fa}} C_{{fa}}^{{cons}})
+\frac{\gamma(1+\gamma)^{\theta}}{(1+\gamma)^{\theta}-1}
+\end{aligned}
+\label{eq:cons}
+\end{equation}
+where the last term represents the annualization factor that converts the investment cost into an equivalent annual cost.
+
+\hspace*{0.5em} The model is subject to the following constraints:
+\begin{itemize}
+    \item Minimum charger requirement
+\end{itemize}
+\begin{equation}
+(n_{n}^{{sl}} + n_{n}^{{fa}}) \geq 3z_{n}
+\label{eq:evse_number_limit1}
+\end{equation}
+\begin{itemize}
+    \item Installation bounds：
+\end{itemize}
+\begin{equation}
+0\le n_{n}^{{fa}}\le N^{max}_{fa}z_{n},\quad 
+0\le n_{n}^{{sl}}\le N^{max}_{sl}z_{n}
+\label{eq:evse_number_limit}
+\end{equation}
+
+\subsection{Second-stage operational model}
+
+\hspace*{0.7em}This section presents the second-stage operational model, which evaluates the system response after the first-stage EVCS planning decisions are fixed. The second stage consists of two operating regimes: normal 】and disaster. 
+
+\subsubsection{Normal-operation recourse model}
+
+This section formulates the normal-operation recourse model. The recourse function $\Psi^{{nor}}(x,\xi)$, in (\ref{eq:13})  includes transportation cost, unmet demand cost, and substation electricity purchase cost, and is optimized subject to charging service and LinDistFlow-based network constraints.
+\begin{equation}
+\Psi^{{nor}}(x,\xi)=F^{{trans}}+F^{{unmet}}+F^{{sub}}
+\label{eq:13}
+\end{equation}
+\hspace*{0.5em} The three components of \eqref{eq:13} are detailed as follows:
+\begin{itemize}
+    \item Annual EV user transportation cost $F^{\text{trans}}$
+\end{itemize}
+\hspace*{0.5em} The EV user transportation cost is represented through regional charging demand assignment. For each time 
+$t$, the slow- and fast-charging demand from region 
+$o$ can be allocated to candidate charging stations at node 
+$n$, denoted by $y^{{ch,sl}}_{t,o,n}$ and $y^{{ch,fa}}_{t,o,n}$ ,respectively. The corresponding transportation cost is computed as the distance-weighted sum of the assigned charging demand.
+
+\begin{equation}
+F^{\text{trans}}
+=
+365 \,C^{\text{trans}} 
+\sum_{t=1}^{\mathcal{T}_{nor}}
+\sum_{o=1}^{\mathcal{O}}
+\sum_{n=1}^{\mathcal{N}} D_{o,n}
+(\frac{y_{t,o,n}^{ch,sl}}{P_{sl}^{EV,rated}}+\frac{y_{t,o,n}^{ch,fa}}{P_{fa}^{EV,rated}}) \\
+\end{equation}
+\begin{itemize}
+    \item Annual unmet charging demand cost $F^{unmet}$
+\end{itemize}
+ \hspace*{0.7em}The annual unmet charging demand cost represents service loss caused by insufficient charging capacity under normal operation and is formulated using unmet slow- and fast-charging demand variables as follows: 
+
+\begin{equation}
+F^{\text{unmet}}
+=
+365C^{{unmet}} \, 
+\sum_{t=1}^{\mathcal{T}_{nor}}\sum_{o=1}^{\mathcal{O}}
+\sum_{n=1}^{\mathcal{N}} (u_{t,o,n}^{sl}+u_{t,o,n}^{fa})
+ \\
+\end{equation}
+
+ 
+ 
+\begin{itemize}
+    \item Annual electricity purchase cost $F^{sub}$
+\end{itemize}
+\hspace*{0.7em}The annual electricity purchase cost from the substation is given by:
+\begin{equation}
+F^{{sub}}
+=
+365 \sum_{t=1}^{\mathcal{T}_{nor}}C_{t}^{{pur}}
+p_{t}^{sub}
+\end{equation}
+\hspace*{0.7em}The above formulation is constrained by the following conditions:
+\begin{itemize}
+    \item Demand assignment balance constraint
+\end{itemize}
+\begin{equation}
+\sum_{n=1}^{\mathcal{N}} y_{t,o,n}^{ch,fa}+u_{t,o,n}^{fa}
+=
+D_{t,o}^{EVch,fa},  \quad\sum_{n=1}^{\mathcal{N}} y_{t,o,n}^{ch,sl}+u_{t,o,n}^{sl}
+=
+D_{t,o}^{EVch,sl}
+\label{eq:1}
+\end{equation}
+\begin{itemize}
+    \item Station capacity limits
+\end{itemize}
+\begin{equation}
+\sum_{o \in \mathcal O}
+y_{t,o,n}^{ch,fa}\le n_n^{fa}P^{EV,rated}_{fa},
+\quad
+\sum_{o \in \mathcal O}
+y_{t,o,n}^{ch,sl}\le n_n^{sl}P^{EV,rated}_{sl}
+\end{equation}
+
+\begin{itemize}
+    \item Assignment--siting linkage constraint
+\end{itemize}
+\begin{equation}
+0\le y_{t,o,n}^{ch,fa}
+\le
+D_{t,o}^{EVch,fa}z_n,   
+0\le y_{t,o,n}^{ch,sl}
+\le
+D_{t,o}^{EVch,sl}z_n
+\end{equation}
+
+\begin{itemize}
+    \item LinDistFlow power balance
+\end{itemize}
+\begin{equation}
+p_{t,\ell}=\sum_{\ell'=(n,k)\in \mathcal{L}} p_{t,\ell'} + P^{Load}_{t,n}+\sum_{o \in \mathcal O}
+(y_{t,o,n}^{ch,fa}+y_{t,o,n}^{ch,sl})
+\end{equation}
+\begin{equation}
+q_{t,\ell}=\sum_{\ell'=(n,k)\in \mathcal{L}} q_{t,\ell'} + Q^{Load}_{t,n},
+\quad \forall \ell=(m,n)\in \mathcal{L}
+\end{equation}
+\begin{equation}
+p_t^{{sub}}=\sum_{n:(0,n)\in\mathcal{L}} p_{t,(0,n)}.
+%\quad \forall \ell=(m,n)\in \mathcal{L}
+\end{equation}
+
+
+
+\begin{itemize}
+    \item Distribution line flow bounds
+\end{itemize}
+\begin{equation}
+-P^{\max}_{\ell} \le p_{t,{\ell}}\le P^{\max}_{\ell}
+,\quad
+-Q^{\max}_{\ell} \le q_{t,{\ell}} \le Q^{\max}_{\ell}
+\end{equation}
+
+\begin{itemize}
+    \item Voltage drop equation
+\end{itemize}
+\begin{equation}
+\begin{aligned}
+v_{{t},n}
+=
+v_{{t},m}
+-
+2\left(
+R_{\ell} p_{t,{\ell}}
++
+X_{\ell}q_{t,{\ell}}
+\right),\quad \forall \ell=(m,n)\in \mathcal{L}
+\label{eq:lindistflow_voltage}
+\end{aligned}
+\end{equation}
+
+\begin{itemize}
+    \item Voltage limit
+\end{itemize}
+\begin{equation}
+\begin{aligned}
+\left|V^{\min} \right|^2\leq v_{t,n}\leq \left|V^{\max}\right|^2
+\label{eq:lindistflow_voltage}
+\end{aligned}
+\end{equation}
+
+
+
+\\
+\subsubsection{Disaster-stage recourse model}
+
+This subsection formulates the disaster-stage recourse model for post-disaster operation under outage-dependent network conditions. In this stage, the uncertain EV-related parameter is interpreted as the aggregated available V2G discharging capability at the regional level, rather than the directly controlled charging/discharging power of individual EVs. This quantity reflects the uncertain post-disaster availability of EV energy support induced by behavioral factors such as SoC, plug-in time, and parking duration. Based on this available V2G capability, the recourse model determines EV discharging dispatch, load shedding, and disaster-stage power flow so as to minimize resilience-oriented operating loss:
+\begin{equation}
+\Phi^{{dis}}(x,\delta,\zeta) =
+\sum_{t_s\in\mathcal T_s}\sum_{n\in\mathcal N}C_n^{LS}
+y^{ls}_{t_s,n}
+\label{eq:resilience}
+\end{equation}
+
+where \(C^{LS}_n\) is the node-dependent load-shedding penalty coefficient, defined as $C^{{LS-cri}}$ for critical nodes and $C^{LS-noncri}$ for non-critical nodes.
+
+The model is subject to the following constraints:
+\begin{itemize}
+    \item LinDistFlow power balance
+\end{itemize}
+\begin{equation}
+p_{t_s,\ell}^{dis} =\sum_{\ell'=(n,k)\in \mathcal{L}} p_{t_s,\ell'}^{dis} + P^{Load}_{t_s,n}-y^{ls}_{t_s,n}-\sum_{o=1}^{\mathcal{O}}\left(y_{t_s,o,n}^{{dis,sl}}
++y_{t_s,o,n}^{{dis,fa}}
+\right)
+\end{equation}
+
+\begin{itemize}
+    \item Assignment discharging constraint
+\end{itemize}
+\begin{equation}
+\sum_{n=1}^{\mathcal{N}} y_{t_s,o,n}^{dis,fa}
+\le
+D_{t_s,o}^{EVdis,fa},\quad
+\sum_{n=1}^{\mathcal{N}} y_{t_s,o,n}^{dis,sl}
+\le
+D_{t_s,o}^{EVdis,sl}
+\end{equation}
+\begin{itemize}
+    \item Station capacity limits
+\end{itemize}
+\begin{equation}
+\sum_{o \in \mathcal O}
+y_{t_s,o,n}^{dis,fa}\le n_n^{fa}P^{EV,rated}_{fa},
+\quad
+\sum_{o \in \mathcal O}
+y_{t_s,o,n}^{dis,sl}\le n_n^{sl}P^{EV,rated}_{sl}
+\end{equation}
+
+
+\begin{itemize}
+    \item Discharging capacity assignment-siting linking constraint
+\end{itemize}
+\begin{equation}
+0\le y_{t_s,o,n}^{dis,fa}
+\le
+D_{t_s,o}^{EVdis,fa}z_n, \quad
+0\le y_{t_s,o,n}^{dis,sl}
+\le
+D_{t_s,o}^{EVdis,sl}z_n
+\label{eq:47}
+\end{equation}
+\begin{itemize}
+    \item Load shedding constraint
+\end{itemize}
+\begin{equation}
+0\le
+y^{ls}_{t_s,n}\le P^{Load}_{t_s,n}
+\end{equation}
+\begin{itemize}
+    \item Distribution line power constraint
+\end{itemize}
+\begin{equation}
+-P^{max}_{{\ell}}(1-\delta_{\ell})\le
+p_{t_s,{\ell}}^{dis}\le P^{max}_{{\ell}}(1-\delta_{\ell})
+\end{equation}
+
+\input{paper/Section-IV-Solution}
+
+\section{Case study}
+\subsection{Experimental Setup}
+\hspace*{0.7em}This case study is conducted on the IEEE 33-node distribution system, which serves as the planning area, as shown in Fig.~\ref{fig:IEEE_33}. Red and white nodes denote critical and non-critical nodes, respectively. The system is divided into three color-coded regions with different numbers of EVs. In each region, both fast and slow charging are available, with different numbers of EVs choosing each mode. A total of 1000 EVs with heterogeneous vehicle types and battery capacities are considered, including 18 EV models whose battery capacities are adopted from~\cite{jin2020optimal}.
+
+\begin{figure}[H]
+    \centering
+\includegraphics[width=0.49\textwidth]{paper/fig/ieee_33_v2.png}
+    \caption{IEEE 33-node distribution system}
+\label{fig:IEEE_33}
+\end{figure}
+Following the modeling approach described in Section II-B, the EV charging/discharging-related quantities and load profiles under different scenarios are generated. In addition, the outage probability of each distribution line is evaluated. The resulting scenario profiles and line outage probabilities are presented in Figs.~\ref{load_data_3d_profile}--\ref{normal_ev_discharge_24h_scenario_1_lines.png}. The disaster period is assumed to occur from 10:00 to 14:00.
+The time-of-use (ToU) electricity price varies across three periods. The on-peak period is from 16:00 to 21:00 with a price of 0.2154/kWh. The partial-peak period covers 8:00 to 16:00 and 21:00 to 24:00, with a price of 0.17297/kWh. The off-peak period is from 0:00 to 8:00, during which the electricity price is 0.14296/kWh. The remaining key model parameters are summarized in Table~\ref{tab:1}.
+
+
+\begin{figure}[H]
+    \centering
+\includegraphics[width=0.49\textwidth]{paper/fig/load_data_3d_profile.png}
+    \caption{Active and Reactive load profile under scenario a=1}
+\label{load_data_3d_profile}
+\end{figure}
+\begin{figure}[H]
+    \centering
+\includegraphics[width=0.49\textwidth]{paper/fig/normal_ev_scenario_1_lines.png}
+    \caption{Slow/fast charging profile for each region under scenario a=1}
+\label{normal_ev_scenario_1_lines}
+\end{figure}
+\begin{figure}[H]
+    \centering
+\includegraphics[width=0.49\textwidth]{paper/fig/normal_ev_discharge_24h_scenario_1_lines.png}
+    \caption{Slow/fast discharging profile for each region under scenario b=1}
+\label{normal_ev_discharge_24h_scenario_1_lines.png}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\captionsetup{font=small}
+\caption{Model parameters}
+\begin{tabular}{M{1.5cm}|M{4.3cm}|M{1.8cm}}
+\hline
+Symbol & Parameters & Value \\ \hline
+$C^{fix}$    & Fixed infrastructure cost     & 153600(\$)    \\ 
+$C^{cons}_{sl}$   & Installation cost per slow EVSE     & 540.07(\$/EVSE)     \\
+$C^{cons}_{fa}$   & Installation cost per fast EVSE     & 25000(\$/EVSE)     \\
+$C^{Trans}$   & Transporation cost     & 0.0435(\$/km)     \\
+$C^{unmet}$   & Unmet demand penalty cost     & 3(\$/kWh)     \\
+$C^{LS-cri}$   & Load shedding penalty cost for critical load     & 50(\$/kWh)     \\
+$C^{LS-noncri}$   & Load shedding penalty cost for non-critical load    & 10(\$/kWh)     \\
+$v_s$   & Typhoon-level strong wind speed    & 33m/s     \\
+$\gamma$   & Discount rate     & 0.01     \\
+$\theta$   & Payback period     & 20(year)    \\
+$\pi_f$   & weight     & 0.3
+\\
+$P_{sl/fa}^{EV,rated}$ &  Rated EV charging power of slow/fast EVSE  & 7/50(kW)
+\\
+$N_{sl/fa}^{max}$ & Maximum number of slow/fast
+EVSEs per EVCS & 25/10 \\
+
+$V^{\min}, V^{\max}$ & Voltage limits& 0.95/1.05\\
+
+ \hline
+\end{tabular}
+\label{tab:1}
+\end{table}
+
+The proposed optimization model is solved using GUROBI 13.0.1 implemented in Python 3.14.3. All simulations are carried out on a computer equipped with a 2~GHz Intel i7 CPU and 32~GB RAM.
+
+
+\subsection{Comparison with Partial-Framework Benchmark Cases}
+\hspace*{0.7em}To demonstrate the value of jointly considering normal-operation economy and disaster-stage resilience, the proposed method is compared with two benchmark cases that capture only part of the full planning framework. Specifically, Case 1 is the integrated planning case based on the proposed method, Case 2 is the normal-operation-only benchmark, and Case 3 is the disaster-resilience-only benchmark.
+
+Figs. 6(a)–6(c) present the first-stage siting and sizing results under the three cases, and Table~\ref{tab:case1_case3_compare} summarizes the corresponding objective values. Clear differences can be observed in both the spatial deployment of stations and the charger composition. Case 2 yields the lowest 
+$F^{cons}$
+, because it is designed only to support normal operation and therefore tends to reduce the number of station sites to save fixed investment cost while maintaining sufficient charging capacity for daily charging service. In contrast, Case 3 results in the highest $F^{cons}$ and a more spatially dispersed station layout. As shown in Fig.  (c), all installed chargers in Case 3 are slow chargers, and the stations are distributed more broadly across the system. This indicates that, when planning is driven solely by disaster-stage performance, the model places greater emphasis on geographic coverage and post-disaster support accessibility than on charging efficiency during normal operation. Compared with these two benchmark cases, Case 1 provides a more balanced first-stage design, combining moderate construction cost with a planning layout that supports both daily charging demand and disaster-response capability.
+
+The second-stage results further illustrate the tradeoff between normal-operation economy and disaster-stage resilience. As reported in Table~\ref{tab:case1_case3_compare}, compared with Case 2, Case 1 increases $\Psi^{\mathrm{nor}}$ by only 0.21\% while reducing $\Phi^{\mathrm{dis}}$ by 89.4\%, indicating that a substantial resilience improvement can be achieved with only a marginal increase in normal-operation cost. By contrast, although Case 3 reduces $\Phi^{\mathrm{dis}}$ to zero, it does so at the expense of much worse normal-operation performance. Compared with Case 1, $F^{\mathrm{cons}}$ increases by 16.7\%, and $\Psi^{\mathrm{nor}}$ rises dramatically, mainly due to the sharp increase in $F^{\mathrm{unmet}}$. This is because Case 3 prioritizes disaster support alone, leading to a more spatially dispersed deployment with slow chargers and insufficient daily charging capacity.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.499\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{paper/fig/case1_v5.png}
+        \caption*{(a) Case 1: Proposed model}
+        \label{fig:case2_v4}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.499\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{paper/fig/case2_v5.png}
+        \caption*{(b) Case 2: Only normal operation considered}
+        \label{fig:case1_v5}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.499\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{paper/fig/case3_v4.png}
+        \caption*{(c) Case 3: Only disaster resilience considered}
+        \label{fig:case3_v4}
+    \end{subfigure}
+    \caption{EVCS planning results under different cases}
+    \label{fig:case_v4_all}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\captionsetup{font=small}
+\caption{Comparison of objective components under different cases}
+\label{tab:case1_case3_compare}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Obj(\$)} & \textbf{Case 1} & \textbf{Case 2} & \textbf{Case 3}  & \textbf{Case 4} \\
+\hline
+$F^{\mathrm{cons}}$  & 88408.78   & 45550.54   & \mathbf{103218.92} & \mathbf{86903.68}\\
+$F^{\mathrm{trans}}$ & 17202.11    & 17099.3    & 14152.47  & 17115.09  \\
+$F^{\mathrm{unmet}}$    & 0    & 0    & 8514421.07 & \mathbf{0} \\
+$F^{\mathrm{sub}}$   & 29951.26      & 29951.26      & 24940.13   & 29951.26   \\
+$\Psi^{\mathrm{nor}}$   & 47153.37    & 47050.56    & 8553513.67  & 47066.35 \\
+$\Phi^{\mathrm{dis}}$    & 893.91    & 8451.73    & 0         &2230.34  \\
+\hline
+\end{tabular}
+\end{table}
+
+Overall, the comparison with the two benchmark cases demonstrates the significance of the proposed integrated planning model. A planning strategy focused only on normal-operation economy cannot provide sufficient resilience, whereas a strategy focused only on disaster-stage performance may lead to unacceptable degradation in daily charging service. The proposed model effectively bridges these two aspects by jointly incorporating normal-operation recourse and disaster-operation recourse into the planning stage. Therefore, it yields EVCS deployment decisions that are not only more balanced in terms of cost and resilience, but also more practical for real-world systems that must simultaneously satisfy routine charging needs and post-disaster support requirements.
+
+\subsection{Comparison with deterministic case}
+\hspace*{0.7em}To further examine the role of uncertainty treatment in the second-stage model, this subsection compares Case 1 with a deterministic benchmark (Case 4). In Case 4, a mean-value scenario representation is adopted, where the uncertain parameters in the second-stage model, including load demand, EV charging demand, and EV discharging-related quantities, are replaced by their average values across all sampled scenarios. Accordingly, the second-stage recourse problem is reduced to a deterministic evaluation under a single representative scenario.
+
+The results in \ref{tab:case1_case3_compare} and Fig. \ref{fig:case4_v4} further demonstrate the importance of explicitly modeling second-stage uncertainty. Compared with the proposed method in Case~1, the deterministic mean-value benchmark in Case~4 achieves only marginal reductions in investment and normal-operation costs, with \(F^{\mathrm{cons}}\) and \(\Psi^{\mathrm{nor}}\) decreasing by about 1.7\% and 0.2\%, respectively. In particular, the normal-operation components remain very close, as \(F^{\mathrm{trans}}\) decreases only slightly and \(F^{\mathrm{sub}}\) is essentially unchanged. However, this small economic gain comes at the expense of a substantial deterioration in disaster-stage resilience, as \(\Phi^{\mathrm{dis}}\) increases by about 149.5\%. This suggests that the mean-value deterministic representation may still perform reasonably well under average operating conditions, but fails to capture the impact of scenario variability on post-disaster support requirements, thereby leading to planning decisions that are less resilient under disruptive events. 
+
+
+\begin{figure}[H]
+    \centering
+\includegraphics[width=0.499\textwidth]{paper/fig/case4_v5.png}
+    \caption{EVCS planning result under case 4}
+\label{fig:case4_v4}
+\end{figure}
+
+
+\subsection{Sensitivity analysis}
+\hspace*{0.7em}This subsection presents a sensitivity analysis of the proposed model to further examine the effects of key parameters on EVCS planning results. Cases 5 and 6 investigate the impact of higher EV penetration, where the EV-related charging demand and discharging profiles are increased to 1.5 and 2 times the base level, respectively. 
+
+From Table~\ref{tab:case1_case5_compare} and Fig.~\ref{fig:case_v4_all}, it can be observed that as EV penetration increases from the base level to 1.5 and 2 times, both the first-stage investment cost and the normal-operation cost rise significantly. This is mainly because higher EV penetration leads to greater charging demand, which requires more EVCS capacity and consequently increases the transportation cost \(F^{{trans}}\) and the substation purchase cost \(F^{{sub}}\). Meanwhile, the total number of chargers increases markedly from 84 in Case~1 to 120 in Case~5 and 159 in Case~6, indicating that the model expands station capacity to accommodate the higher charging demand. On the other hand, the disaster-stage cost decreases relative to the base case, mainly because higher EV penetration also increases the available EV discharging capability during the disaster stage. However, the disaster-stage cost rises slightly from Case~5 to Case~6, suggesting that the further increase in EV penetration is mainly used to satisfy larger charging demand rather than bringing a proportional resilience gain. Overall, Table~\ref{tab:case1_case5_compare} and Fig.~\ref{fig:case_v4_all} show that higher EV penetration increases the economic burden in normal operation while also providing stronger resilience support in the disaster stage.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{paper/fig/case1_1.5.png}
+        \caption*{(a) Case 5: 1.5$\times$ EV penetration}
+        \label{fig:case1_1.5.png}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{paper/fig/case1_2.png}
+        \caption*{(b) Case 6: 2$\times$ EV penetration}
+        \label{fig:case1_2.png}
+    \end{subfigure}
+    \caption{EVCS planning results under different EV penetrations}
+\label{fig:case_v4_all}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\captionsetup{font=small}
+\caption{Sensitivity analysis under different EV penetrations}
+\label{tab:case1_case5_compare}
+% \setlength{\tabcolsep}{8pt}
+% \renewcommand{\arraystretch}{1.1}
+\begin{tabular}{lcc}
+\hline
+{\textbf{Obj(\$)}} &
+ \textbf{Case 5} & \textbf{Case 6} &  
+\hline
+$F^{\mathrm{cons}}$  & 94739.35  & 115251.07  \\
+$F^{\mathrm{trans}}$ & 25578.58  & 34258.78   \\
+$F^{\mathrm{unmet}}$ & 0         & 0          \\
+$F^{\mathrm{sub}}$   & 34353.16  & 38755.05  \\
+$\Psi^{\mathrm{nor}}$ & 59931.74 & 73013.83 \\
+$\Phi^{\mathrm{dis}}$ & 440.74   & 547.18     \\
+\hline
+\end{tabular}
+\end{table}
+    
+\section{Conclusion}
+This paper proposed a two-stage hybrid DRO-stochastic optimization framework for EV charging station planning in distribution networks, considering both normal-operation economy and post-disaster resilience. The model jointly captures routine operational uncertainty and hurricane-induced outage uncertainty, and it is solved efficiently using a Benders-like decomposition algorithm. Results on the IEEE 33-node system show that the proposed method achieves a better trade-off between economic performance and resilience than conventional benchmark strategies. Overall, the framework provides an effective tool for EVCS planning under both daily uncertainty and extreme-event disruptions.
+Future work will extend the proposed framework by incorporating transportation network constraints, renewable generation, and energy storage to better capture the coupling between mobility demand and power system operation. In addition, improving the scalability of the proposed solution method for larger-scale and more complex networks will be an important direction for future research.
+
+\bibliographystyle{IEEEtran}
+\bibliography{paper/refs.bib}
+
+\appendix
+\input{paper/Section-Appendix}
+
+\ifCLASSOPTIONcaptionsoff
+  \newpage
+\fi
+
+\end{document}
+

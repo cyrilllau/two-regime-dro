@@ -1,0 +1,244 @@
+\section{Solution Methodology}
+\label{sec:solution_methodology_compact}
+
+\hspace*{0.7em}For fixed first-stage decisions $x$, the proposed model combines a stochastic recourse term under normal operating conditions with a moment-based distributionally robust recourse term under disasters. To obtain a tractable solution method, we apply sample-average approximation (SAA) to all uncertainty sources with known distributions and retain the outage uncertainty in a worst-case expectation form~\cite{liu2023stochasticTaxi}.
+
+Let $\{\xi^a\}_{a=1}^A$ be i.i.d. samples of the normal-condition uncertainty, where $\xi$ collects random EV charging demand and nodal load realizations. Let $\{\zeta^b\}_{b=1}^B$ be i.i.d. samples of the post-disaster continuous uncertainty, while the binary outage vector $\delta\in\{0,1\}^{|\mathcal L|}$ remains distributionally ambiguous. Define \(
+f_{x,B}(\delta):=\frac{1}{B}\sum_{b=1}^B \Phi(x,\delta,\zeta^b)
+\) and \(w_B(x):=\sup_{\bQ \in\fP}\bE_{\delta\sim\bQ}\big[f_{x,B}(\delta)\big]\). We write the SAA of \eqref{eq:overall_objective} as follows:
+\begin{equation}
+\label{eq:overall_saa_compact}
+\begin{aligned}
+\min_{x,\{y^{{\rm nor},a}\}}
+&F^{{cons}}(x)
++\frac{1-\pi_f}{A}\sum_{a=1}^A
+\Big(F^{{trans},a}+F^{{unmet},a}+F^{{sub},a}\Big)\\
+&\qquad \qquad +\pi_f\,w_B(x)\\
+\text{s.t.}\quad
+&x\in\cX,\quad y^{{\rm nor},a}\in\Ynor(x,\xi^a),\quad a=1,\dots,A
+\end{aligned}
+\end{equation}
+\begin{assumption}[Well-posed recourse]
+\label{ass:sg_wellposed}
+For every $x\in\cX$, every sampled normal scenario $\xi^a$, and every sampled disaster realization $(\delta,\zeta^b)$ with $\delta\in\OmegaK$, the linear programs defining the normal-operation and disaster-operation recourse functions are feasible and have finite optimal values.
+\end{assumption}
+
+\subsection{Compact reformulation of the disaster DRO term}
+\label{subsec:compact_reformulation}
+
+\hspace*{0.7em}For each disaster sample $b$, the second-stage load shedding model can be written in compact linear form as
+\begin{equation*}
+\Phi^{dis}(x,\delta,\zeta^b)
+=
+\min_{y^{{\rm Disa},b}\ge 0}
+\Big\{\bar d^\top y^{{\rm Disa},b}:\ Wy^{{\rm Disa},b}\ge H^b-Z^b x+U\delta\Big\}
+\end{equation*}
+where $H^b:=H(\zeta^b)$ and $Z^b:=Z(\zeta^b)$. Its dual feasible region is
+\begin{equation}
+\label{eq:dual_poly_compact}
+\bar\Pi:=\{\bar\pi\ge 0:\ W^\top\bar\pi\le \bar d\}
+\end{equation}
+\hspace*{0.7em}By linear-programming duality,
+\begin{equation}
+\label{eq:disaster_dual_compact}
+\Phi^{dis}(x,\delta,\zeta^b)
+=
+\max_{\bar\pi_b\in\bar\Pi}
+\bar\pi_b^\top(H^b-Z^b x+U\delta)
+\end{equation}
+\hspace*{0.7em}Hence,
+\begin{equation}
+\label{eq:sg_fx_dual}
+f_{x,B}(\delta)
+=
+\max_{\boldsymbol{\pi}\in\Pi^B}
+\left\{\beta(\boldsymbol{\pi})-\gamma(\boldsymbol{\pi})^\top x+\phi(\boldsymbol{\pi})^\top\delta\right\}
+\end{equation}
+where for $\boldsymbol{\pi}=(\pi_1,\dots,\pi_B)$,
+\[
+\begin{aligned}
+    \beta(\boldsymbol{\pi})&:=\frac{1}{B}\sum_{b=1}^B \pi_b^\top H^b, \qquad
+\gamma(\boldsymbol{\pi}):=\frac{1}{B}\sum_{b=1}^B (Z^b)^\top\pi_b,\\
+&\qquad  \qquad \phi(\boldsymbol{\pi}):=\frac{1}{B}\sum_{b=1}^B U^\top\pi_b
+\end{aligned}
+\]
+\hspace*{0.7em}\begin{proposition}[Moment Dualization]
+\label{prop:sg_moment_dual}
+Under Assumption~\ref{ass:sg_wellposed}, $w_B(x)$ can be written as
+\begin{equation}
+\label{eq:sg_moment_dual}
+\min_{\alpha\in\mathbb{R},\ \lambda\ge 0}
+\left\{\alpha+\lambda^\top \mathbf{FP}: \alpha+\lambda^\top\delta\ge f_{x,B}(\delta),\ \forall\delta\in\Omega(K)\right\}
+\end{equation}
+Equivalently,
+\begin{equation*}
+\alpha
+\ge
+\beta(\boldsymbol{\pi})-\gamma(\boldsymbol{\pi})^\top x
++\max_{\delta\in\Omega(K)}\big(\phi(\boldsymbol{\pi})-\lambda\big)^\top\delta,
+\qquad \forall\boldsymbol{\pi}\in\Pi^B
+\end{equation*}
+\end{proposition}
+
+\begin{lemma}[Budgeted support function]
+\label{lem:sg_support}
+For any $v\in\mathbb{R}^{|\mathcal{L}|}$,
+\begin{equation*}
+\max_{\delta\in\Omega(K)} v^\top\delta
+=
+\min_{s\ge 0,\ u\ge 0}
+\left\{Ks+\mathbf{1}^\top u: u_{\ell}\ge v_{\ell}-s,\ \forall \ell\in\mathcal{L}\right\}
+\end{equation*}
+\end{lemma}
+
+Combining Proposition~\ref{prop:sg_moment_dual} and Lemma~\ref{lem:sg_support}, problem \eqref{eq:overall_saa_compact} is equivalent to the semi-infinite formulation
+\begin{equation}
+\label{eq:sg_semiinf}
+\begin{aligned}
+\min\quad
+&F^{\mathrm{cons}}(x)
++\frac{1-\pi_f}{A}\sum_{a=1}^A F^{{\rm nor},a}(x,y^{{\rm nor},a}) \\
+&\qquad \qquad +\pi_f\big(\alpha+\lambda^\top \mathbf{FP}\big)\\
+\text{s.t.}\quad
+&x\in \mathcal{X},\qquad y^{{\rm nor},a}\in \mathcal{Y}^{\mathrm{nor}}(x,\xi^a),\quad a=1,\dots,A,\\
+&\lambda\ge 0,\\
+&\alpha\ge \beta(\boldsymbol{\pi})-\gamma(\boldsymbol{\pi})^\top x+Ks(\boldsymbol{\pi})+\mathbf{1}^\top u(\boldsymbol{\pi}),\quad \forall\boldsymbol{\pi}\in\Pi^B,\\
+&u_{\ell}(\boldsymbol{\pi})\ge \phi_{\ell}(\boldsymbol{\pi})-\lambda_{\ell}-s(\boldsymbol{\pi}),\quad \forall \ell\in\mathcal{L},\ \forall\boldsymbol{\pi}\in\Pi^B,\\
+&s(\boldsymbol{\pi})\ge 0,\qquad u(\boldsymbol{\pi})\ge 0,\quad \forall\boldsymbol{\pi}\in\Pi^B.
+\end{aligned}
+\end{equation}
+The proofs of Proposition~\ref{prop:sg_moment_dual} and Lemma~\ref{lem:sg_support} are deferred to Appendix.
+
+\subsection{A Benders-like Cuts Generation Algorithm}
+\label{subsec:sg_ccg}
+
+\hspace*{0.7em}Let $\mathcal{R}$ be the current cut set, where each cut $r\in\mathcal{R}$ stores coefficients $(\beta_r,\gamma_r,\phi_r)$ induced by some tuple in $\Pi^B$. The restricted master problem (RMP) is
+\begin{equation}
+\label{eq:sg_rmp}
+\begin{aligned}
+\min\quad
+&F^{\mathrm{cons}}(x)
++\frac{1-\pi_f}{A}\sum_{a=1}^A F^{{\rm nor},a}(x,y^{{\rm nor},a})\\
+&\qquad\qquad+\pi_f\big(\alpha+\lambda^\top \mathbf{FP}\big)\\
+\text{s.t.}\quad
+&x\in \mathcal{X},\qquad y^{{\rm nor},a}\in \mathcal{Y}^{\mathrm{nor}}(x,\xi^a),\quad a=1,\dots,A,\\
+&\lambda\ge 0,\\
+&\alpha\ge \beta_r-\gamma_r^\top x+Ks_r+\mathbf{1}^\top u_r,\quad \forall r\in\mathcal{R},\\
+&u_{r,\ell}\ge \phi_{r,\ell}-\lambda_{\ell}-s_r,\quad \forall r\in\mathcal{R},\ \forall \ell\in\mathcal{L},\\
+&s_r\ge 0,\qquad u_r\ge 0,\quad \forall r\in\mathcal{R}
+\end{aligned}
+\end{equation}
+\hspace*{0.7em}Initialization uses the trivial cut induced by $\pi_b=0$ for all $b$.
+Given an RMP solution $(x^{\star},\alpha^{\star},\lambda^{\star})$, the maximum missing-cut violation, $\mathrm{Viol}(x^{\star},\alpha^{\star},\lambda^{\star})$, is written as
+\begin{equation*}
+\begin{aligned}
+\max_{\boldsymbol{\pi}\in\Pi^B}
+\left\{\beta(\boldsymbol{\pi})-\gamma(\boldsymbol{\pi})^\top x^{\star}
++\max_{\delta\in\Omega(K)}\big(\phi(\boldsymbol{\pi})-\lambda^{\star}\big)^\top\delta
+-\alpha^{\star}\right\}.
+\end{aligned}
+\end{equation*}
+\hspace*{0.7em}To solve $\mathrm{Viol}(x^{\star},\alpha^{\star},\lambda^{\star})$ exactly, define for each $\ell\in\mathcal{L}$ the bounds:
+\begin{equation}
+\label{eq:sg_bounds_main}
+\underline{\omega}_{\ell}:=\min_{\pi\in\Pi} e_{\ell}^\top U^\top\pi,
+\qquad
+\overline{\omega}_{\ell}:=\max_{\pi\in\Pi} e_{\ell}^\top U^\top\pi,
+\end{equation}
+where $e_{\ell}$ is the $\ell$th unit vector. Let
+\[
+\omega:=\frac{1}{B}\sum_{b=1}^B U^\top\pi_b,
+\qquad
+\tau_{\ell}:=\delta_{\ell}\omega_{\ell},\quad \forall \ell\in\mathcal{L}.
+\]
+\hspace*{0.7em}Then the separation problem is equivalent to the linearized MILP
+\begin{equation}
+\label{eq:sg_sep_milp_main}
+\begin{aligned}
+\max_{\{\pi_b\},\,\delta,\,\omega,\,\tau}\quad
+&\frac{1}{B}\sum_{b=1}^B \pi_b^\top(H^b-Z^b x^{\star})
++\mathbf{1}^\top\tau
+-(\lambda^{\star})^\top\delta
+-\alpha^{\star}\\
+\text{s.t.}\quad
+&W^\top\pi_b\le \bar d,\quad \pi_b\ge 0,\qquad b=1,\dots,B,\\
+&\delta\in\{0,1\}^{|\mathcal{L}|},\quad \mathbf{1}^\top\delta\le K,\\
+&\omega=\frac{1}{B}\sum_{b=1}^B U^\top\pi_b,\\
+&\tau_{\ell}\ge \underline{\omega}_{\ell}\delta_{\ell},\qquad
+\tau_{\ell}\le \overline{\omega}_{\ell}\delta_{\ell},\qquad \forall \ell\in\mathcal{L},\\
+&\tau_{\ell}\ge \omega_{\ell}-\overline{\omega}_{\ell}(1-\delta_{\ell}),\qquad \forall \ell\in\mathcal{L}\\
+&\tau_{\ell}\le \omega_{\ell}-\underline{\omega}_{\ell}(1-\delta_{\ell}),\qquad \forall \ell\in\mathcal{L}.
+\end{aligned}
+\end{equation}
+\hspace*{0.7em}If the optimal value of \eqref{eq:sg_sep_milp_main} is at most $\varepsilon_{\mathrm{cert}}$, the current RMP solution is certified. Otherwise, let $\delta^{\star}$ be an optimal outage vector of \eqref{eq:sg_sep_milp_main}. The sample-wise dual LPs
+\[
+\max_{\pi_b\in\Pi}\ \pi_b^\top(H^b-Z^b x^{\star}+U\delta^{\star}),
+\qquad b=1,\dots,B,
+\]
+are then re-solved and extreme optimal dual solutions $\widehat{\pi}_b^{\star}\in\mathrm{ext}(\Pi)$ are selected. The new cut coefficients are obtained by setting $\boldsymbol{\pi}=(\widehat{\pi}_1^{\star},\dots,\widehat{\pi}_B^{\star})$, and the corresponding cut is added to $\mathcal{R}$.
+
+\begin{algorithm}[H]
+\captionsetup{font=footnotesize}
+\caption{Cut generation procedure for \eqref{eq:overall_saa_compact}}
+\label{alg:sg_ccg}
+\begin{algorithmic}[1]
+\STATE Generate samples $\{\xi^a\}_{a=1}^A$ and $\{\zeta^b\}_{b=1}^B$.
+\STATE Precompute $H^b$, $Z^b$, and the bounds
+$\underline{\omega}_{\ell}$ and $\overline{\omega}_{\ell}$ for all
+$\ell \in \mathcal{L}$ using \eqref{eq:sg_bounds_main}.
+\STATE Initialize $\mathcal{R} \leftarrow \{(\beta,\gamma,\phi)=(0,0,0)\}$
+and set $k \leftarrow 0$.
+\STATE Repeat:
+\STATE \hspace{1em} Solve the restricted master problem \eqref{eq:sg_rmp}
+and obtain $(x^k,\alpha^k,\lambda^k)$.
+\STATE \hspace{1em} Solve the separation MILP \eqref{eq:sg_sep_milp_main}
+at $(x^k,\alpha^k,\lambda^k)$, and obtain its optimal value
+$\widehat{v}^k$ and an optimal outage vector $\delta^k$.
+\STATE \hspace{1em} If $\widehat{v}^k \le \varepsilon_{\mathrm{cert}}$,
+output $(x^k,\alpha^k,\lambda^k)$ and stop.
+\STATE \hspace{1em} For each $b=1,\ldots,B$, solve
+\[
+\max_{\pi_b \in \Pi}\ \pi_b^\top(H^b - Z^b x^k + U\delta^k),
+\]
+and select an extreme optimal solution $\widehat{\pi}_b^k$.
+\STATE \hspace{1em} Compute
+$(\beta_{\mathrm{new}},\gamma_{\mathrm{new}},\phi_{\mathrm{new}})$
+using $\widehat{\pi}_1^k,\ldots,\widehat{\pi}_B^k$.
+\STATE \hspace{1em} Add the resulting cut to $\mathcal{R}$.
+\STATE \hspace{1em} Set $k \leftarrow k+1$.
+\end{algorithmic}
+\end{algorithm}
+% Let $V:=\mathrm{ext}(\Pi)$. The semi-infinite model \eqref{eq:sg_semiinf} admits an equivalent finite reformulation indexed by the tuples in $V^B$. This observation yields the following convergence result.
+
+The following two theorems ensures the convergence properties of Algorithm~~\ref{alg:sg_ccg}. 
+We defer the detailed proof to Appendix.
+\begin{theorem}[Finite termination under exact separation]
+\label{thm:sg_finite}
+Suppose that each RMP \eqref{eq:sg_rmp} and each separation MILP \eqref{eq:sg_sep_milp_main} are solved to global optimality. Then Algorithm~\ref{alg:sg_ccg} terminates after finitely many iterations and returns an optimal solution of the problem \eqref{eq:overall_saa_compact}.
+\end{theorem}
+
+\begin{theorem}[$\varepsilon$-optimal termination]
+\label{prop:sg_epsopt}
+Let $z^{\mathrm{RMP}}$ be the optimal value of the current RMP. If the separation routine provides a valid upper bound
+\begin{equation}
+\label{eq:sg_epscert}
+\mathrm{Viol}(x^{\star},\alpha^{\star},\lambda^{\star})\le \varepsilon_{\mathrm{cert}},
+\end{equation}
+then the optimal value $z_B^{\star}$ of the sampled problem \eqref{eq:overall_saa_compact} satisfies
+\begin{equation}
+\label{eq:sg_epsgap}
+0\le z_B^{\star}-z^{\mathrm{RMP}}\le \pi_f\varepsilon_{\mathrm{cert}}.
+\end{equation}
+\end{theorem}
+\begin{remark}
+The above results provide both exact and approximate convergence guarantees
+for Algorithm~\ref{alg:sg_ccg}. Under exact separation, the algorithm terminates
+in finitely many iterations because each iteration adds a previously missing
+valid cut from an equivalent finite reformulation of the SAA problem
+\eqref{eq:overall_saa_compact}. Under inexact separation with certification
+tolerance $\varepsilon_{\mathrm{cert}}$, the returned solution is still
+near-optimal for \eqref{eq:overall_saa_compact}, with a worst-case gap bounded
+by $\pi_f\varepsilon_{\mathrm{cert}}$.
+\end{remark}
+
+

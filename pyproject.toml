@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "two-regime-dro"
+version = "0.0.0"
+description = "Round-gated scaffold for a paper-faithful EVCS hybrid DRO mainline."
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["data*", "docs*", "reference*", "tests*"]

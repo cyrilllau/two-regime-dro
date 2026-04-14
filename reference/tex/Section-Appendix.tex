@@ -1,0 +1,307 @@
+
+
+
+\section{Proofs and Additional Reformulation Details}
+\label{app:sg_proofs}
+\section{Proofs of the Results in Section~\ref{sec:solution_methodology_compact}}
+\label{app:sg_proofs}
+
+For notational brevity, write $\Pi:=\bar\Pi$ and recall that
+\[
+\Omega(K):=\left\{\delta\in\{0,1\}^{|\mathcal L|}:\ \mathbf 1^\top\delta\le K\right\}.
+\]
+We also use the shorthand
+\[
+V:=\mathrm{ext}(\Pi)
+\]
+for the set of extreme points of the dual polyhedron \eqref{eq:dual_poly_compact}.
+
+\subsection{Proof of Proposition~\ref{prop:sg_moment_dual}}
+
+\begin{proof}[Proof of Proposition~\ref{prop:sg_moment_dual}]
+Because $\Omega(K)$ is finite, write
+\[
+\Omega(K)=\{\delta^1,\ldots,\delta^S\}.
+\]
+Any distribution $\mathbb P\in\mathfrak P$ can then be represented by a probability vector
+$p\in\mathbb R_+^S$ satisfying $\sum_{s=1}^S p_s=1$ and
+\[
+\sum_{s=1}^S p_s\delta^s\le \mathbf{FP}.
+\]
+Therefore, for fixed $x$,
+\[
+\begin{aligned}
+    &w_B(x)=\\
+    &\max_{p\ge 0}
+    \left\{
+    \sum_{s=1}^S p_s f_{x,B}(\delta^s):
+    \sum_{s=1}^S p_s=1,\
+    \sum_{s=1}^S p_s\delta^s\le \mathbf{FP}
+    \right\}.
+\end{aligned}
+\]
+This is a finite-dimensional linear program. Let $\alpha\in\mathbb R$ be the dual variable associated with
+$\sum_{s=1}^S p_s=1$, and let $\lambda\ge 0$ be the dual multiplier associated with the componentwise constraint
+$\sum_{s=1}^S p_s\delta^s\le \mathbf{FP}$. By linear-programming strong duality,
+\[
+\begin{aligned}
+    &w_B(x)=\\
+    &\min_{\alpha\in\mathbb R,\ \lambda\ge 0}
+    \left\{
+    \alpha+\lambda^\top \mathbf{FP}:
+    \alpha+\lambda^\top\delta^s\ge f_{x,B}(\delta^s), s=1,\ldots,S
+    \right\},
+\end{aligned}
+\]
+which is exactly \eqref{eq:sg_moment_dual}.
+
+Next, substitute the representation \eqref{eq:sg_fx_dual} of $f_{x,B}(\delta)$ into
+\eqref{eq:sg_moment_dual}. The inequality
+\[
+\alpha+\lambda^\top\delta\ge f_{x,B}(\delta)
+\qquad \forall\delta\in\Omega(K)
+\]
+is equivalent to
+\[
+\alpha+\lambda^\top\delta\ge
+\beta(\boldsymbol\pi)-\gamma(\boldsymbol\pi)^\top x+\phi(\boldsymbol\pi)^\top\delta,
+\qquad \forall \delta\in\Omega(K),\ \forall\boldsymbol\pi\in\Pi^B.
+\]
+Rearranging yields
+\[
+\alpha\ge
+\beta(\boldsymbol\pi)-\gamma(\boldsymbol\pi)^\top x+
+\big(\phi(\boldsymbol\pi)-\lambda\big)^\top\delta,
+\quad \forall \delta\in\Omega(K),\ \forall\boldsymbol\pi\in\Pi^B.
+\]
+Taking the maximum over $\delta\in\Omega(K)$ gives the equivalent form
+\[
+\alpha
+\ge
+\beta(\boldsymbol\pi)-\gamma(\boldsymbol\pi)^\top x
++\max_{\delta\in\Omega(K)}\big(\phi(\boldsymbol\pi)-\lambda\big)^\top\delta,
+\quad \forall\boldsymbol\pi\in\Pi^B.
+\]
+The proof is complete.
+\end{proof}
+
+\subsection{Proof of Lemma~\ref{lem:sg_support}}
+
+\begin{proof}[Proof of Lemma~\ref{lem:sg_support}]
+For a fixed vector $v\in\mathbb R^{|\mathcal L|}$, consider the linear relaxation
+\[
+\max\left\{v^\top\delta:\ \mathbf 1^\top\delta\le K,\ 0\le \delta\le \mathbf 1\right\}.
+\]
+Its constraint matrix is totally unimodular, so every extreme point of the relaxation is binary.
+Hence the relaxation is exact and has the same optimal value as
+$\max_{\delta\in\Omega(K)} v^\top\delta$.
+
+The dual of the relaxation is
+\[
+\min_{s\ge 0,\ u\ge 0}
+\left\{Ks+\mathbf 1^\top u:\ u_\ell\ge v_\ell-s,\ \forall \ell\in\mathcal L\right\}.
+\]
+Strong duality then gives the desired identity.
+\end{proof}
+
+\subsection{Exactness of the linearized separation MILP}
+
+The linearization in \eqref{eq:sg_sep_milp_main} is exact.
+This fact is used by Algorithm~\ref{alg:sg_ccg} and by the convergence proof below.
+
+\begin{proposition}[Exact linearized separation]
+\label{prop:sg_sep_exact_appendix}
+For any fixed $(x^{\star},\alpha^{\star},\lambda^{\star})$, the optimal value of the MILP
+\eqref{eq:sg_sep_milp_main} is equal to
+\[
+\begin{aligned}
+    &\mathrm{Viol}(x^{\star},\alpha^{\star},\lambda^{\star})=\\
+    &
+\max_{\boldsymbol\pi\in\Pi^B}
+\left\{
+\beta(\boldsymbol\pi)-\gamma(\boldsymbol\pi)^\top x^{\star}
++\max_{\delta\in\Omega(K)}\big(\phi(\boldsymbol\pi)-\lambda^{\star}\big)^\top\delta
+-\alpha^{\star}
+\right\}.
+\end{aligned}
+\]
+\end{proposition}
+
+\begin{proof}
+Fix any tuple $\boldsymbol\pi=(\pi_1,\ldots,\pi_B)\in\Pi^B$ and define
+\[
+\omega:=\frac{1}{B}\sum_{b=1}^B U^\top\pi_b.
+\]
+By definition of the bounds in \eqref{eq:sg_bounds_main}, each component satisfies
+$\underline\omega_\ell\le \omega_\ell\le \overline\omega_\ell$.
+Now fix $\delta\in\Omega(K)$ and set $\tau_\ell:=\delta_\ell\omega_\ell$ for all
+$\ell\in\mathcal L$.
+Because $\delta_\ell\in\{0,1\}$ and $\omega_\ell\in[\underline\omega_\ell,\overline\omega_\ell]$,
+the four McCormick inequalities in \eqref{eq:sg_sep_milp_main} are satisfied exactly.
+Thus every feasible pair $(\boldsymbol\pi,\delta)$ of the original separation problem can be lifted to a feasible point
+of \eqref{eq:sg_sep_milp_main} with the same objective value.
+Consequently, the MILP optimal value is at least $\mathrm{Viol}(x^{\star},\alpha^{\star},\lambda^{\star})$.
+
+Conversely, let $(\{\pi_b\},\delta,\omega,\tau)$ be any feasible solution of
+\eqref{eq:sg_sep_milp_main}. Since $\delta_\ell$ is binary and the McCormick system is exact over a bounded interval,
+those constraints imply
+\[
+\tau_\ell=\delta_\ell\omega_\ell,
+\qquad \forall \ell\in\mathcal L.
+\]
+Using the defining equation for $\omega$ gives
+\[
+\mathbf 1^\top\tau
+=\sum_{\ell\in\mathcal L}\delta_\ell\omega_\ell
+=\delta^\top\left(\frac{1}{B}\sum_{b=1}^B U^\top\pi_b\right)
+=\phi(\boldsymbol\pi)^\top\delta.
+\]
+Therefore the MILP objective becomes
+\[
+\frac{1}{B}\sum_{b=1}^B \pi_b^\top(H^b-Z^b x^{\star})
++\phi(\boldsymbol\pi)^\top\delta
+-(\lambda^{\star})^\top\delta-\alpha^{\star},
+\]
+which is exactly the objective of the original separation problem.
+Hence the MILP optimal value is at most $\mathrm{Viol}(x^{\star},\alpha^{\star},\lambda^{\star})$.
+The two values are equal.
+\end{proof}
+
+\subsection{Finite exact reformulation}
+
+The next observation is standard and is the only ingredient needed to prove finite termination.
+
+\begin{proposition}[Finite exact reformulation]
+\label{prop:sg_finite_exact_appendix}
+Let $V:=\mathrm{ext}(\Pi)$ and, for each tuple
+$r=(v_1,\ldots,v_B)\in V^B$, let
+\[
+\beta_r=\tfrac{1}{B}\sum_{b=1}^B v_b^\top H^b, \ 
+\gamma_:=\tfrac{1}{B}\sum_{b=1}^B (Z^b)^\top v_b, \ 
+\phi_r=\tfrac{1}{B}\sum_{b=1}^B U^\top v_b.
+\]
+Then \eqref{eq:sg_semiinf} is equivalent to the finite optimization problem
+\begin{equation}
+\label{eq:sg_finite_exact_appendix}
+\begin{aligned}
+\min \ 
+&F^{\mathrm{cons}}(x)
++\tfrac{1-\pi_f}{A}\sum_{a=1}^A F^{{\rm nor},a}(x,y^{{\rm nor},a})
++\pi_f\big(\alpha+\lambda^\top \mathbf{FP}\big)\\
+\text{s.t.}\ 
+&x\in \mathcal{X},\qquad y^{{\rm nor},a}\in \mathcal{Y}^{\mathrm{nor}}(x,\xi^a),\quad a=1,\ldots,A,\\
+&\lambda\ge 0,\\
+&\alpha\ge \beta_r-\gamma_r^\top x+Ks_r+\mathbf 1^\top u_r,
+\qquad \forall r\in V^B,\\
+&u_{r,\ell}\ge \phi_{r,\ell}-\lambda_\ell-s_r,
+\qquad \forall r\in V^B,\ \forall \ell\in\mathcal L,\\
+&s_r\ge 0,\qquad u_r\ge 0,
+\qquad \forall r\in V^B.
+\end{aligned}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+For each sample $b$, the dual representation \eqref{eq:disaster_dual_compact} maximizes a linear function over the
+polyhedron $\Pi$. Hence an optimal solution can always be chosen at an extreme point of $\Pi$.
+Therefore the maximization in \eqref{eq:sg_fx_dual} may be restricted to tuples in $V^B$:
+\[
+f_{x,B}(\delta)
+=
+\max_{r\in V^B}
+\left\{\beta_r-\gamma_r^\top x+\phi_r^\top\delta\right\}.
+\]
+Substituting this representation into Proposition~\ref{prop:sg_moment_dual} and applying
+Lemma~\ref{lem:sg_support} to each tuple $r\in V^B$ gives \eqref{eq:sg_finite_exact_appendix}.
+Since every step is exact, the two models are equivalent.
+\end{proof}
+
+\subsection{Proof of Theorem~\ref{thm:sg_finite}}
+
+\begin{proof}[Proof of Theorem~\ref{thm:sg_finite}]
+Let $z_B^{\star}$ denote the optimal value of the sampled problem \eqref{eq:overall_saa_compact},
+or equivalently of the finite reformulation \eqref{eq:sg_finite_exact_appendix}. Let
+$\mathcal R_k\subseteq V^B$ be the cut set used by the restricted master problem at iteration $k$,
+and let $z_k^{\mathrm{RMP}}$ be its optimal value.
+Because the RMP only contains a subset of the full cut family, it is a relaxation of
+\eqref{eq:sg_finite_exact_appendix}; therefore,
+\[
+z_k^{\mathrm{RMP}}\le z_B^{\star}
+\qquad \forall k.
+\]
+
+Now consider iteration $k$ and let $(x^k,\alpha^k,\lambda^k)$ be the RMP solution.
+If the separation MILP \eqref{eq:sg_sep_milp_main} returns an optimal value at most
+$\varepsilon_{\mathrm{cert}}=0$, then by Proposition~\ref{prop:sg_sep_exact_appendix} we have
+\[
+\mathrm{Viol}(x^k,\alpha^k,\lambda^k)\le 0.
+\]
+Hence no cut from the full family is violated, which means $(x^k,\alpha^k,\lambda^k)$ can be extended with suitable
+support variables $(s_r,u_r)_{r\in V^B}$ to a feasible solution of the full model
+\eqref{eq:sg_finite_exact_appendix}. Since the RMP is a relaxation of the full model, this implies
+$z_k^{\mathrm{RMP}}=z_B^{\star}$, and the algorithm terminates optimally.
+
+Suppose instead that the separation MILP returns a strictly positive optimal value. Let $\delta^k$ be an optimal
+outage vector, and let $\widehat\pi_b^k\in V$ be the extreme optimal solution obtained by re-solving
+\[
+\max_{\pi_b\in\Pi}\ \pi_b^\top(H^b-Z^b x^k+U\delta^k),
+\qquad b=1,\ldots,B.
+\]
+Set $r^k:=(\widehat\pi_1^k,\ldots,\widehat\pi_B^k)\in V^B$.
+By construction, the cut associated with $r^k$ is violated at $(x^k,\alpha^k,\lambda^k)$.
+Moreover, $r^k\notin\mathcal R_k$: if it were already present in the RMP, then the existing support variables
+$(s_{r^k},u_{r^k})$ would make that cut satisfied, contradicting the positive violation.
+Therefore each nonterminating iteration adds a previously unseen tuple from the finite set $V^B$.
+
+Since $V$ is finite, so is $V^B$. Thus only finitely many distinct cuts can be added. The algorithm must therefore stop
+after finitely many iterations, and by the first part of the proof the terminating solution is optimal for
+\eqref{eq:overall_saa_compact}.
+\end{proof}
+
+\subsection{Proof of Theorem~\ref{prop:sg_epsopt}}
+
+\begin{proof}[Proof of Theorem~\ref{prop:sg_epsopt}]
+Let $(x^{\star},\alpha^{\star},\lambda^{\star})$ be the current RMP solution with objective value
+$z^{\mathrm{RMP}}$. Assume that the separation routine provides a valid upper bound satisfying
+\eqref{eq:sg_epscert}. Then for every $r\in V^B$,
+\[
+\beta_r-\gamma_r^\top x^{\star}
++\max_{\delta\in\Omega(K)}(\phi_r-\lambda^{\star})^\top\delta
+-\alpha^{\star}
+\le \varepsilon_{\mathrm{cert}}.
+\]
+Equivalently,
+\[
+\alpha^{\star}+\varepsilon_{\mathrm{cert}}
+\ge
+\beta_r-\gamma_r^\top x^{\star}
++\max_{\delta\in\Omega(K)}(\phi_r-\lambda^{\star})^\top\delta,
+\qquad \forall r\in V^B.
+\]
+Now apply Lemma~\ref{lem:sg_support} to each vector $\phi_r-\lambda^{\star}$.
+For every $r\in V^B$, there exist $\tilde s_r\ge 0$ and $\tilde u_r\ge 0$ such that
+\[
+\begin{aligned}
+    \max_{\delta\in\Omega(K)}(\phi_r-\lambda^{\star})^\top\delta
+=K\tilde s_r+\mathbf 1^\top \tilde u_r, \\
+\tilde u_{r,\ell}\ge \phi_{r,\ell}-\lambda_\ell^{\star}-\tilde s_r,
+\qquad \forall \ell\in\mathcal L.
+\end{aligned}
+\]
+Hence
+\[
+(x^{\star},\alpha^{\star}+\varepsilon_{\mathrm{cert}},\lambda^{\star},\{\tilde s_r,\tilde u_r\}_{r\in V^B})
+\]
+is feasible for the full finite reformulation \eqref{eq:sg_finite_exact_appendix}. Its objective value is exactly
+\[
+z^{\mathrm{RMP}}+\pi_f\varepsilon_{\mathrm{cert}}.
+\]
+Therefore,
+\[
+z_B^{\star}\le z^{\mathrm{RMP}}+\pi_f\varepsilon_{\mathrm{cert}}.
+\]
+On the other hand, since the RMP is a relaxation of the full problem,
+$z^{\mathrm{RMP}}\le z_B^{\star}$. Combining the two inequalities yields
+\eqref{eq:sg_epsgap}.
+\end{proof}
+
