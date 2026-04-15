@@ -91,9 +91,10 @@ repo/
 This layer is the only place that may touch raw JSON/CSV loader semantics.
 
 Responsibilities:
-- read raw data
-- apply source-of-truth hierarchy
-- build canonical internal objects
+- read raw data packages
+- inspect declared-vs-available support manifests
+- apply runtime selection
+- build canonical internal objects for the selected subset only
 - validate shape and topology
 - construct stable index maps
 
@@ -101,6 +102,7 @@ Non-responsibilities:
 - no optimization
 - no dualization
 - no implicit paper-level inference
+- no silent scenario expansion
 
 Key expected modules:
 - `schema.py`
@@ -108,6 +110,9 @@ Key expected modules:
 - `validators.py`
 - `indexer.py`
 - `network_topology.py`
+- `raw_package.py`
+- `manifest.py`
+- `selection.py`
 
 ---
 
@@ -189,11 +194,13 @@ Key expected modules:
 - what objects exist
 - how indices are normalized
 - which raw file populates which tensor
+- how raw availability, manifest reporting, and runtime selection are separated
 
 It is not allowed to define:
 - the disaster objective semantics
 - critical-node meaning
 - how dual variables are interpreted
+- how many scenarios the model should use without explicit selection input
 
 ### 4.2 Reference does not optimize for speed
 
@@ -243,6 +250,24 @@ The architecture must preserve the paper structure:
 6. RMP + separation + cut generation
 
 That is why disaster primal, auto-dual, paper-dual, and separation are separate modules rather than a single black-box optimizer.
+
+---
+
+## 6.1 Instance-loading boundary
+
+The instance layer must preserve a three-step boundary:
+
+1. `load_raw_data_package(...)`
+   - reads JSON/CSV files
+   - does not decide runtime selection
+
+2. `inspect_available_support(...)`
+   - reports JSON-declared support and CSV-available support separately
+   - records explicit mismatch metadata
+
+3. `build_canonical_instance(..., selection=...)`
+   - materializes only the selected scenario subset
+   - never leaks unselected raw scenarios into model-facing tensors
 
 ---
 

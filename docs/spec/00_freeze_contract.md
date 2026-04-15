@@ -38,20 +38,27 @@ Use three layers, with strict precedence:
 2. `parameters.json`
    - source of live runtime numeric parameters
    - source of base set declarations
+   - scenario-support declarations are advisory metadata for manifest/reporting
 
 3. live scenario CSV contents
-   - source of actual scenario index support
-   - must be validated against `parameters.json`
-   - if JSON and CSV disagree, the mismatch must be surfaced explicitly
+   - source of raw scenario index availability
+   - must be compared explicitly against `parameters.json`
+   - if JSON and CSV disagree, the mismatch must be surfaced explicitly in manifest/reporting
+
+4. runtime selection config / fixture logic
+   - source of which scenarios are used in this run
+   - must be bounded by CSV availability
+   - does not change raw package contents
 
 Interpretation:
 - `m1_data_setup.py` = schema/loader truth
 - `parameters.json` = runtime numeric-parameter truth
-- CSV contents = scenario-instance truth, with validation
+- CSV contents = raw scenario reservoir truth
+- runtime selection = chosen subset for canonicalization
 
 ---
 
-## 2. Mainline default runtime fixture
+## 2. Mainline default runtime selection preset
 
 The first mainline implementation is frozen to the locally tested small instance.
 
@@ -65,9 +72,11 @@ default_runtime_fixture:
 ```
 
 Important:
-- The default mainline must behave as the `{1,2}` tested fixture.
+- The default mainline must select the `{1,2}` tested subset.
+- The raw CSV reservoir is allowed to contain more support than `{1,2}`.
 - Larger scenario packages are allowed later, but only via explicit opt-in.
-- Codex must never silently upgrade the default fixture to a larger scenario package.
+- Codex must never silently upgrade the default selection preset to a larger scenario package.
+- JSON/CSV support disagreement is not by itself a fatal load error when the selected subset is available from CSV.
 
 ---
 
@@ -156,7 +165,8 @@ prohibited_inference:
 Codex must not:
 - infer `critical_buses` from `ambig.w`
 - use `ambig.w` as a substitute for paper `CLS_n`
-- silently broaden the default `{1,2}` fixture
+- silently broaden the default `{1,2}` selection preset
+- treat JSON-declared support as the controller of runtime selection
 - patch semantic mismatches by guessing
 
 ---
@@ -167,10 +177,11 @@ The implementation must raise a configuration or validation error before model b
 
 - missing `critical_buses`
 - a `critical_buses` entry is not a valid bus id
-- malformed scenario support for the default fixture
+- malformed runtime selection
+- selected scenario absent from CSV availability
 - topology is not a single-root radial tree
 - `p_bar` length does not match line count
-- missing required scenario tensors for declared support
+- missing required scenario tensors for the selected support
 
 ---
 

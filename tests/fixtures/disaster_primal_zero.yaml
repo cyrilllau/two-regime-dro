@@ -1,0 +1,32 @@
+{
+  "buses": [1, 2],
+  "lines": [[1, 2]],
+  "regions": [1],
+  "disaster_times": [1],
+  "scenario_id": 1,
+  "critical_buses": [2],
+  "p_ev_rated_sl": 3.0,
+  "p_ev_rated_fa": 6.0,
+  "line_p_max_kw": 10.0,
+  "loads": [
+    {"ts": 1, "bus": 2, "p_kw": 0.0}
+  ],
+  "dev_dis_sl": [
+    {"ts": 1, "region": 1, "value": 0.0}
+  ],
+  "dev_dis_fa": [
+    {"ts": 1, "region": 1, "value": 0.0}
+  ],
+  "plan": {
+    "z_by_bus": {},
+    "n_sl_by_bus": {},
+    "n_fa_by_bus": {}
+  },
+  "outage_by_line_id": {
+    "line_01_02": 0
+  },
+  "expected": {
+    "objective": 0.0,
+    "failed_line_id": null
+  }
+}

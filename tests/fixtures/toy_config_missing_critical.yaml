@@ -1,0 +1,36 @@
+{
+  "source_of_truth": {
+    "schema_and_loader": "reference/legacy/m1_data_setup.py",
+    "runtime_numeric_params": "data/runtime_12/parameters.json",
+    "scenario_index_source": "selection_config_bounded_by_csv_manifest"
+  },
+  "default_runtime_fixture": {
+    "instance_id": "local_tested_small_v1",
+    "scenarios_a": [1, 2],
+    "scenarios_b": [1, 2],
+    "expanded_scenario_packages": "opt_in_only",
+    "on_support_mismatch": "record_manifest_mismatch_and_fail_only_if_selection_invalid"
+  },
+  "economics": {
+    "Cunmet": 3.0,
+    "annualize_normal_cost_by_365": true,
+    "annualize_disaster_cost_by_365": false,
+    "Ctrans_mode": "time_vector",
+    "power_unit": "kW"
+  },
+  "network_freeze": {
+    "root_bus": 1,
+    "candidate_buses": "all_except_root",
+    "allow_evcs_at_root": false,
+    "v_ref_sq": 1.0
+  },
+  "ambiguity_freeze": {
+    "p_bar_equals_FP": true,
+    "use_ambig_w_in_paper_model": false,
+    "ambig_w_meaning": "legacy engineering weight in old repo only, not the paper CLS_n contract"
+  },
+  "disaster_objective_freeze": {
+    "CLS_critical": 50.0,
+    "CLS_noncritical": 10.0
+  }
+}

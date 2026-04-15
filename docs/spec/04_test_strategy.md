@@ -40,12 +40,14 @@ Purpose:
 - make sure the canonical instance is well-formed before any optimization is attempted
 
 Typical checks:
-- scenario support
+- raw support manifest
+- runtime selection validity
+- selected-scenario tensor support
 - tensor shape completeness
 - radial topology
 - line count and `p_bar` length consistency
 - `critical_buses` validity
-- default fixture enforcement
+- default selection-preset enforcement
 
 Expected location:
 - `tests/unit/test_data_contract.py`
@@ -193,6 +195,7 @@ Focus:
 - repo sanity
 - data contract
 - topology checks
+- raw-package vs selection boundary
 
 ### Phase 2
 Focus:
@@ -244,3 +247,4 @@ The project should not be considered mainline-complete unless all of the followi
 5. normal block tests pass
 6. end-to-end Benders/oracle tests pass on tiny instances
 7. default `{1,2}` fixture runs through the mainline without semantic contract violations
+8. raw packages with larger CSV support can still load under the default `{1,2}` selection when the selected scenarios exist

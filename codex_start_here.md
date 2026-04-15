@@ -25,12 +25,14 @@ You are not redesigning the math. You are implementing the new mainline under a 
 
 - `m1_data_setup.py` is the source of loader behavior, schema shape, set-construction logic, and data-resolution rules.
 - `parameters.json` is the source of live runtime numeric parameters.
-- live scenario CSV contents are the source of actual scenario support, with explicit validation against JSON.
-- If runtime declarations and CSV support disagree, raise the mismatch explicitly rather than guessing.
+- live scenario CSV contents are the source of raw scenario availability.
+- `parameters.json` scenario declarations are advisory manifest metadata and must still be compared explicitly against CSV support.
+- runtime scenario selection is controlled by fixture/config logic and must be bounded by CSV availability.
+- If runtime declarations and CSV support disagree, surface the mismatch explicitly rather than guessing.
 
 ## Mainline freeze
 
-- default runtime fixture: scenarios `{1,2}`
+- default runtime selection preset: scenarios `{1,2}`
 - `Cunmet = 3.0`
 - `root_bus = 1`
 - `candidate_buses = all_except_root`
@@ -46,7 +48,7 @@ You are not redesigning the math. You are implementing the new mainline under a 
 
 - Do not infer `critical_buses` from `ambig.w`.
 - Do not use `ambig.w` as a paper `CLS_n` substitute.
-- Do not silently expand the default runtime fixture.
+- Do not silently expand the default runtime selection.
 - Do not modify `docs/spec/*` unless the current round explicitly allows it.
 - Do not implement production disaster dual / separation / Benders before the reference validation rounds require them.
 
@@ -65,4 +67,3 @@ For each round:
 - run required tests
 - write the round report
 - state conservative design decisions explicitly
-

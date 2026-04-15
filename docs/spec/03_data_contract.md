@@ -22,10 +22,15 @@ The data layer must follow the source-of-truth hierarchy from the freeze contrac
 2. `parameters.json`
    - live numeric parameters
    - base set declarations
+   - advisory scenario-support declarations for manifest/reporting
 
 3. scenario CSV contents
-   - actual realized scenario support
-   - must be validated against declared support
+   - raw realized scenario availability
+   - must be compared explicitly against declared support
+
+4. runtime selection config / fixture logic
+   - chooses the subset used in this run
+   - must be bounded by CSV availability
 
 The data layer must surface mismatches explicitly.
 
@@ -59,6 +64,12 @@ This last item is required for paper-faithful disaster objective construction.
 
 The data layer must produce these canonical objects.
 
+Before canonicalization, the instance layer must also expose:
+
+- a raw data package object
+- a support manifest that distinguishes JSON declarations from CSV availability
+- a runtime selection object
+
 ## 3.1 `FrozenConfig`
 
 This object stores project-level frozen semantics, such as:
@@ -84,6 +95,7 @@ Minimum contents:
 - distance matrix
 - `CLS_n` vector derived from `critical_buses`
 - scenario support metadata
+- manifest metadata describing declared-vs-available support
 - references to canonical scenario tensors
 
 ## 3.3 `NormalScenarioTensor`
@@ -123,9 +135,9 @@ Stable integer or label mappings for:
 
 ---
 
-## 4. Runtime fixture semantics
+## 4. Runtime selection semantics
 
-The default mainline fixture is:
+The default mainline selection preset is:
 
 ```yaml
 scenarios_a: [1, 2]
@@ -133,9 +145,17 @@ scenarios_b: [1, 2]
 ```
 
 The data layer must:
-- load only this support by default
-- reject undeclared support unless expanded mode is explicitly enabled
+- select only this support by default
+- allow the raw package to contain more support than this default selection
+- treat JSON-declared support as advisory metadata
+- bind selection validity to CSV availability
 - report mismatches rather than silently guessing
+
+Consequences:
+- extra CSV support is allowed
+- JSON/CSV support disagreement must appear explicitly in manifest metadata
+- JSON/CSV disagreement is not by itself fatal when the requested selected subset exists in CSV
+- canonical tensors must contain only the selected subset
 
 ---
 
@@ -203,8 +223,9 @@ The data layer must fail before model construction if any of the following holds
 - topology is not a single-root tree
 - `p_bar` length != number of lines
 - distance matrix shape mismatch
-- unsupported scenario indices under default fixture
-- missing required normal/disaster tensor support
+- requested selected scenario absent from CSV availability
+- malformed selection config
+- missing required normal/disaster tensor support for the selected subset
 
 ---
 
@@ -218,7 +239,8 @@ The canonicalizer is allowed to:
 It is not allowed to:
 - invent new scenario indices
 - reinterpret `ambig.w` semantically
-- change the default fixture support
+- change the default selection preset
+- pull unselected scenarios into canonical tensors
 - collapse paper-level categories without explicit freeze support
 
 ---
