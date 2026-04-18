@@ -264,6 +264,12 @@ def test_zero_demand_case_has_zero_objective_and_zero_flows(tmp_path: Path) -> N
     assert residual.max_bound_violation <= 1e-9
     assert residual.max_eq27_active_balance_residual <= 1e-9
     assert residual.max_failed_line_flow_violation <= 1e-9
+    assert "eq27_active_balance_t1_line_01_02" in residual.eq27_active_balance_residuals
+    assert "eq28_discharge_slow_t1_o1" in residual.eq28_regional_v2g_slacks
+    assert "eq29_station_slow_capacity_t1_n2" in residual.eq29_station_capacity_slacks
+    assert "eq30_link_slow_t1_o1_n2" in residual.eq30_linkage_slacks
+    assert "eq31_shed_upper_t1_n2" in residual.eq31_load_shedding_upper_slacks
+    assert "eq32_line_upper_t1_line_01_02" in residual.eq32_line_capacity_slacks
 
 
 def test_shortage_case_matches_hand_checked_objective() -> None:
@@ -330,6 +336,31 @@ def test_failed_line_case_forces_zero_flow_on_failed_branch() -> None:
     assert solution.objective_value == pytest.approx(float(expected["objective"]))
     assert solution.line_flow_by_time_line[(1, failed_line_id)] == pytest.approx(0.0)
     assert residual.max_failed_line_flow_violation <= 1e-9
+
+
+def test_mixed_slow_fast_case_uses_both_discharge_modes() -> None:
+    """Mixed slow/fast case should use both charger types when both are required."""
+
+    instance, plan, outage, scenario_id, expected = _build_case("disaster_primal_mixed_slow_fast.yaml")
+    reference_model, solution = solve_disaster_primal_reference(
+        instance,
+        plan=plan,
+        outage=outage,
+        scenario_id=scenario_id,
+        model_name="disaster_primal_mixed_slow_fast",
+    )
+    residual = build_residual_report(reference_model, solution)
+
+    assert solution.objective_value == pytest.approx(float(expected["objective"]))
+    assert solution.load_shedding_by_time_bus[(1, 2)] == pytest.approx(float(expected["shed_bus_2"]))
+    assert solution.discharge_slow_by_time_region_bus[(1, 1, 2)] == pytest.approx(
+        float(expected["slow_discharge_bus_2"])
+    )
+    assert solution.discharge_fast_by_time_region_bus[(1, 1, 2)] == pytest.approx(
+        float(expected["fast_discharge_bus_2"])
+    )
+    assert residual.eq28_regional_v2g_slacks["eq28_discharge_slow_t1_o1"] == pytest.approx(0.0)
+    assert residual.eq28_regional_v2g_slacks["eq28_discharge_fast_t1_o1"] == pytest.approx(0.0)
 
 
 def test_missing_critical_buses_fails_before_model_build() -> None:

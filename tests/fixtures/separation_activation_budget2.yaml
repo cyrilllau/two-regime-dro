@@ -1,0 +1,11 @@
+{
+  "source_fixture": "disaster_primal_critical_priority.yaml",
+  "budget_k": 2,
+  "alpha": 5.0,
+  "lambda_by_line_id": {},
+  "plan_override": {
+    "z_by_bus": {},
+    "n_sl_by_bus": {},
+    "n_fa_by_bus": {}
+  }
+}

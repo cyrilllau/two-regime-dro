@@ -1,0 +1,62 @@
+{
+  "buses": [1, 2],
+  "lines": [[1, 2]],
+  "regions": [1],
+  "normal_times": [1],
+  "normal_scenarios": [1],
+  "candidate_buses": [2],
+  "critical_buses": [],
+  "line_r_pu": [0.001],
+  "line_x_pu": [0.0],
+  "line_p_max_kw": [1000.0],
+  "line_q_max_kvar": [1000.0],
+  "normal_loads": [],
+  "normal_dev_ch_sl": [],
+  "normal_dev_ch_fa": [],
+  "economics": {
+    "cfix": 20.0,
+    "ccons_sl": 5.0,
+    "ccons_fa": 8.0,
+    "ctrans": [1.0],
+    "cpur": [0.0],
+    "ccong": 0.0,
+    "gamma": 0.0,
+    "theta": 1,
+    "pi_f": 1.0,
+    "alpha_min": 0.0,
+    "cunmet": 100.0,
+    "annualize_normal_cost_by_365": false
+  },
+  "ev": {
+    "p_ev_rated_sl": 10.0,
+    "p_ev_rated_fa": 50.0,
+    "nbar_sl": 10,
+    "nbar_fa": 10
+  },
+  "ambig": {
+    "k_max_outages": 1,
+    "p_bar": [0.2]
+  },
+  "distance_km": [
+    [0.0, 1.0]
+  ],
+  "vmin": 0.9,
+  "vmax": 1.1,
+  "cuts": [
+    {
+      "cut_id": "gamma_site",
+      "beta": 100.0,
+      "gamma_z_by_bus": {"2": 100.0},
+      "gamma_n_sl_by_bus": {},
+      "gamma_n_fa_by_bus": {},
+      "phi_by_line_id": {}
+    }
+  ],
+  "expected": {
+    "objective": 35.0,
+    "z2": 1,
+    "n_sl2": 3,
+    "n_fa2": 0,
+    "alpha": 0.0
+  }
+}

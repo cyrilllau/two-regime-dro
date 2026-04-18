@@ -1,0 +1,628 @@
+{
+  "artifact_paths": {
+    "iteration_log_path": "results/logs/deterministic_mean_value_runtime12_iteration_log.json",
+    "master_after_cut_lp_path": null,
+    "master_before_cut_lp_path": null
+  },
+  "cut_count_sequence": [
+    1,
+    2
+  ],
+  "iteration_log": {
+    "certificate": {
+      "epsilon_cert": 0.0,
+      "final_rmp_value": 24858124.365097396,
+      "final_violation_upper_bound": 12987.68000000075,
+      "sampled_problem_gap_bound": 0.0
+    },
+    "cut_count_sequence": [
+      1,
+      2
+    ],
+    "epsilon_cert": 0.0,
+    "generated_cut_count": 1,
+    "iteration_count": 2,
+    "iterations": [
+      {
+        "active_cut_ids_after": [
+          "trivial_cut",
+          "generated_cut_001"
+        ],
+        "active_cut_ids_before": [
+          "trivial_cut"
+        ],
+        "construction_cost_value": 4177939.715276799,
+        "cut_generation_seconds": 0.014903125000000017,
+        "first_stage_attached_objective_value": 24858147.410983786,
+        "first_stage_objective_is_pure_construction": false,
+        "generated_cut_id": "generated_cut_001",
+        "generated_cut_old_master_violation": 18238.169999999925,
+        "iteration_id": 0,
+        "master_solve_seconds": 0.7789461250000009,
+        "post_cut_master_objective": 24858124.365097396,
+        "pre_cut_master_objective": 24858147.410983786,
+        "selected_outage_by_line_id": {
+          "line_01_02": 0,
+          "line_02_03": 0,
+          "line_02_19": 0,
+          "line_03_04": 0,
+          "line_03_23": 1,
+          "line_04_05": 0,
+          "line_05_06": 0,
+          "line_06_07": 0,
+          "line_06_26": 0,
+          "line_07_08": 0,
+          "line_08_09": 0,
+          "line_09_10": 0,
+          "line_10_11": 0,
+          "line_11_12": 0,
+          "line_12_13": 0,
+          "line_13_14": 0,
+          "line_14_15": 0,
+          "line_15_16": 0,
+          "line_16_17": 0,
+          "line_17_18": 0,
+          "line_19_20": 0,
+          "line_20_21": 0,
+          "line_21_22": 0,
+          "line_23_24": 0,
+          "line_24_25": 1,
+          "line_26_27": 0,
+          "line_27_28": 0,
+          "line_28_29": 0,
+          "line_29_30": 0,
+          "line_30_31": 0,
+          "line_31_32": 0,
+          "line_32_33": 0
+        },
+        "separation_solve_seconds": 0.023420083999997843,
+        "separation_violation_value": 16777.62999999989,
+        "stop_reason": null,
+        "total_cut_count_after": 2,
+        "total_cut_count_before": 1
+      },
+      {
+        "active_cut_ids_after": [
+          "trivial_cut",
+          "generated_cut_001"
+        ],
+        "active_cut_ids_before": [
+          "trivial_cut",
+          "generated_cut_001"
+        ],
+        "construction_cost_value": 4183374.4336056146,
+        "cut_generation_seconds": 0.0,
+        "first_stage_attached_objective_value": 24858124.365097396,
+        "first_stage_objective_is_pure_construction": false,
+        "generated_cut_id": null,
+        "generated_cut_old_master_violation": null,
+        "iteration_id": 1,
+        "master_solve_seconds": 0.7497821249999994,
+        "post_cut_master_objective": null,
+        "pre_cut_master_objective": 24858124.365097396,
+        "selected_outage_by_line_id": {
+          "line_01_02": 0,
+          "line_02_03": 0,
+          "line_02_19": 0,
+          "line_03_04": 0,
+          "line_03_23": 0,
+          "line_04_05": 0,
+          "line_05_06": 0,
+          "line_06_07": 1,
+          "line_06_26": 0,
+          "line_07_08": 0,
+          "line_08_09": 0,
+          "line_09_10": 0,
+          "line_10_11": 0,
+          "line_11_12": 0,
+          "line_12_13": 0,
+          "line_13_14": 0,
+          "line_14_15": 0,
+          "line_15_16": 0,
+          "line_16_17": 0,
+          "line_17_18": 0,
+          "line_19_20": 0,
+          "line_20_21": 0,
+          "line_21_22": 0,
+          "line_23_24": 1,
+          "line_24_25": 0,
+          "line_26_27": 0,
+          "line_27_28": 0,
+          "line_28_29": 0,
+          "line_29_30": 0,
+          "line_30_31": 0,
+          "line_31_32": 0,
+          "line_32_33": 0
+        },
+        "separation_solve_seconds": 0.03670791700000109,
+        "separation_violation_value": 12987.68000000075,
+        "stop_reason": "max_iterations",
+        "total_cut_count_after": 2,
+        "total_cut_count_before": 2
+      }
+    ],
+    "lower_bound_sequence": [
+      24858147.410983786,
+      24858124.365097396
+    ],
+    "stop_reason": "max_iterations"
+  },
+  "lower_bound_sequence": [
+    24858147.410983786,
+    24858124.365097396
+  ],
+  "metadata": {
+    "benchmark_mode": "deterministic_mean_value",
+    "mean_value_source_disaster_support": [
+      1,
+      2
+    ],
+    "mean_value_source_normal_support": [
+      1,
+      2
+    ],
+    "runtime_selection": {
+      "scenarios_a": [
+        1,
+        2
+      ],
+      "scenarios_b": [
+        1,
+        2
+      ],
+      "source": "default_small_preset"
+    },
+    "support_manifest": {
+      "disaster": {
+        "csv_support": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "csv_support_by_file": {
+          "disaster_fast": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "disaster_load": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "disaster_slow": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        "declared_support": [
+          1,
+          2
+        ],
+        "issues": [
+          "Disaster-stage support declared in parameters.json is (1, 2), but live CSV support is (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)."
+        ]
+      },
+      "normal": {
+        "csv_support": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "csv_support_by_file": {
+          "normal_fast": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "normal_load": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "normal_slow": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        "declared_support": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "issues": []
+      },
+      "policy": {
+        "csv_support_binds_runtime_selection": true,
+        "json_declared_support_is_advisory": true
+      }
+    }
+  },
+  "normal_cost_by_scenario": {
+    "1": 22971829.289820403
+  },
+  "objective_components": {
+    "alpha": 0.0,
+    "construction_cost": 4183374.4336056146,
+    "disaster_master_term": 103.5706534132272,
+    "lambda_times_FP": 1035.706534132272,
+    "objective_reconstruction_gap": 3.725290298461914e-09,
+    "unweighted_normal_term": 22971829.289820403,
+    "weighted_normal_term": 20674646.360838365
+  },
+  "plan_rows": [
+    {
+      "bus": 1,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 2,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 3,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 4,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 5,
+      "is_critical": 1,
+      "n_fa": 3,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 6,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 7,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 8,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 9,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 10,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 11,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 12,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 13,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 14,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 15,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 16,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 17,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 18,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 19,
+      "is_critical": 0,
+      "n_fa": 10,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 20,
+      "is_critical": 1,
+      "n_fa": 6,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 21,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 22,
+      "is_critical": 0,
+      "n_fa": 4,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 23,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 24,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 25,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 26,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 27,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 28,
+      "is_critical": 0,
+      "n_fa": 3,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 29,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 30,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 31,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": "",
+      "z": 0
+    },
+    {
+      "bus": 32,
+      "is_critical": 1,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    },
+    {
+      "bus": 33,
+      "is_critical": 0,
+      "n_fa": 0,
+      "n_sl": 20,
+      "region": "",
+      "z": 1
+    }
+  ],
+  "run_config": {
+    "benders": {
+      "epsilon_cert": 0.0,
+      "max_iterations": 2
+    },
+    "case_name": "deterministic_mean_value_runtime12",
+    "expected_validation_level": "smoke_only",
+    "family_name": "runtime12_smoke_family",
+    "mode": "deterministic_mean_value",
+    "parameter_regime": "deterministic_mean_value",
+    "run_id": "deterministic_mean_value_runtime12",
+    "runtime_source": "data/runtime_12",
+    "selection_preset": "default_small",
+    "solver": "benders"
+  },
+  "selected_disaster_scenarios": [
+    1
+  ],
+  "selected_normal_scenarios": [
+    1
+  ],
+  "stop_reason": "max_iterations",
+  "summary": {
+    "alpha": 0.0,
+    "case_name": "deterministic_mean_value_runtime12",
+    "construction_cost": 4183374.4336056146,
+    "cut_count": 2,
+    "disaster_master_term": 103.5706534132272,
+    "family_name": "runtime12_smoke_family",
+    "final_violation_upper_bound": 12987.68000000075,
+    "iteration_count": 2,
+    "lambda_times_FP": 1035.706534132272,
+    "opened_bus_count": 17,
+    "parameter_regime": "deterministic_mean_value",
+    "run_id": "deterministic_mean_value_runtime12",
+    "stop_reason": "max_iterations",
+    "total_fast_chargers": 26,
+    "total_objective": 24858124.365097396,
+    "total_slow_chargers": 340,
+    "unweighted_normal_term": 22971829.289820403,
+    "validation_level": "smoke_only",
+    "weighted_normal_term": 20674646.360838365
+  },
+  "validation_level": "smoke_only"
+}

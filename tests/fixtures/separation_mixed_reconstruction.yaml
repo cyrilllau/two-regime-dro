@@ -1,0 +1,6 @@
+{
+  "source_fixture": "disaster_primal_mixed_slow_fast.yaml",
+  "budget_k": 1,
+  "alpha": 5.0,
+  "lambda_by_line_id": {}
+}

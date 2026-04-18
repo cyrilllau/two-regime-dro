@@ -1,0 +1,49 @@
+{
+  "buses": [1, 2],
+  "lines": [[1, 2]],
+  "candidate_buses": [2],
+  "regions": [1],
+  "normal_times": [1],
+  "scenario_id": 1,
+  "critical_buses": [2],
+  "line_r_pu": [0.001],
+  "line_x_pu": [0.001],
+  "line_p_max_kw": [100.0],
+  "line_q_max_kvar": [100.0],
+  "vmin": 0.9,
+  "vmax": 1.1,
+  "distance_km": [[99.0, 0.0]],
+  "economics": {
+    "cfix": 5.0,
+    "ccons_sl": 10.0,
+    "ccons_fa": 100.0,
+    "ctrans": [0.0],
+    "cpur": [0.0],
+    "ccong": 0.0,
+    "gamma": 0.0,
+    "theta": 1,
+    "pi_f": 0.3,
+    "alpha_min": 0.0,
+    "cunmet": 10.0,
+    "annualize_normal_cost_by_365": false
+  },
+  "ev": {
+    "p_ev_rated_sl": 10.0,
+    "p_ev_rated_fa": 50.0,
+    "nbar_sl": 10,
+    "nbar_fa": 10
+  },
+  "normal_loads": [],
+  "normal_dev_ch_sl": [
+    {"t": 1, "region": 1, "value": 20.0}
+  ],
+  "normal_dev_ch_fa": [],
+  "expected": {
+    "objective": 35.0,
+    "z_by_bus": {"1": 0, "2": 1},
+    "n_sl_by_bus": {"1": 0, "2": 3},
+    "n_fa_by_bus": {"1": 0, "2": 0},
+    "slow_served": 20.0,
+    "slow_unmet": 0.0
+  }
+}

@@ -1,11 +1,71 @@
-"""Scaffold for cut-lineage and cut-coefficient audit artifacts."""
+"""Structured audit artifacts for generated master cuts."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+from typing import Mapping
 
-def record_cut_audit() -> None:
-    """Placeholder entry point reserved for later audit support."""
+from src.production.disaster_dual_paper import SamplewisePaperDualDecomposition
+from src.production.master_problem import RestrictedMasterCut
+from src.reference.disaster_primal_ref import FixedFirstStagePlan, FixedOutageVector
 
-    raise NotImplementedError(
-        "Round 00 scaffold only: cut-audit reporting is not implemented."
+
+@dataclass(frozen=True)
+class GeneratedCutAuditRecord:
+    """Stable audit record for one generated structured master cut."""
+
+    cut_id: str
+    provenance: str
+    simplex_method: int
+    source_plan: FixedFirstStagePlan
+    source_outage: FixedOutageVector
+    source_alpha: float | None
+    source_lambda_by_line_id: dict[str, float] = field(default_factory=dict)
+    source_violation_value: float | None = None
+    samplewise_decompositions_by_scenario: dict[int, SamplewisePaperDualDecomposition] = field(
+        default_factory=dict
+    )
+    samplewise_objective_by_scenario: dict[int, float] = field(default_factory=dict)
+    aggregated_cut: RestrictedMasterCut | None = None
+
+
+def build_cut_audit_record(
+    *,
+    cut_id: str,
+    provenance: str,
+    simplex_method: int,
+    source_plan: FixedFirstStagePlan,
+    source_outage: FixedOutageVector,
+    source_alpha: float | None,
+    source_lambda_by_line_id: Mapping[str, float] | None,
+    source_violation_value: float | None,
+    samplewise_decompositions_by_scenario: Mapping[int, SamplewisePaperDualDecomposition],
+    samplewise_objective_by_scenario: Mapping[int, float],
+    aggregated_cut: RestrictedMasterCut,
+) -> GeneratedCutAuditRecord:
+    """Build the stable audit artifact required for one generated cut."""
+
+    return GeneratedCutAuditRecord(
+        cut_id=str(cut_id),
+        provenance=str(provenance),
+        simplex_method=int(simplex_method),
+        source_plan=source_plan,
+        source_outage=source_outage,
+        source_alpha=None if source_alpha is None else float(source_alpha),
+        source_lambda_by_line_id={
+            str(line_id): float(value)
+            for line_id, value in (source_lambda_by_line_id or {}).items()
+        },
+        source_violation_value=(
+            None if source_violation_value is None else float(source_violation_value)
+        ),
+        samplewise_decompositions_by_scenario={
+            int(scenario_id): decomposition
+            for scenario_id, decomposition in samplewise_decompositions_by_scenario.items()
+        },
+        samplewise_objective_by_scenario={
+            int(scenario_id): float(value)
+            for scenario_id, value in samplewise_objective_by_scenario.items()
+        },
+        aggregated_cut=aggregated_cut,
     )

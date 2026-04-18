@@ -1,0 +1,105 @@
+{
+  "buses": [1, 2, 3],
+  "lines": [[1, 2], [2, 3]],
+  "regions": [1],
+  "normal_times": [1],
+  "disaster_times": [1],
+  "normal_scenarios": [1],
+  "disaster_scenarios": [1],
+  "candidate_buses": [2, 3],
+  "critical_buses": [3],
+  "line_r_pu": [0.0, 0.0],
+  "line_x_pu": [0.0, 0.0],
+  "line_p_max_kw": [10.0, 10.0],
+  "line_q_max_kvar": [10.0, 10.0],
+  "distance_km": [[0.0, 0.0, 1.0]],
+  "normal_loads": [],
+  "normal_dev_ch_sl": [
+    {"scenario": 1, "t": 1, "region": 1, "value": 1.0}
+  ],
+  "normal_dev_ch_fa": [],
+  "disaster_loads": [
+    {"scenario": 1, "t": 1, "bus": 3, "p_kw": 10.0}
+  ],
+  "disaster_dev_dis_sl": [
+    {"scenario": 1, "t": 1, "region": 1, "value": 10.0}
+  ],
+  "disaster_dev_dis_fa": [
+    {"scenario": 1, "t": 1, "region": 1, "value": 0.0}
+  ],
+  "economics": {
+    "cfix": 20.0,
+    "ccons_sl": 5.0,
+    "ccons_fa": 8.0,
+    "ctrans": [10.0],
+    "cpur": [0.0],
+    "ccong": 0.0,
+    "gamma": 0.0,
+    "theta": 1,
+    "pi_f": 0.9,
+    "alpha_min": 0.0,
+    "cunmet": 100.0,
+    "annualize_normal_cost_by_365": false
+  },
+  "ev": {
+    "p_ev_rated_sl": 1.0,
+    "p_ev_rated_fa": 6.0,
+    "nbar_sl": 10,
+    "nbar_fa": 10
+  },
+  "ambig": {
+    "k_max_outages": 1,
+    "p_bar": [0.5, 0.5]
+  },
+  "enumerated_plans": [
+    {
+      "plan_id": "none",
+      "z_by_bus": {},
+      "n_sl_by_bus": {},
+      "n_fa_by_bus": {}
+    },
+    {
+      "plan_id": "bus2_3",
+      "z_by_bus": {"2": 1},
+      "n_sl_by_bus": {"2": 3},
+      "n_fa_by_bus": {}
+    },
+    {
+      "plan_id": "bus2_10",
+      "z_by_bus": {"2": 1},
+      "n_sl_by_bus": {"2": 10},
+      "n_fa_by_bus": {}
+    },
+    {
+      "plan_id": "bus3_3",
+      "z_by_bus": {"3": 1},
+      "n_sl_by_bus": {"3": 3},
+      "n_fa_by_bus": {}
+    },
+    {
+      "plan_id": "bus3_10",
+      "z_by_bus": {"3": 1},
+      "n_sl_by_bus": {"3": 10},
+      "n_fa_by_bus": {}
+    },
+    {
+      "plan_id": "both_10",
+      "z_by_bus": {"2": 1, "3": 1},
+      "n_sl_by_bus": {"2": 10, "3": 10},
+      "n_fa_by_bus": {}
+    }
+  ],
+  "expected_benders": {
+    "stop_reason_exact": "certified_exact",
+    "stop_reason_epsilon": "certified_epsilon",
+    "objective": 71.0,
+    "best_plan_id": "bus3_10",
+    "lower_bound_sequence": [10.0, 70.0, 71.0],
+    "cut_count_sequence": [1, 2, 3],
+    "generated_cut_count": 2,
+    "epsilon_cert": 500.0,
+    "epsilon_gap_bound": 450.0,
+    "first_generated_cut_id": "generated_cut_001",
+    "second_generated_cut_id": "generated_cut_002"
+  }
+}

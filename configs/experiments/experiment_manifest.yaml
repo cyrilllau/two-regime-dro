@@ -1,0 +1,6 @@
+critical_buses_config: configs/critical_buses_paper_fig2.yaml
+output_root: results
+report_path: reports/experiment_interpretation_pack.md
+families:
+  - include: configs/experiments/certified_small_family.yaml
+  - include: configs/experiments/runtime12_smoke_family.yaml

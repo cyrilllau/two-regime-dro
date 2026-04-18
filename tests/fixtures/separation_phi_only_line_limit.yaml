@@ -1,0 +1,8 @@
+{
+  "source_fixture": "disaster_primal_failed_line.yaml",
+  "budget_k": 1,
+  "alpha": 5.0,
+  "lambda_by_line_id": {
+    "line_02_03": 10.0
+  }
+}

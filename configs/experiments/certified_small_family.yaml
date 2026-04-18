@@ -1,0 +1,41 @@
+family_name: certified_small_family
+runs:
+  - run_id: integrated_mainline_certified_small
+    case_name: integrated_mainline_certified_small
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: integrated_mainline
+    solver: benders
+    parameter_regime: base
+    expected_validation_level: epsilon_certified
+    benders:
+      epsilon_cert: 10000.0
+      max_iterations: 5
+      capture_artifacts: true
+
+  - run_id: normal_only_certified_small
+    case_name: normal_only_certified_small
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: normal_only
+    solver: direct_master
+    parameter_regime: normal_only
+    expected_validation_level: exact
+
+  - run_id: deterministic_mean_value_certified_small
+    case_name: deterministic_mean_value_certified_small
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: deterministic_mean_value
+    solver: benders
+    parameter_regime: deterministic_mean_value
+    expected_validation_level: epsilon_certified
+    benders:
+      epsilon_cert: 10000.0
+      max_iterations: 5

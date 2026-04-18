@@ -1,0 +1,5 @@
+{
+  "eq24_power_base_kw": 1000.0,
+  "eq24_power_to_pu_scale": 0.001,
+  "unit_assumption_substring": "implicit S_base = 1 MVA"
+}

@@ -1,0 +1,66 @@
+{
+  "buses": [1, 2],
+  "lines": [[1, 2]],
+  "regions": [1],
+  "normal_times": [1],
+  "disaster_times": [1],
+  "normal_scenarios": [1],
+  "disaster_scenarios": [1],
+  "candidate_buses": [2],
+  "critical_buses": [1],
+  "line_r_pu": [0.0],
+  "line_x_pu": [0.0],
+  "line_p_max_kw": [10.0],
+  "line_q_max_kvar": [10.0],
+  "distance_km": [[0.0, 0.0]],
+  "normal_loads": [],
+  "normal_dev_ch_sl": [],
+  "normal_dev_ch_fa": [],
+  "disaster_loads": [
+    {"scenario": 1, "t": 1, "bus": 2, "p_kw": 10.0}
+  ],
+  "disaster_dev_dis_sl": [
+    {"scenario": 1, "t": 1, "region": 1, "value": 3.0}
+  ],
+  "disaster_dev_dis_fa": [
+    {"scenario": 1, "t": 1, "region": 1, "value": 0.0}
+  ],
+  "economics": {
+    "cfix": 20.0,
+    "ccons_sl": 5.0,
+    "ccons_fa": 8.0,
+    "ctrans": [0.0],
+    "cpur": [0.0],
+    "ccong": 0.0,
+    "gamma": 0.0,
+    "theta": 1,
+    "pi_f": 1.0,
+    "alpha_min": 0.0,
+    "cunmet": 100.0,
+    "annualize_normal_cost_by_365": false
+  },
+  "ev": {
+    "p_ev_rated_sl": 3.0,
+    "p_ev_rated_fa": 6.0,
+    "nbar_sl": 10,
+    "nbar_fa": 10
+  },
+  "ambig": {
+    "k_max_outages": 1,
+    "p_bar": [0.1]
+  },
+  "initial_cuts": [
+    {
+      "cut_id": "gamma_site",
+      "beta": 100.0,
+      "gamma_z_by_bus": {"2": 100.0},
+      "gamma_n_sl_by_bus": {},
+      "gamma_n_fa_by_bus": {},
+      "phi_by_line_id": {}
+    }
+  ],
+  "expected_single_iteration": {
+    "pre_objective": 35.0,
+    "post_objective": 42.0
+  }
+}

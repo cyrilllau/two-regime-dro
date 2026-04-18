@@ -1,0 +1,6 @@
+{
+  "source_fixture": "disaster_primal_shortage.yaml",
+  "budget_k": 1,
+  "alpha": 50.0,
+  "lambda_by_line_id": {}
+}

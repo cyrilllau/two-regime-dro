@@ -1,0 +1,19 @@
+{
+  "runtime_dir": "data/runtime_12",
+  "critical_buses": [5, 9],
+  "selection": {
+    "scenarios_a": [1],
+    "scenarios_b": [1]
+  },
+  "epsilon_cert": 10200.0,
+  "max_iterations": 5,
+  "expected": {
+    "stop_reason": "certified_epsilon",
+    "iteration_count": 2,
+    "generated_cut_count": 1,
+    "cut_count_sequence": [1, 2],
+    "lower_bound_sequence": [25010444.305336308, 25010527.830859635],
+    "final_violation_upper_bound": 10180.110000000335,
+    "sampled_problem_gap_bound": 1020.0
+  }
+}
