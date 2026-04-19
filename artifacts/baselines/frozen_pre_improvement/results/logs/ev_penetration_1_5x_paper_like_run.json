@@ -1,0 +1,600 @@
+{
+  "artifact_paths": {
+    "iteration_log_path": "results/logs/ev_penetration_1_5x_paper_like_iteration_log.json",
+    "master_after_cut_lp_path": null,
+    "master_before_cut_lp_path": null
+  },
+  "cut_count_sequence": [
+    1
+  ],
+  "exception": null,
+  "failure_record": null,
+  "iteration_log": {
+    "certificate": {
+      "epsilon_cert": 20000.0,
+      "final_rmp_value": 17273788.20712779,
+      "final_violation_upper_bound": 3692.670000000391,
+      "sampled_problem_gap_bound": 6000.0
+    },
+    "cut_count_sequence": [
+      1
+    ],
+    "epsilon_cert": 20000.0,
+    "generated_cut_count": 0,
+    "iteration_count": 1,
+    "iterations": [
+      {
+        "active_cut_ids_after": [
+          "trivial_cut"
+        ],
+        "active_cut_ids_before": [
+          "trivial_cut"
+        ],
+        "construction_cost_value": 262853.6935867764,
+        "cut_generation_seconds": 0.0,
+        "first_stage_attached_objective_value": 17273788.20712779,
+        "first_stage_objective_is_pure_construction": false,
+        "generated_cut_id": null,
+        "generated_cut_old_master_violation": null,
+        "iteration_id": 0,
+        "master_solve_seconds": 0.4424626249999992,
+        "post_cut_master_objective": null,
+        "pre_cut_master_objective": 17273788.20712779,
+        "selected_outage_by_line_id": {
+          "line_01_02": 0,
+          "line_02_03": 0,
+          "line_02_19": 0,
+          "line_03_04": 0,
+          "line_03_23": 0,
+          "line_04_05": 0,
+          "line_05_06": 0,
+          "line_06_07": 0,
+          "line_06_26": 0,
+          "line_07_08": 0,
+          "line_08_09": 0,
+          "line_09_10": 0,
+          "line_10_11": 0,
+          "line_11_12": 1,
+          "line_12_13": 0,
+          "line_13_14": 0,
+          "line_14_15": 0,
+          "line_15_16": 0,
+          "line_16_17": 0,
+          "line_17_18": 0,
+          "line_19_20": 0,
+          "line_20_21": 0,
+          "line_21_22": 0,
+          "line_23_24": 1,
+          "line_24_25": 0,
+          "line_26_27": 0,
+          "line_27_28": 0,
+          "line_28_29": 0,
+          "line_29_30": 0,
+          "line_30_31": 0,
+          "line_31_32": 0,
+          "line_32_33": 0
+        },
+        "separation_solve_seconds": 0.0202084590000009,
+        "separation_violation_value": 3692.670000000391,
+        "stop_reason": "certified_epsilon",
+        "total_cut_count_after": 1,
+        "total_cut_count_before": 1
+      }
+    ],
+    "lower_bound_sequence": [
+      17273788.20712779
+    ],
+    "stop_reason": "certified_epsilon"
+  },
+  "lower_bound_sequence": [
+    17273788.20712779
+  ],
+  "message": "",
+  "metadata": {
+    "ev_penetration_scale": 1.5,
+    "parameter_overrides": {
+      "economics": {
+        "ccons_fa": 25000.0,
+        "ccons_sl": 540.07,
+        "cfix": 153600.0,
+        "ctrans_scalar": 0.0435,
+        "gamma": 0.01,
+        "pi_f": 0.3,
+        "theta": 20
+      },
+      "ev": {
+        "nbar_fa": 10,
+        "nbar_sl": 25,
+        "p_ev_rated_fa": 50.0,
+        "p_ev_rated_sl": 7.0
+      }
+    },
+    "runtime_selection": {
+      "scenarios_a": [
+        1
+      ],
+      "scenarios_b": [
+        1
+      ],
+      "source": "ev_penetration_1_5x_paper_like"
+    },
+    "support_manifest": {
+      "disaster": {
+        "csv_support": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "csv_support_by_file": {
+          "disaster_fast": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "disaster_load": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "disaster_slow": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        "declared_support": [
+          1,
+          2
+        ],
+        "issues": [
+          "Disaster-stage support declared in parameters.json is (1, 2), but live CSV support is (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)."
+        ]
+      },
+      "normal": {
+        "csv_support": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "csv_support_by_file": {
+          "normal_fast": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "normal_load": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ],
+          "normal_slow": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10
+          ]
+        },
+        "declared_support": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "issues": []
+      },
+      "policy": {
+        "csv_support_binds_runtime_selection": true,
+        "json_declared_support_is_advisory": true
+      }
+    }
+  },
+  "normal_cost_by_scenario": {
+    "1": 24301335.019344315
+  },
+  "objective_components": {
+    "alpha": 0.0,
+    "construction_cost": 262853.6935867764,
+    "disaster_master_term": 0.0,
+    "lambda_times_FP": 0.0,
+    "objective_reconstruction_gap": 7.450580596923828e-09,
+    "unweighted_normal_term": 24301335.019344315,
+    "weighted_normal_term": 17010934.51354102
+  },
+  "plan_rows": [
+    {
+      "bus": 1,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 2,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 4,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 3,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 2,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 4,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 5,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 6,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 7,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 8,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 9,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 10,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 11,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 12,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 13,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 14,
+      "is_critical": 1,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 15,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 16,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 17,
+      "is_critical": 1,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 18,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 19,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 10,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 20,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 10,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 21,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 22,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 10,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 23,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 24,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 25,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 26,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 27,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 28,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 29,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 30,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 31,
+      "is_critical": 0,
+      "is_open": 0,
+      "n_fa": 0,
+      "n_sl": 0,
+      "region": ""
+    },
+    {
+      "bus": 32,
+      "is_critical": 1,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    },
+    {
+      "bus": 33,
+      "is_critical": 0,
+      "is_open": 1,
+      "n_fa": 0,
+      "n_sl": 25,
+      "region": ""
+    }
+  ],
+  "run_config": {
+    "benders": {
+      "epsilon_cert": 20000.0,
+      "max_iterations": 5
+    },
+    "case_name": "ev_penetration_1_5x_paper_like",
+    "ev_penetration_scale": 1.5,
+    "family_name": "paper_like_tableII_family",
+    "mode": "integrated_mainline",
+    "parameter_overrides": {
+      "economics": {
+        "ccons_fa": 25000.0,
+        "ccons_sl": 540.07,
+        "cfix": 153600.0,
+        "ctrans_scalar": 0.0435,
+        "gamma": 0.01,
+        "pi_f": 0.3,
+        "theta": 20
+      },
+      "ev": {
+        "nbar_fa": 10,
+        "nbar_sl": 25,
+        "p_ev_rated_fa": 50.0,
+        "p_ev_rated_sl": 7.0
+      }
+    },
+    "parameter_regime": "paper_like_tableII",
+    "run_id": "ev_penetration_1_5x_paper_like",
+    "runtime_source": "data/runtime_12",
+    "selection": {
+      "scenarios_a": [
+        1
+      ],
+      "scenarios_b": [
+        1
+      ]
+    },
+    "solver": "benders"
+  },
+  "selected_disaster_scenarios": [
+    1
+  ],
+  "selected_normal_scenarios": [
+    1
+  ],
+  "solver_status": "OPTIMAL",
+  "stop_reason": "certified_epsilon",
+  "summary": {
+    "alpha": 0.0,
+    "case_name": "ev_penetration_1_5x_paper_like",
+    "construction_cost": 262853.6935867764,
+    "cut_count": 1,
+    "disaster_master_term": 0.0,
+    "family_name": "paper_like_tableII_family",
+    "final_violation_upper_bound": 3692.670000000391,
+    "iteration_count": 1,
+    "lambda_times_FP": 0.0,
+    "opened_bus_count": 23,
+    "parameter_regime": "paper_like_tableII",
+    "run_id": "ev_penetration_1_5x_paper_like",
+    "solver_status": "OPTIMAL",
+    "stop_reason": "certified_epsilon",
+    "total_fast_chargers": 36,
+    "total_objective": 17273788.20712779,
+    "total_slow_chargers": 575,
+    "unweighted_normal_term": 24301335.019344315,
+    "validation_level": "epsilon_certified",
+    "weighted_normal_term": 17010934.51354102
+  },
+  "validation_level": "epsilon_certified"
+}

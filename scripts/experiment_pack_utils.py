@@ -1,4 +1,4 @@
-"""Utilities for the Round 11 experiment packaging scripts."""
+"""Utilities for the Round 12 experiment packaging scripts."""
 
 from __future__ import annotations
 
@@ -15,7 +15,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.audit.experiment_summary import ExperimentRunSummary
+from src.audit.experiment_summary import (
+    ExperimentFailureSummary,
+    ExperimentRunSummary,
+)
 from src.instance.canonical_instance import (
     CanonicalInstance,
     ScenarioSupport,
@@ -25,7 +28,6 @@ from src.instance.indexer import build_index_map
 from src.instance.schema import (
     CanonicalSets,
     DisasterScenarioTensor,
-    EconomicParameters,
     NormalScenarioTensor,
 )
 from src.instance.selection import build_runtime_selection, default_runtime_selection
@@ -43,20 +45,8 @@ def load_yaml_file(path: str | Path) -> dict[str, Any]:
     return dict(raw)
 
 
-def write_yaml_file(path: str | Path, payload: Mapping[str, Any]) -> Path:
-    """Write a stable YAML file."""
-
-    file_path = Path(path)
-    file_path.parent.mkdir(parents=True, exist_ok=True)
-    file_path.write_text(
-        yaml.safe_dump(dict(payload), sort_keys=False),
-        encoding="utf-8",
-    )
-    return file_path
-
-
 def ensure_directory(path: str | Path) -> Path:
-    """Create a directory and return it as a Path."""
+    """Create a directory and return it as a ``Path``."""
 
     directory = Path(path)
     directory.mkdir(parents=True, exist_ok=True)
@@ -303,13 +293,126 @@ def build_normal_only_instance(instance: CanonicalInstance) -> CanonicalInstance
     return replace(instance, economics=economics, metadata=metadata)
 
 
+def build_disaster_only_instance(instance: CanonicalInstance) -> CanonicalInstance:
+    """Disable the weighted normal term while preserving the disaster objective."""
+
+    economics = replace(instance.economics, pi_f=1.0)
+    metadata = dict(instance.metadata)
+    metadata["benchmark_mode"] = "disaster_only"
+    return replace(instance, economics=economics, metadata=metadata)
+
+
+def _resolve_tuple_override(
+    raw_value: Any,
+    *,
+    expected_length: int,
+    label: str,
+) -> tuple[float, ...]:
+    if isinstance(raw_value, Sequence) and not isinstance(raw_value, (str, bytes)):
+        values = tuple(float(value) for value in raw_value)
+        if len(values) != expected_length:
+            raise ValueError(
+                f"{label} must have length {expected_length}, got {len(values)}."
+            )
+        return values
+    scalar = float(raw_value)
+    return tuple(scalar for _ in range(expected_length))
+
+
+def apply_parameter_overrides(
+    instance: CanonicalInstance,
+    overrides: Mapping[str, Any] | None,
+) -> CanonicalInstance:
+    """Apply packaging-scope parameter overrides without touching raw data files."""
+
+    if not overrides:
+        return instance
+
+    economics = instance.economics
+    ev = instance.ev
+    ambiguity = instance.ambiguity
+    metadata = dict(instance.metadata)
+
+    economics_overrides = overrides.get("economics", {})
+    if economics_overrides:
+        economics_kwargs = {
+            "cfix": float(economics_overrides.get("cfix", economics.cfix)),
+            "ccons_sl": float(economics_overrides.get("ccons_sl", economics.ccons_sl)),
+            "ccons_fa": float(economics_overrides.get("ccons_fa", economics.ccons_fa)),
+            "cpur": _resolve_tuple_override(
+                economics_overrides.get("cpur", economics.cpur),
+                expected_length=len(economics.cpur),
+                label="economics.cpur",
+            ),
+            "ccong": float(economics_overrides.get("ccong", economics.ccong)),
+            "gamma": float(economics_overrides.get("gamma", economics.gamma)),
+            "theta": int(economics_overrides.get("theta", economics.theta)),
+            "pi_f": float(economics_overrides.get("pi_f", economics.pi_f)),
+            "alpha_min": float(economics_overrides.get("alpha_min", economics.alpha_min)),
+            "cunmet": float(economics_overrides.get("cunmet", economics.cunmet)),
+            "annualize_normal_cost_by_365": bool(
+                economics_overrides.get(
+                    "annualize_normal_cost_by_365",
+                    economics.annualize_normal_cost_by_365,
+                )
+            ),
+            "annualize_disaster_cost_by_365": bool(
+                economics_overrides.get(
+                    "annualize_disaster_cost_by_365",
+                    economics.annualize_disaster_cost_by_365,
+                )
+            ),
+            "ctrans_mode": str(
+                economics_overrides.get("ctrans_mode", economics.ctrans_mode)
+            ),
+            "power_unit": str(economics_overrides.get("power_unit", economics.power_unit)),
+        }
+        ctrans_source = economics_overrides.get(
+            "ctrans_scalar",
+            economics_overrides.get("ctrans", economics.ctrans),
+        )
+        economics_kwargs["ctrans"] = _resolve_tuple_override(
+            ctrans_source,
+            expected_length=len(economics.ctrans),
+            label="economics.ctrans",
+        )
+        economics = replace(economics, **economics_kwargs)
+
+    ev_overrides = overrides.get("ev", {})
+    if ev_overrides:
+        ev = replace(
+            ev,
+            p_ev_rated_sl=float(ev_overrides.get("p_ev_rated_sl", ev.p_ev_rated_sl)),
+            p_ev_rated_fa=float(ev_overrides.get("p_ev_rated_fa", ev.p_ev_rated_fa)),
+            delta_t_hours=float(ev_overrides.get("delta_t_hours", ev.delta_t_hours)),
+            nbar_sl=int(ev_overrides.get("nbar_sl", ev.nbar_sl)),
+            nbar_fa=int(ev_overrides.get("nbar_fa", ev.nbar_fa)),
+        )
+
+    ambiguity_overrides = overrides.get("ambiguity", {})
+    if ambiguity_overrides:
+        p_bar_source = ambiguity_overrides.get("p_bar", ambiguity.p_bar)
+        ambiguity = replace(
+            ambiguity,
+            k_max_outages=int(ambiguity_overrides.get("k_max_outages", ambiguity.k_max_outages)),
+            p_bar=_resolve_tuple_override(
+                p_bar_source,
+                expected_length=len(ambiguity.p_bar),
+                label="ambiguity.p_bar",
+            ),
+        )
+
+    metadata["parameter_overrides"] = json.loads(json.dumps(overrides))
+    return replace(instance, economics=economics, ev=ev, ambiguity=ambiguity, metadata=metadata)
+
+
 def prepare_instance_for_run(
     base_instance: CanonicalInstance,
     run_config: Mapping[str, Any],
 ) -> CanonicalInstance:
     """Apply benchmark-only transformations in packaging scope."""
 
-    instance = base_instance
+    instance = apply_parameter_overrides(base_instance, run_config.get("parameter_overrides"))
     if float(run_config.get("ev_penetration_scale", 1.0)) != 1.0:
         instance = build_ev_penetration_instance(
             instance,
@@ -319,17 +422,52 @@ def prepare_instance_for_run(
         instance = build_mean_value_instance(instance)
     if run_config.get("mode") == "normal_only":
         instance = build_normal_only_instance(instance)
+    if run_config.get("mode") == "disaster_only":
+        instance = build_disaster_only_instance(instance)
     return instance
 
 
-def _validation_level_from_result(*, solver: str, stop_reason: str) -> str:
-    if solver == "direct_master":
+def _validation_level_from_result(
+    *,
+    solver: str,
+    stop_reason: str,
+    solver_status: str,
+) -> str:
+    normalized_status = str(solver_status).upper()
+    if solver == "direct_master" and normalized_status == "OPTIMAL":
         return "exact"
-    if stop_reason == "certified_exact":
+    if normalized_status == "OPTIMAL" and stop_reason == "certified_exact":
         return "exact"
-    if stop_reason == "certified_epsilon":
+    if normalized_status == "OPTIMAL" and stop_reason == "certified_epsilon":
         return "epsilon_certified"
-    return "smoke_only"
+    if solver == "benders" and normalized_status == "OPTIMAL":
+        return "smoke_only"
+    return "failed"
+
+
+def _record_failure(
+    *,
+    validation_level: str,
+    stop_reason: str,
+) -> bool:
+    return validation_level in {"failed", "smoke_only"} or stop_reason == "max_iterations"
+
+
+def _failure_message(
+    *,
+    validation_level: str,
+    stop_reason: str,
+    solver_status: str,
+    exception: Exception | None = None,
+) -> str:
+    if exception is not None:
+        return f"{exception.__class__.__name__}: {exception}"
+    if validation_level == "smoke_only":
+        return (
+            "Run completed a bounded smoke-only solve but did not certify; "
+            f"stop_reason={stop_reason}, solver_status={solver_status}."
+        )
+    return f"Run ended with stop_reason={stop_reason}, solver_status={solver_status}."
 
 
 def _plan_rows(
@@ -339,10 +477,12 @@ def _plan_rows(
     return [
         {
             "bus": bus,
-            "z": int(solution.first_stage_solution.z_by_bus[bus]),
+            "is_open": int(solution.first_stage_solution.z_by_bus[bus]),
             "n_sl": int(solution.first_stage_solution.n_sl_by_bus[bus]),
             "n_fa": int(solution.first_stage_solution.n_fa_by_bus[bus]),
-            "is_critical": int(bool(instance.is_critical_by_bus and instance.is_critical_by_bus[bus])),
+            "is_critical": int(
+                bool(instance.is_critical_by_bus and instance.is_critical_by_bus[bus])
+            ),
             "region": "",
         }
         for bus in instance.sets.buses
@@ -354,7 +494,7 @@ def write_plan_csv(path: str | Path, rows: Sequence[Mapping[str, Any]]) -> Path:
 
     file_path = Path(path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["bus", "z", "n_sl", "n_fa", "is_critical", "region"]
+    fieldnames = ["bus", "is_open", "n_sl", "n_fa", "is_critical", "region"]
     with file_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
@@ -377,6 +517,23 @@ def write_summary_csv(path: str | Path, summaries: Sequence[ExperimentRunSummary
     return file_path
 
 
+def write_failures_csv(
+    path: str | Path,
+    failures: Sequence[ExperimentFailureSummary],
+) -> Path:
+    """Write the explicit failure/non-convergence CSV."""
+
+    file_path = Path(path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = list(ExperimentFailureSummary.__dataclass_fields__.keys())
+    with file_path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for failure in failures:
+            writer.writerow(failure.to_csv_row())
+    return file_path
+
+
 def write_json(path: str | Path, payload: Mapping[str, Any]) -> Path:
     """Write stable JSON."""
 
@@ -394,12 +551,37 @@ def build_summary_row(
     run_config: Mapping[str, Any],
     validation_level: str,
     stop_reason: str,
-    solution: RestrictedMasterProblemSolution,
+    solver_status: str,
+    solution: RestrictedMasterProblemSolution | None,
     iteration_count: int,
     cut_count: int,
-    final_violation_upper_bound: float,
+    final_violation_upper_bound: float | None,
 ) -> ExperimentRunSummary:
     """Build the stable summary row for one run."""
+
+    if solution is None:
+        return ExperimentRunSummary(
+            run_id=str(run_config["run_id"]),
+            family_name=str(run_config["family_name"]),
+            case_name=str(run_config["case_name"]),
+            parameter_regime=str(run_config["parameter_regime"]),
+            validation_level=validation_level,
+            stop_reason=str(stop_reason),
+            solver_status=str(solver_status),
+            total_objective=None,
+            construction_cost=None,
+            weighted_normal_term=None,
+            unweighted_normal_term=None,
+            disaster_master_term=None,
+            alpha=None,
+            lambda_times_FP=None,
+            iteration_count=int(iteration_count),
+            cut_count=int(cut_count),
+            final_violation_upper_bound=final_violation_upper_bound,
+            opened_bus_count=None,
+            total_slow_chargers=None,
+            total_fast_chargers=None,
+        )
 
     first_stage = solution.first_stage_solution
     opened_bus_count = int(sum(first_stage.z_by_bus.values()))
@@ -412,6 +594,7 @@ def build_summary_row(
         parameter_regime=str(run_config["parameter_regime"]),
         validation_level=validation_level,
         stop_reason=str(stop_reason),
+        solver_status=str(solver_status),
         total_objective=float(solution.objective_value or 0.0),
         construction_cost=float(solution.construction_cost_value),
         weighted_normal_term=float(solution.averaged_normal_cost_value),
@@ -421,11 +604,55 @@ def build_summary_row(
         lambda_times_FP=float(solution.lambda_fp_value),
         iteration_count=int(iteration_count),
         cut_count=int(cut_count),
-        final_violation_upper_bound=float(final_violation_upper_bound),
+        final_violation_upper_bound=(
+            None if final_violation_upper_bound is None else float(final_violation_upper_bound)
+        ),
         opened_bus_count=opened_bus_count,
         total_slow_chargers=total_slow,
         total_fast_chargers=total_fast,
     )
+
+
+def build_failure_row(
+    *,
+    run_config: Mapping[str, Any],
+    validation_level: str,
+    stop_reason: str,
+    solver_status: str,
+    iteration_count: int,
+    cut_count: int,
+    final_violation_upper_bound: float | None,
+    message: str,
+) -> ExperimentFailureSummary:
+    """Build the stable failure/non-convergence row."""
+
+    return ExperimentFailureSummary(
+        run_id=str(run_config["run_id"]),
+        case_name=str(run_config["case_name"]),
+        parameter_regime=str(run_config["parameter_regime"]),
+        validation_level=str(validation_level),
+        stop_reason=str(stop_reason),
+        solver_status=str(solver_status),
+        iteration_count=int(iteration_count),
+        cut_count=int(cut_count),
+        final_violation_upper_bound=(
+            None if final_violation_upper_bound is None else float(final_violation_upper_bound)
+        ),
+        message=str(message),
+    )
+
+
+def _selected_scenarios_fallback(run_config: Mapping[str, Any], key: str) -> list[int]:
+    selection = run_config.get("selection")
+    if isinstance(selection, Mapping):
+        raw = selection.get(key, ())
+        if isinstance(raw, Sequence):
+            return [int(value) for value in raw]
+    if run_config.get("selection_preset") == "default_small":
+        if key == "scenarios_a":
+            return [1, 2]
+        return [1, 2]
+    return []
 
 
 def execute_run(
@@ -440,8 +667,6 @@ def execute_run(
     plans_dir = ensure_directory(output_root_path / "plans")
     logs_dir = ensure_directory(output_root_path / "logs")
 
-    base_instance = load_instance_for_run(run_config, critical_buses=critical_buses)
-    instance = prepare_instance_for_run(base_instance, run_config)
     run_id = str(run_config["run_id"])
     solver = str(run_config["solver"])
 
@@ -451,108 +676,181 @@ def execute_run(
         "iteration_log_path": None,
     }
 
-    if solver == "direct_master":
-        _, solution = solve_master_problem(
-            instance,
-            model_name=f"{run_id}_direct_master",
-        )
-        stop_reason = "direct_optimal" if solution.model_status == "OPTIMAL" else solution.model_status
-        iteration_count = 0
-        cut_count = 1
-        final_violation_upper_bound = 0.0
-        lower_bound_sequence: list[float] = []
-        cut_count_sequence: list[int] = []
-        validation_level = _validation_level_from_result(solver=solver, stop_reason=stop_reason)
-        summary = build_summary_row(
-            run_config=run_config,
-            validation_level=validation_level,
-            stop_reason=stop_reason,
-            solution=solution,
-            iteration_count=iteration_count,
-            cut_count=cut_count,
-            final_violation_upper_bound=final_violation_upper_bound,
-        )
-        iteration_payload: dict[str, Any] | None = None
-    elif solver == "benders":
-        benders_config = dict(run_config.get("benders", {}))
-        capture_artifacts = bool(benders_config.get("capture_artifacts", False))
-        if capture_artifacts:
-            artifact_paths["master_before_cut_lp_path"] = str(
-                Path("/tmp") / f"{run_id}_master_before_cut.lp"
-            )
-            artifact_paths["master_after_cut_lp_path"] = str(
-                Path("/tmp") / f"{run_id}_master_after_cut.lp"
-            )
-        artifact_paths["iteration_log_path"] = str(logs_dir / f"{run_id}_iteration_log.json")
-        benders_result: BendersEngineResult = run_benders_engine(
-            instance,
-            epsilon_cert=float(benders_config.get("epsilon_cert", 0.0)),
-            max_iterations=int(benders_config.get("max_iterations", 25)),
-            model_name_prefix=run_id,
-            master_before_cut_lp_path=artifact_paths["master_before_cut_lp_path"],
-            master_after_cut_lp_path=artifact_paths["master_after_cut_lp_path"],
-            iteration_log_path=artifact_paths["iteration_log_path"],
-        )
-        solution = benders_result.final_solution
-        stop_reason = str(benders_result.stop_reason)
-        iteration_count = len(benders_result.iterations)
-        cut_count = len(benders_result.final_master.cuts)
-        final_violation_upper_bound = float(
-            benders_result.certificate.final_violation_upper_bound
-        )
-        lower_bound_sequence = list(benders_result.lower_bound_sequence)
-        cut_count_sequence = list(benders_result.cut_count_sequence)
-        validation_level = _validation_level_from_result(solver=solver, stop_reason=stop_reason)
-        summary = build_summary_row(
-            run_config=run_config,
-            validation_level=validation_level,
-            stop_reason=stop_reason,
-            solution=solution,
-            iteration_count=iteration_count,
-            cut_count=cut_count,
-            final_violation_upper_bound=final_violation_upper_bound,
-        )
-        iteration_payload = asdict(benders_result.iteration_log_artifact)
-    else:
-        raise ValueError(f"Unsupported solver {solver!r}.")
+    instance: CanonicalInstance | None = None
+    solution: RestrictedMasterProblemSolution | None = None
+    plan_rows: list[dict[str, Any]] = []
+    plan_path: Path | None = None
+    lower_bound_sequence: list[float] = []
+    cut_count_sequence: list[int] = []
+    iteration_payload: dict[str, Any] | None = None
+    normal_cost_by_scenario: dict[str, float] = {}
+    objective_components: dict[str, Any] = {}
+    iteration_count = 0
+    cut_count = 0
+    final_violation_upper_bound: float | None = None
+    stop_reason = "not_started"
+    solver_status = "NOT_STARTED"
+    validation_level = "failed"
+    message = ""
+    exception_payload: dict[str, Any] | None = None
 
-    plan_rows = _plan_rows(instance, solution)
-    plan_path = write_plan_csv(plans_dir / f"{run_id}_plan.csv", plan_rows)
+    try:
+        base_instance = load_instance_for_run(run_config, critical_buses=critical_buses)
+        instance = prepare_instance_for_run(base_instance, run_config)
+
+        if solver == "direct_master":
+            _, solution = solve_master_problem(
+                instance,
+                model_name=f"{run_id}_direct_master",
+            )
+            solver_status = str(solution.model_status)
+            stop_reason = "direct_optimal" if solver_status == "OPTIMAL" else solver_status
+            iteration_count = 0
+            cut_count = 1
+            final_violation_upper_bound = 0.0
+        elif solver == "benders":
+            benders_config = dict(run_config.get("benders", {}))
+            capture_artifacts = bool(benders_config.get("capture_artifacts", False))
+            if capture_artifacts:
+                artifact_paths["master_before_cut_lp_path"] = str(
+                    Path("/tmp") / f"{run_id}_master_before_cut.lp"
+                )
+                artifact_paths["master_after_cut_lp_path"] = str(
+                    Path("/tmp") / f"{run_id}_master_after_cut.lp"
+                )
+            artifact_paths["iteration_log_path"] = str(logs_dir / f"{run_id}_iteration_log.json")
+            benders_result: BendersEngineResult = run_benders_engine(
+                instance,
+                epsilon_cert=float(benders_config.get("epsilon_cert", 0.0)),
+                max_iterations=int(benders_config.get("max_iterations", 25)),
+                model_name_prefix=run_id,
+                master_before_cut_lp_path=artifact_paths["master_before_cut_lp_path"],
+                master_after_cut_lp_path=artifact_paths["master_after_cut_lp_path"],
+                iteration_log_path=artifact_paths["iteration_log_path"],
+            )
+            solution = benders_result.final_solution
+            stop_reason = str(benders_result.stop_reason)
+            solver_status = str(solution.model_status)
+            iteration_count = len(benders_result.iterations)
+            cut_count = len(benders_result.final_master.cuts)
+            final_violation_upper_bound = float(
+                benders_result.certificate.final_violation_upper_bound
+            )
+            lower_bound_sequence = list(benders_result.lower_bound_sequence)
+            cut_count_sequence = list(benders_result.cut_count_sequence)
+            iteration_payload = asdict(benders_result.iteration_log_artifact)
+        else:
+            raise ValueError(f"Unsupported solver {solver!r}.")
+
+        validation_level = _validation_level_from_result(
+            solver=solver,
+            stop_reason=stop_reason,
+            solver_status=solver_status,
+        )
+        if _record_failure(validation_level=validation_level, stop_reason=stop_reason):
+            message = _failure_message(
+                validation_level=validation_level,
+                stop_reason=stop_reason,
+                solver_status=solver_status,
+            )
+
+        if solution is not None:
+            plan_rows = _plan_rows(instance, solution)
+            plan_path = write_plan_csv(plans_dir / f"{run_id}_plan.csv", plan_rows)
+            normal_cost_by_scenario = {
+                str(key): float(value) for key, value in solution.normal_cost_by_scenario.items()
+            }
+            objective_components = {
+                "construction_cost": float(solution.construction_cost_value),
+                "weighted_normal_term": float(solution.averaged_normal_cost_value),
+                "unweighted_normal_term": float(solution.unweighted_average_normal_cost_value),
+                "disaster_master_term": float(solution.disaster_master_cost_value),
+                "alpha": float(solution.alpha_value),
+                "lambda_times_FP": float(solution.lambda_fp_value),
+                "objective_reconstruction_gap": float(solution.objective_reconstruction_gap),
+            }
+    except Exception as exc:  # pragma: no cover - exercised by integration path
+        stop_reason = "exception"
+        solver_status = "EXCEPTION"
+        validation_level = "failed"
+        message = _failure_message(
+            validation_level=validation_level,
+            stop_reason=stop_reason,
+            solver_status=solver_status,
+            exception=exc,
+        )
+        exception_payload = {
+            "type": exc.__class__.__name__,
+            "message": str(exc),
+        }
+
+    summary = build_summary_row(
+        run_config=run_config,
+        validation_level=validation_level,
+        stop_reason=stop_reason,
+        solver_status=solver_status,
+        solution=solution,
+        iteration_count=iteration_count,
+        cut_count=cut_count,
+        final_violation_upper_bound=final_violation_upper_bound,
+    )
+
+    failure_summary: ExperimentFailureSummary | None = None
+    if _record_failure(validation_level=validation_level, stop_reason=stop_reason):
+        failure_summary = build_failure_row(
+            run_config=run_config,
+            validation_level=validation_level,
+            stop_reason=stop_reason,
+            solver_status=solver_status,
+            iteration_count=iteration_count,
+            cut_count=cut_count,
+            final_violation_upper_bound=final_violation_upper_bound,
+            message=message,
+        )
+
+    selected_normal_scenarios = (
+        list(instance.sets.loaded_normal_scenarios)
+        if instance is not None
+        else _selected_scenarios_fallback(run_config, "scenarios_a")
+    )
+    selected_disaster_scenarios = (
+        list(instance.sets.loaded_disaster_scenarios)
+        if instance is not None
+        else _selected_scenarios_fallback(run_config, "scenarios_b")
+    )
+
     log_payload = {
         "run_config": dict(run_config),
         "validation_level": summary.validation_level,
         "stop_reason": stop_reason,
-        "selected_normal_scenarios": list(instance.sets.loaded_normal_scenarios),
-        "selected_disaster_scenarios": list(instance.sets.loaded_disaster_scenarios),
+        "solver_status": solver_status,
+        "message": message,
+        "selected_normal_scenarios": selected_normal_scenarios,
+        "selected_disaster_scenarios": selected_disaster_scenarios,
         "summary": summary.to_csv_row(),
-        "objective_components": {
-            "construction_cost": float(solution.construction_cost_value),
-            "weighted_normal_term": float(solution.averaged_normal_cost_value),
-            "unweighted_normal_term": float(solution.unweighted_average_normal_cost_value),
-            "disaster_master_term": float(solution.disaster_master_cost_value),
-            "alpha": float(solution.alpha_value),
-            "lambda_times_FP": float(solution.lambda_fp_value),
-            "objective_reconstruction_gap": float(solution.objective_reconstruction_gap),
-        },
+        "failure_record": None if failure_summary is None else failure_summary.to_csv_row(),
+        "objective_components": objective_components,
         "plan_rows": plan_rows,
-        "normal_cost_by_scenario": {
-            str(key): float(value) for key, value in solution.normal_cost_by_scenario.items()
-        },
+        "normal_cost_by_scenario": normal_cost_by_scenario,
         "artifact_paths": artifact_paths,
         "lower_bound_sequence": lower_bound_sequence,
         "cut_count_sequence": cut_count_sequence,
         "iteration_log": iteration_payload,
-        "metadata": dict(instance.metadata),
+        "metadata": {} if instance is None else dict(instance.metadata),
+        "exception": exception_payload,
     }
     log_path = write_json(logs_dir / f"{run_id}_run.json", log_payload)
 
     return {
         "summary": summary,
-        "plan_path": str(plan_path),
+        "failure_summary": failure_summary,
+        "plan_path": None if plan_path is None else str(plan_path),
         "log_path": str(log_path),
         "artifact_paths": artifact_paths,
         "validation_level": summary.validation_level,
         "stop_reason": stop_reason,
+        "solver_status": solver_status,
+        "message": message,
         "lower_bound_sequence": lower_bound_sequence,
         "cut_count_sequence": cut_count_sequence,
     }

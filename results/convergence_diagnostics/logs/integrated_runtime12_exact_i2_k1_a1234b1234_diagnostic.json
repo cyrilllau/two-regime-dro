@@ -1,0 +1,518 @@
+{
+  "diagnostics": {
+    "cut_count_sequence": [
+      1,
+      2
+    ],
+    "cut_efficacy_sequence": [
+      {
+        "alpha_lambda_only": false,
+        "cut_id": "generated_cut_001",
+        "cut_signature": "71a93b85d7bb2e1b",
+        "iteration_id": 0,
+        "old_master_violation": 12216.890000000014,
+        "plan_changed": true,
+        "post_cut_master_objective_change": 1324.2086785435677,
+        "post_plan_signature": [
+          [
+            3,
+            20,
+            5
+          ],
+          [
+            4,
+            20,
+            0
+          ],
+          [
+            5,
+            20,
+            2
+          ],
+          [
+            6,
+            20,
+            0
+          ],
+          [
+            9,
+            20,
+            0
+          ],
+          [
+            17,
+            20,
+            0
+          ],
+          [
+            18,
+            20,
+            0
+          ],
+          [
+            19,
+            20,
+            10
+          ],
+          [
+            20,
+            20,
+            10
+          ],
+          [
+            22,
+            20,
+            9
+          ],
+          [
+            25,
+            20,
+            0
+          ],
+          [
+            26,
+            20,
+            0
+          ],
+          [
+            27,
+            20,
+            0
+          ],
+          [
+            28,
+            20,
+            5
+          ],
+          [
+            29,
+            20,
+            0
+          ],
+          [
+            32,
+            20,
+            0
+          ],
+          [
+            33,
+            20,
+            0
+          ]
+        ],
+        "pre_plan_signature": [
+          [
+            3,
+            20,
+            5
+          ],
+          [
+            4,
+            20,
+            0
+          ],
+          [
+            5,
+            20,
+            1
+          ],
+          [
+            6,
+            20,
+            0
+          ],
+          [
+            9,
+            20,
+            0
+          ],
+          [
+            17,
+            20,
+            0
+          ],
+          [
+            18,
+            20,
+            0
+          ],
+          [
+            19,
+            20,
+            10
+          ],
+          [
+            20,
+            20,
+            10
+          ],
+          [
+            22,
+            20,
+            10
+          ],
+          [
+            25,
+            20,
+            0
+          ],
+          [
+            26,
+            20,
+            0
+          ],
+          [
+            27,
+            20,
+            0
+          ],
+          [
+            28,
+            20,
+            5
+          ],
+          [
+            29,
+            20,
+            0
+          ],
+          [
+            32,
+            20,
+            0
+          ],
+          [
+            33,
+            20,
+            0
+          ]
+        ]
+      }
+    ],
+    "generated_cut_ids": [
+      "generated_cut_001"
+    ],
+    "generated_cut_signatures": {
+      "generated_cut_001": "71a93b85d7bb2e1b"
+    },
+    "iteration_artifact": {
+      "certificate": {
+        "epsilon_cert": 0.0,
+        "final_rmp_value": 25169160.071633365,
+        "final_violation_upper_bound": 10492.675000000047,
+        "sampled_problem_gap_bound": 0.0
+      },
+      "cut_count_sequence": [
+        1,
+        2
+      ],
+      "epsilon_cert": 0.0,
+      "generated_cut_count": 1,
+      "iteration_count": 2,
+      "iterations": [
+        {
+          "active_cut_ids_after": [
+            "trivial_cut",
+            "generated_cut_001"
+          ],
+          "active_cut_ids_before": [
+            "trivial_cut"
+          ],
+          "construction_cost_value": 4264895.208537845,
+          "cut_generation_seconds": 0.060710000000000264,
+          "first_stage_attached_objective_value": 25167835.86295482,
+          "first_stage_objective_is_pure_construction": false,
+          "generated_cut_id": "generated_cut_001",
+          "generated_cut_old_master_violation": 12216.890000000014,
+          "iteration_id": 0,
+          "master_solve_seconds": 3.379920999999996,
+          "post_cut_master_objective": 25169160.071633365,
+          "pre_cut_master_objective": 25167835.86295482,
+          "selected_outage_by_line_id": {
+            "line_01_02": 0,
+            "line_02_03": 0,
+            "line_02_19": 0,
+            "line_03_04": 0,
+            "line_03_23": 1,
+            "line_04_05": 0,
+            "line_05_06": 0,
+            "line_06_07": 0,
+            "line_06_26": 0,
+            "line_07_08": 0,
+            "line_08_09": 0,
+            "line_09_10": 0,
+            "line_10_11": 0,
+            "line_11_12": 0,
+            "line_12_13": 0,
+            "line_13_14": 0,
+            "line_14_15": 0,
+            "line_15_16": 0,
+            "line_16_17": 0,
+            "line_17_18": 0,
+            "line_19_20": 0,
+            "line_20_21": 0,
+            "line_21_22": 0,
+            "line_23_24": 0,
+            "line_24_25": 0,
+            "line_26_27": 0,
+            "line_27_28": 0,
+            "line_28_29": 0,
+            "line_29_30": 0,
+            "line_30_31": 0,
+            "line_31_32": 0,
+            "line_32_33": 0
+          },
+          "separation_solve_seconds": 0.07732754199997771,
+          "separation_violation_value": 12216.890000000101,
+          "stop_reason": null,
+          "total_cut_count_after": 2,
+          "total_cut_count_before": 1
+        },
+        {
+          "active_cut_ids_after": [
+            "trivial_cut",
+            "generated_cut_001"
+          ],
+          "active_cut_ids_before": [
+            "trivial_cut",
+            "generated_cut_001"
+          ],
+          "construction_cost_value": 4264895.208537845,
+          "cut_generation_seconds": 0.0,
+          "first_stage_attached_objective_value": 25169160.071633365,
+          "first_stage_objective_is_pure_construction": false,
+          "generated_cut_id": null,
+          "generated_cut_old_master_violation": null,
+          "iteration_id": 1,
+          "master_solve_seconds": 3.611212249999994,
+          "post_cut_master_objective": null,
+          "pre_cut_master_objective": 25169160.071633365,
+          "selected_outage_by_line_id": {
+            "line_01_02": 0,
+            "line_02_03": 0,
+            "line_02_19": 0,
+            "line_03_04": 0,
+            "line_03_23": 0,
+            "line_04_05": 0,
+            "line_05_06": 0,
+            "line_06_07": 0,
+            "line_06_26": 0,
+            "line_07_08": 0,
+            "line_08_09": 0,
+            "line_09_10": 0,
+            "line_10_11": 0,
+            "line_11_12": 0,
+            "line_12_13": 0,
+            "line_13_14": 0,
+            "line_14_15": 0,
+            "line_15_16": 0,
+            "line_16_17": 0,
+            "line_17_18": 0,
+            "line_19_20": 0,
+            "line_20_21": 0,
+            "line_21_22": 0,
+            "line_23_24": 1,
+            "line_24_25": 0,
+            "line_26_27": 0,
+            "line_27_28": 0,
+            "line_28_29": 0,
+            "line_29_30": 0,
+            "line_30_31": 0,
+            "line_31_32": 0,
+            "line_32_33": 0
+          },
+          "separation_solve_seconds": 0.07711612500000342,
+          "separation_violation_value": 10492.675000000047,
+          "stop_reason": "max_iterations",
+          "total_cut_count_after": 2,
+          "total_cut_count_before": 2
+        }
+      ],
+      "lower_bound_sequence": [
+        25167835.86295482,
+        25169160.071633365
+      ],
+      "stop_reason": "max_iterations"
+    },
+    "iteration_log_path": "results/convergence_diagnostics/logs/integrated_runtime12_exact_i2_k1_a1234b1234_iteration_log.json",
+    "lower_bound_sequence": [
+      25167835.86295482,
+      25169160.071633365
+    ],
+    "omega_diagnostics": {
+      "max_omega_bound_violation": 0.0,
+      "smallest_slack_lines": [
+        {
+          "line_id": "line_01_02",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 0.0
+        },
+        {
+          "line_id": "line_02_03",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 0.0
+        },
+        {
+          "line_id": "line_03_04",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 0.0
+        },
+        {
+          "line_id": "line_04_05",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 0.0
+        },
+        {
+          "line_id": "line_05_06",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 0.0
+        }
+      ],
+      "tight_lower_count": 31,
+      "tight_upper_count": 22
+    },
+    "selected_outage_trace": [
+      [
+        "line_03_23"
+      ],
+      [
+        "line_23_24"
+      ]
+    ],
+    "summary": {
+      "A_selected": "[1,2,3,4]",
+      "B_selected": "[1,2,3,4]",
+      "K": 1,
+      "case_name": "integrated_mainline",
+      "construction_cost": 4264895.208537845,
+      "cut_count": 2,
+      "cut_efficacy_sequence": "[{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_001\",\"cut_signature\":\"71a93b85d7bb2e1b\",\"iteration_id\":0,\"old_master_violation\":12216.890000000014,\"plan_changed\":true,\"post_cut_master_objective_change\":1324.2086785435677,\"post_plan_signature\":[[3,20,5],[4,20,0],[5,20,2],[6,20,0],[9,20,0],[17,20,0],[18,20,0],[19,20,10],[20,20,10],[22,20,9],[25,20,0],[26,20,0],[27,20,0],[28,20,5],[29,20,0],[32,20,0],[33,20,0]],\"pre_plan_signature\":[[3,20,5],[4,20,0],[5,20,1],[6,20,0],[9,20,0],[17,20,0],[18,20,0],[19,20,10],[20,20,10],[22,20,10],[25,20,0],[26,20,0],[27,20,0],[28,20,5],[29,20,0],[32,20,0],[33,20,0]]}]",
+      "diagnosis_label": "max_iter_noncert",
+      "disaster_master_term": 69.3770964947454,
+      "dual_resolve_runtime_sec_total": 0.060710000000000264,
+      "epsilon_cert": 0.0,
+      "final_alpha": 0.0,
+      "final_lambda_times_FP": 693.770964947454,
+      "final_violation_upper_bound": 10492.675000000047,
+      "generated_cut_count": 1,
+      "iteration_count": 2,
+      "lower_bound_sequence": "[25167835.86295482,25169160.071633365]",
+      "master_runtime_sec_total": 6.99113324999999,
+      "max_iterations": 2,
+      "notes": "intentionally bounded smoke run with low iteration budget; lower-bound gain=1324.209; violation drop=1724.215; dominant runtime component: master-side; smoke_only result should not be promoted beyond directional diagnosis",
+      "parameter_regime": "runtime12_directional",
+      "repeated_cut_signature_flag": false,
+      "repeated_outage_flag": false,
+      "run_id": "integrated_runtime12_exact_i2_k1_a1234b1234",
+      "sampled_problem_gap_bound": 0.0,
+      "selected_outage_trace": "[[\"line_03_23\"],[\"line_23_24\"]]",
+      "separation_runtime_sec_total": 0.15444366699998113,
+      "solver_status": "OPTIMAL",
+      "stop_reason": "max_iterations",
+      "total_objective": 25169160.071633365,
+      "total_runtime_sec": 11.760968624999975,
+      "validation_level": "smoke_only",
+      "violation_sequence": "[12216.890000000101,10492.675000000047]",
+      "weighted_normal_term": 20904195.48599902
+    },
+    "type": "benders",
+    "violation_sequence": [
+      12216.890000000101,
+      10492.675000000047
+    ]
+  },
+  "exception": null,
+  "failure_record": {
+    "A_selected": "[1,2,3,4]",
+    "B_selected": "[1,2,3,4]",
+    "K": 1,
+    "case_name": "integrated_mainline",
+    "cut_count": 2,
+    "diagnosis_label": "max_iter_noncert",
+    "epsilon_cert": 0.0,
+    "final_violation_upper_bound": 10492.675000000047,
+    "iteration_count": 2,
+    "max_iterations": 2,
+    "message": "intentionally bounded smoke run with low iteration budget; lower-bound gain=1324.209; violation drop=1724.215; dominant runtime component: master-side; smoke_only result should not be promoted beyond directional diagnosis",
+    "parameter_regime": "runtime12_directional",
+    "run_id": "integrated_runtime12_exact_i2_k1_a1234b1234",
+    "sampled_problem_gap_bound": 0.0,
+    "solver_status": "OPTIMAL",
+    "stop_reason": "max_iterations",
+    "total_runtime_sec": 11.760968624999975,
+    "validation_level": "smoke_only"
+  },
+  "run_config": {
+    "benders": {
+      "epsilon_cert": 0.0,
+      "max_iterations": 2
+    },
+    "case_name": "integrated_mainline",
+    "family_name": "convergence_diagnostics",
+    "mode": "integrated_mainline",
+    "parameter_overrides": {
+      "ambiguity": {
+        "k_max_outages": 1
+      }
+    },
+    "parameter_regime": "runtime12_directional",
+    "run_id": "integrated_runtime12_exact_i2_k1_a1234b1234",
+    "runtime_source": "data/runtime_12",
+    "selection": {
+      "scenarios_a": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "scenarios_b": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "solver": "benders"
+  },
+  "summary": {
+    "A_selected": "[1,2,3,4]",
+    "B_selected": "[1,2,3,4]",
+    "K": 1,
+    "case_name": "integrated_mainline",
+    "construction_cost": 4264895.208537845,
+    "cut_count": 2,
+    "cut_efficacy_sequence": "[{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_001\",\"cut_signature\":\"71a93b85d7bb2e1b\",\"iteration_id\":0,\"old_master_violation\":12216.890000000014,\"plan_changed\":true,\"post_cut_master_objective_change\":1324.2086785435677,\"post_plan_signature\":[[3,20,5],[4,20,0],[5,20,2],[6,20,0],[9,20,0],[17,20,0],[18,20,0],[19,20,10],[20,20,10],[22,20,9],[25,20,0],[26,20,0],[27,20,0],[28,20,5],[29,20,0],[32,20,0],[33,20,0]],\"pre_plan_signature\":[[3,20,5],[4,20,0],[5,20,1],[6,20,0],[9,20,0],[17,20,0],[18,20,0],[19,20,10],[20,20,10],[22,20,10],[25,20,0],[26,20,0],[27,20,0],[28,20,5],[29,20,0],[32,20,0],[33,20,0]]}]",
+    "diagnosis_label": "max_iter_noncert",
+    "disaster_master_term": 69.3770964947454,
+    "dual_resolve_runtime_sec_total": 0.060710000000000264,
+    "epsilon_cert": 0.0,
+    "final_alpha": 0.0,
+    "final_lambda_times_FP": 693.770964947454,
+    "final_violation_upper_bound": 10492.675000000047,
+    "generated_cut_count": 1,
+    "iteration_count": 2,
+    "lower_bound_sequence": "[25167835.86295482,25169160.071633365]",
+    "master_runtime_sec_total": 6.99113324999999,
+    "max_iterations": 2,
+    "notes": "intentionally bounded smoke run with low iteration budget; lower-bound gain=1324.209; violation drop=1724.215; dominant runtime component: master-side; smoke_only result should not be promoted beyond directional diagnosis",
+    "parameter_regime": "runtime12_directional",
+    "repeated_cut_signature_flag": false,
+    "repeated_outage_flag": false,
+    "run_id": "integrated_runtime12_exact_i2_k1_a1234b1234",
+    "sampled_problem_gap_bound": 0.0,
+    "selected_outage_trace": "[[\"line_03_23\"],[\"line_23_24\"]]",
+    "separation_runtime_sec_total": 0.15444366699998113,
+    "solver_status": "OPTIMAL",
+    "stop_reason": "max_iterations",
+    "total_objective": 25169160.071633365,
+    "total_runtime_sec": 11.760968624999975,
+    "validation_level": "smoke_only",
+    "violation_sequence": "[12216.890000000101,10492.675000000047]",
+    "weighted_normal_term": 20904195.48599902
+  }
+}

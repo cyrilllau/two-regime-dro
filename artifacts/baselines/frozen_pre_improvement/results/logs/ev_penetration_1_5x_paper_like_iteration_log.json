@@ -1,0 +1,77 @@
+{
+  "certificate": {
+    "epsilon_cert": 20000.0,
+    "final_rmp_value": 17273788.20712779,
+    "final_violation_upper_bound": 3692.670000000391,
+    "sampled_problem_gap_bound": 6000.0
+  },
+  "cut_count_sequence": [
+    1
+  ],
+  "epsilon_cert": 20000.0,
+  "generated_cut_count": 0,
+  "iteration_count": 1,
+  "iterations": [
+    {
+      "active_cut_ids_after": [
+        "trivial_cut"
+      ],
+      "active_cut_ids_before": [
+        "trivial_cut"
+      ],
+      "construction_cost_value": 262853.6935867764,
+      "cut_generation_seconds": 0.0,
+      "first_stage_attached_objective_value": 17273788.20712779,
+      "first_stage_objective_is_pure_construction": false,
+      "generated_cut_id": null,
+      "generated_cut_old_master_violation": null,
+      "iteration_id": 0,
+      "master_solve_seconds": 0.4424626249999992,
+      "post_cut_master_objective": null,
+      "pre_cut_master_objective": 17273788.20712779,
+      "selected_outage_by_line_id": {
+        "line_01_02": 0,
+        "line_02_03": 0,
+        "line_02_19": 0,
+        "line_03_04": 0,
+        "line_03_23": 0,
+        "line_04_05": 0,
+        "line_05_06": 0,
+        "line_06_07": 0,
+        "line_06_26": 0,
+        "line_07_08": 0,
+        "line_08_09": 0,
+        "line_09_10": 0,
+        "line_10_11": 0,
+        "line_11_12": 1,
+        "line_12_13": 0,
+        "line_13_14": 0,
+        "line_14_15": 0,
+        "line_15_16": 0,
+        "line_16_17": 0,
+        "line_17_18": 0,
+        "line_19_20": 0,
+        "line_20_21": 0,
+        "line_21_22": 0,
+        "line_23_24": 1,
+        "line_24_25": 0,
+        "line_26_27": 0,
+        "line_27_28": 0,
+        "line_28_29": 0,
+        "line_29_30": 0,
+        "line_30_31": 0,
+        "line_31_32": 0,
+        "line_32_33": 0
+      },
+      "separation_solve_seconds": 0.0202084590000009,
+      "separation_violation_value": 3692.670000000391,
+      "stop_reason": "certified_epsilon",
+      "total_cut_count_after": 1,
+      "total_cut_count_before": 1
+    }
+  ],
+  "lower_bound_sequence": [
+    17273788.20712779
+  ],
+  "stop_reason": "certified_epsilon"
+}

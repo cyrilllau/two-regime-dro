@@ -1,0 +1,162 @@
+family_name: paper_like_tableII_family
+runs:
+  - run_id: integrated_mainline_paper_like
+    case_name: integrated_mainline_paper_like
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: integrated_mainline
+    solver: benders
+    parameter_regime: paper_like_tableII
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+    benders:
+      epsilon_cert: 20000.0
+      max_iterations: 5
+
+  - run_id: normal_only_paper_like
+    case_name: normal_only_paper_like
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: normal_only
+    solver: direct_master
+    parameter_regime: paper_like_tableII
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+
+  - run_id: disaster_only_paper_like
+    case_name: disaster_only_paper_like
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: disaster_only
+    solver: benders
+    parameter_regime: paper_like_tableII
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+    benders:
+      epsilon_cert: 20000.0
+      max_iterations: 5
+
+  - run_id: deterministic_mean_value_paper_like
+    case_name: deterministic_mean_value_paper_like
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: deterministic_mean_value
+    solver: benders
+    parameter_regime: paper_like_tableII
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+    benders:
+      epsilon_cert: 20000.0
+      max_iterations: 5
+
+  - run_id: ev_penetration_1_5x_paper_like
+    case_name: ev_penetration_1_5x_paper_like
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: integrated_mainline
+    solver: benders
+    parameter_regime: paper_like_tableII
+    ev_penetration_scale: 1.5
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+    benders:
+      epsilon_cert: 20000.0
+      max_iterations: 5
+
+  - run_id: ev_penetration_2_0x_paper_like
+    case_name: ev_penetration_2_0x_paper_like
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: integrated_mainline
+    solver: benders
+    parameter_regime: paper_like_tableII
+    ev_penetration_scale: 2.0
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+    benders:
+      epsilon_cert: 20000.0
+      max_iterations: 5

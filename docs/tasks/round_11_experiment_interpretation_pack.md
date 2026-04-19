@@ -32,7 +32,7 @@ Outputs produced by this round:
 - `results/plans/*.csv`
 - `results/figures/*.png`
 - `results/logs/*.json`
-- `reports/experiment_interpretation_pack.md`
+- `docs/analysis_packs/experiment_interpretation_pack.md`
 
 Optional smoke test / fixture for this round:
 - `tests/integration/test_experiment_pack_smoke.py`
@@ -218,7 +218,7 @@ Figure requirements:
 
 #### 5. Interpretation report
 Create:
-- `reports/experiment_interpretation_pack.md`
+- `docs/analysis_packs/experiment_interpretation_pack.md`
 
 This report must answer, explicitly:
 1. Does `integrated_mainline` trade a modest daily-cost increase for a resilience benefit?
@@ -276,7 +276,7 @@ You must return:
 5. `results/summary.csv`
 6. `results/plans/*.csv`
 7. `results/figures/*.png`
-8. `reports/experiment_interpretation_pack.md`
+8. `docs/analysis_packs/experiment_interpretation_pack.md`
 9. concise run summary including:
    - which runs are exact / epsilon-certified / smoke-only
    - the biggest integrated vs normal-only difference observed

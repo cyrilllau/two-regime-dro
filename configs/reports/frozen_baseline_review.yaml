@@ -1,0 +1,97 @@
+critical_buses:
+  - 2
+  - 5
+  - 8
+  - 11
+  - 14
+  - 17
+  - 20
+  - 23
+  - 26
+  - 29
+  - 32
+
+archive_root: artifacts/baselines/frozen_pre_improvement
+report_root: reports
+report_tex_path: reports/frozen_baseline_review_report.tex
+report_pdf_path: reports/frozen_baseline_review_report.pdf
+report_log_path: reports/frozen_baseline_review_report.log
+appendix_csv_path: reports/frozen_baseline_review_appendix.csv
+metadata_json_path: reports/frozen_baseline_review_metadata.json
+figures_dir: reports/figures/baseline
+tables_dir: reports/tables
+round_report_path: docs/reports/round_14_report.md
+
+round_reports:
+  - docs/reports/round_02_report.md
+  - docs/reports/round_03_report.md
+  - docs/reports/round_04_report.md
+  - docs/reports/round_05_report.md
+  - docs/reports/round_05_5_report.md
+  - docs/reports/round_06_report.md
+  - docs/reports/round_06_5_report.md
+  - docs/reports/round_07_report.md
+  - docs/reports/round_07_5_report.md
+  - docs/reports/round_08_report.md
+  - docs/reports/round_09_report.md
+  - docs/reports/round_10_report.md
+  - docs/reports/round_11_report.md
+  - docs/reports/round_12_report.md
+  - docs/reports/round_12_5_report.md
+  - docs/reports/round_13_report.md
+
+pack_sources:
+  experiment_interpretation: docs/analysis_packs/experiment_interpretation_pack.md
+  paper_style_experiment: docs/analysis_packs/paper_style_experiment_pack.md
+  convergence_diagnostic: docs/analysis_packs/convergence_diagnostic_pack.md
+  cut_process_diagnostic: reports/cut_process_diagnostic_pack.md
+
+current_outputs:
+  experiment_summary_csv: results/summary.csv
+  experiment_failures_csv: results/failures.csv
+  experiment_logs_dir: results/logs
+  experiment_plans_dir: results/plans
+  experiment_figures_dir: results/figures
+  convergence_summary_csv: results/convergence_diagnostics/summary.csv
+  convergence_failures_csv: results/convergence_diagnostics/failures.csv
+  convergence_logs_dir: results/convergence_diagnostics/logs
+  convergence_figures_dir: results/convergence_diagnostics/figures
+  cut_process_summary_csv: results/cut_process_diagnostics/summary.csv
+  cut_process_failures_csv: results/cut_process_diagnostics/failures.csv
+  cut_process_cut_csv: results/cut_process_diagnostics/cut_diagnostics.csv
+  cut_process_logs_dir: results/cut_process_diagnostics/logs
+  cut_process_lp_dir: results/cut_process_diagnostics/lp
+  cut_process_figures_dir: results/cut_process_diagnostics/figures
+
+selected_iteration_logs:
+  - results/logs/integrated_mainline_runtime12_iteration_log.json
+  - results/logs/integrated_mainline_paper_like_iteration_log.json
+  - results/convergence_diagnostics/logs/integrated_paper_like_exact_i20_k2_a1b1_iteration_log.json
+  - results/cut_process_diagnostics/logs/integrated_paper_like_exact_i20_k2_a1b1__baseline_iteration_log.json
+  - results/cut_process_diagnostics/logs/integrated_runtime12_exact_i3_k3_a1234b1234__baseline_iteration_log.json
+
+selected_lp_dumps:
+  - results/cut_process_diagnostics/lp/integrated_runtime12_exact_i3_k3_a1234b1234__baseline_master_before.lp
+  - results/cut_process_diagnostics/lp/integrated_runtime12_exact_i3_k3_a1234b1234__baseline_master_after.lp
+  - results/cut_process_diagnostics/lp/integrated_runtime12_exact_i3_k3_a1234b1234__improved_master_before.lp
+  - results/cut_process_diagnostics/lp/integrated_runtime12_exact_i3_k3_a1234b1234__improved_master_after.lp
+
+certified_small_family:
+  source_config: configs/experiments/certified_small_family.yaml
+  output_root: artifacts/baselines/frozen_pre_improvement/regenerated/certified_small
+
+anchors:
+  - anchor_id: certified_small_integrated
+    source_kind: regenerated_experiment
+    run_id: integrated_mainline_certified_small
+  - anchor_id: runtime12_integrated
+    source_kind: current_experiment
+    run_id: integrated_mainline_runtime12
+  - anchor_id: hard_exact_mode
+    source_kind: current_convergence
+    run_id: integrated_paper_like_exact_i20_k2_a1b1
+
+selected_trace_runs:
+  certified_or_small: integrated_mainline_certified_small
+  runtime_smoke: integrated_mainline_runtime12
+  hard_exact_noncert: integrated_paper_like_exact_i20_k2_a1b1

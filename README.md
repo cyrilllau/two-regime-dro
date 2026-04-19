@@ -117,8 +117,8 @@ These are the guardrails that keep the repo coherent:
   - plans
   - logs
   - figures
-- `reports/`
-  - interpretation packs intended for human review
+- `docs/analysis_packs/`
+  - interpretation / experiment / diagnostic packs intended for human review
 
 ### Tests
 
@@ -224,7 +224,7 @@ Default outputs:
 - `results/plans/*.csv`
 - `results/logs/*.json`
 - `results/figures/*.png`
-- `reports/experiment_interpretation_pack.md`
+- `docs/analysis_packs/paper_style_experiment_pack.md`
 
 ### Run a smoke manifest only
 
@@ -361,7 +361,7 @@ The current figure script writes:
 
 ### Interpretation pack
 
-[reports/experiment_interpretation_pack.md](/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/experiment_interpretation_pack.md) is the colleague-facing summary.
+[docs/analysis_packs/experiment_interpretation_pack.md](/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/docs/analysis_packs/experiment_interpretation_pack.md) is the colleague-facing summary.
 
 It is supposed to be:
 
@@ -438,7 +438,7 @@ Look at:
 
 - `results/summary.csv`
 - `results/logs/*.json`
-- `reports/experiment_interpretation_pack.md`
+- `docs/analysis_packs/paper_style_experiment_pack.md`
 
 Make sure:
 

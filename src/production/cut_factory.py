@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from typing import Mapping, Sequence
 
 from src.audit.cut_audit import GeneratedCutAuditRecord, build_cut_audit_record
@@ -41,6 +43,7 @@ from src.reference.outage_enumerator import (
 
 
 PAPER_DUAL_SIMPLEX_METHOD = 0
+CUT_SIGNATURE_TOLERANCE = 1e-9
 
 
 @dataclass(frozen=True)
@@ -53,6 +56,11 @@ class GeneratedCutResult:
     simplex_method: int
     support_value_at_source: float | None
     old_master_cut_violation: float | None
+    cut_signature_hash: str
+    gamma_z_nonzero_count: int
+    gamma_n_sl_nonzero_count: int
+    gamma_n_fa_nonzero_count: int
+    phi_nonzero_count: int
 
 
 @dataclass(frozen=True)
@@ -94,6 +102,72 @@ def _resolve_disaster_scenario_ids(
             f"{invalid}."
         )
     return selected
+
+
+def _stable_signature_payload(
+    cut: RestrictedMasterCut,
+    *,
+    atol: float = CUT_SIGNATURE_TOLERANCE,
+) -> dict[str, object]:
+    return {
+        "beta": round(float(cut.beta), 6),
+        "gamma_z_by_bus": {
+            str(bus): round(float(value), 6)
+            for bus, value in sorted(cut.gamma_z_by_bus.items())
+            if abs(float(value)) > atol
+        },
+        "gamma_n_sl_by_bus": {
+            str(bus): round(float(value), 6)
+            for bus, value in sorted(cut.gamma_n_sl_by_bus.items())
+            if abs(float(value)) > atol
+        },
+        "gamma_n_fa_by_bus": {
+            str(bus): round(float(value), 6)
+            for bus, value in sorted(cut.gamma_n_fa_by_bus.items())
+            if abs(float(value)) > atol
+        },
+        "phi_by_line_id": {
+            str(line_id): round(float(value), 6)
+            for line_id, value in sorted(cut.phi_by_line_id.items())
+            if abs(float(value)) > atol
+        },
+    }
+
+
+def compute_cut_signature_hash(
+    cut: RestrictedMasterCut,
+    *,
+    atol: float = CUT_SIGNATURE_TOLERANCE,
+) -> str:
+    """Return a stable signature hash for one structured cut, ignoring `cut_id`."""
+
+    payload = _stable_signature_payload(cut, atol=atol)
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()[:16]
+
+
+def compute_cut_nonzero_counts(
+    cut: RestrictedMasterCut,
+    *,
+    atol: float = CUT_SIGNATURE_TOLERANCE,
+) -> dict[str, int]:
+    """Return the nonzero coefficient counts for the structured cut blocks."""
+
+    return {
+        "gamma_z_nonzero_count": sum(
+            1 for value in cut.gamma_z_by_bus.values() if abs(float(value)) > atol
+        ),
+        "gamma_n_sl_nonzero_count": sum(
+            1 for value in cut.gamma_n_sl_by_bus.values() if abs(float(value)) > atol
+        ),
+        "gamma_n_fa_nonzero_count": sum(
+            1 for value in cut.gamma_n_fa_by_bus.values() if abs(float(value)) > atol
+        ),
+        "phi_nonzero_count": sum(
+            1 for value in cut.phi_by_line_id.values() if abs(float(value)) > atol
+        ),
+    }
 
 
 def _normalize_lambda_by_line_id(
@@ -270,6 +344,8 @@ def generate_structured_cut(
         cut_id=cut_id,
         samplewise_decompositions_by_scenario=samplewise_decompositions_by_scenario,
     )
+    cut_signature_hash = compute_cut_signature_hash(cut)
+    nonzero_counts = compute_cut_nonzero_counts(cut)
     support_value_at_source = None
     old_master_cut_violation = None
     if source_alpha is not None:
@@ -296,6 +372,11 @@ def generate_structured_cut(
             if source_violation_value is not None
             else old_master_cut_violation
         ),
+        cut_signature_hash=cut_signature_hash,
+        gamma_z_nonzero_count=nonzero_counts["gamma_z_nonzero_count"],
+        gamma_n_sl_nonzero_count=nonzero_counts["gamma_n_sl_nonzero_count"],
+        gamma_n_fa_nonzero_count=nonzero_counts["gamma_n_fa_nonzero_count"],
+        phi_nonzero_count=nonzero_counts["phi_nonzero_count"],
         samplewise_decompositions_by_scenario=samplewise_decompositions_by_scenario,
         samplewise_objective_by_scenario=samplewise_objective_by_scenario,
         aggregated_cut=cut,
@@ -307,6 +388,11 @@ def generate_structured_cut(
         simplex_method=PAPER_DUAL_SIMPLEX_METHOD,
         support_value_at_source=support_value_at_source,
         old_master_cut_violation=old_master_cut_violation,
+        cut_signature_hash=cut_signature_hash,
+        gamma_z_nonzero_count=nonzero_counts["gamma_z_nonzero_count"],
+        gamma_n_sl_nonzero_count=nonzero_counts["gamma_n_sl_nonzero_count"],
+        gamma_n_fa_nonzero_count=nonzero_counts["gamma_n_fa_nonzero_count"],
+        phi_nonzero_count=nonzero_counts["phi_nonzero_count"],
     )
 
 

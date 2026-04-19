@@ -1,0 +1,5 @@
+critical_buses_config: configs/critical_buses_paper_fig2.yaml
+baseline_dir: artifacts/baselines/round_12
+output_root: results/convergence_diagnostics
+report_path: docs/analysis_packs/convergence_diagnostic_pack.md
+matrix_include: configs/experiments/convergence_diagnostic_matrix.yaml

@@ -1,0 +1,56 @@
+family_name: runtime12_directional_family
+runs:
+  - run_id: integrated_mainline_runtime12
+    case_name: integrated_mainline_runtime12
+    runtime_source: data/runtime_12
+    selection_preset: default_small
+    mode: integrated_mainline
+    solver: benders
+    parameter_regime: runtime12_directional
+    benders:
+      epsilon_cert: 0.0
+      max_iterations: 2
+      capture_artifacts: true
+
+  - run_id: normal_only_runtime12
+    case_name: normal_only_runtime12
+    runtime_source: data/runtime_12
+    selection_preset: default_small
+    mode: normal_only
+    solver: direct_master
+    parameter_regime: runtime12_directional
+
+  - run_id: deterministic_mean_value_runtime12
+    case_name: deterministic_mean_value_runtime12
+    runtime_source: data/runtime_12
+    selection_preset: default_small
+    mode: deterministic_mean_value
+    solver: benders
+    parameter_regime: runtime12_directional
+    benders:
+      epsilon_cert: 0.0
+      max_iterations: 2
+
+  - run_id: ev_penetration_1_5x_runtime12
+    case_name: ev_penetration_1_5x_runtime12
+    runtime_source: data/runtime_12
+    selection_preset: default_small
+    mode: integrated_mainline
+    solver: benders
+    parameter_regime: runtime12_directional
+    ev_penetration_scale: 1.5
+    benders:
+      epsilon_cert: 0.0
+      max_iterations: 2
+
+  - run_id: ev_penetration_2_0x_runtime12
+    case_name: ev_penetration_2_0x_runtime12
+    runtime_source: data/runtime_12
+    selection_preset: default_small
+    mode: integrated_mainline
+    solver: benders
+    parameter_regime: runtime12_directional
+    ev_penetration_scale: 2.0
+    benders:
+      epsilon_cert: 0.0
+      max_iterations: 2

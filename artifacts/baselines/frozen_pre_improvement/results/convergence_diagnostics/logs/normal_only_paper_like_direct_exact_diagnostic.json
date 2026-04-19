@@ -1,0 +1,113 @@
+{
+  "diagnostics": {
+    "summary": {
+      "A_selected": "[1]",
+      "B_selected": "[1]",
+      "K": 2,
+      "case_name": "normal_only_paper_like_direct_exact",
+      "construction_cost": 171760.06442104536,
+      "cut_count": 1,
+      "cut_efficacy_sequence": "[]",
+      "diagnosis_label": "exact_zero",
+      "disaster_master_term": 0.0,
+      "dual_resolve_runtime_sec_total": 0.0,
+      "epsilon_cert": 0.0,
+      "final_alpha": 0.0,
+      "final_lambda_times_FP": 0.0,
+      "final_violation_upper_bound": 0.0,
+      "generated_cut_count": 0,
+      "iteration_count": 0,
+      "lower_bound_sequence": "[]",
+      "master_runtime_sec_total": 0.6253994169999999,
+      "max_iterations": 0,
+      "notes": "direct master baseline; no Benders separation or cut generation",
+      "parameter_regime": "paper_like_tableII",
+      "repeated_cut_signature_flag": false,
+      "repeated_outage_flag": false,
+      "run_id": "normal_only_paper_like_direct_exact",
+      "sampled_problem_gap_bound": 0.0,
+      "selected_outage_trace": "[]",
+      "separation_runtime_sec_total": 0.0,
+      "solver_status": "OPTIMAL",
+      "stop_reason": "direct_optimal",
+      "total_objective": 18793795.328542694,
+      "total_runtime_sec": 0.6253994169999999,
+      "validation_level": "exact",
+      "violation_sequence": "[]",
+      "weighted_normal_term": 18622035.264121648
+    },
+    "type": "direct_master"
+  },
+  "exception": null,
+  "failure_record": null,
+  "run_config": {
+    "case_name": "normal_only_paper_like_direct_exact",
+    "family_name": "convergence_diagnostics",
+    "mode": "normal_only",
+    "parameter_overrides": {
+      "economics": {
+        "ccons_fa": 25000.0,
+        "ccons_sl": 540.07,
+        "cfix": 153600.0,
+        "ctrans_scalar": 0.0435,
+        "gamma": 0.01,
+        "pi_f": 0.3,
+        "theta": 20
+      },
+      "ev": {
+        "nbar_fa": 10,
+        "nbar_sl": 25,
+        "p_ev_rated_fa": 50.0,
+        "p_ev_rated_sl": 7.0
+      }
+    },
+    "parameter_regime": "paper_like_tableII",
+    "run_id": "normal_only_paper_like_direct_exact",
+    "runtime_source": "data/runtime_12",
+    "selection": {
+      "scenarios_a": [
+        1
+      ],
+      "scenarios_b": [
+        1
+      ]
+    },
+    "solver": "direct_master"
+  },
+  "summary": {
+    "A_selected": "[1]",
+    "B_selected": "[1]",
+    "K": 2,
+    "case_name": "normal_only_paper_like_direct_exact",
+    "construction_cost": 171760.06442104536,
+    "cut_count": 1,
+    "cut_efficacy_sequence": "[]",
+    "diagnosis_label": "exact_zero",
+    "disaster_master_term": 0.0,
+    "dual_resolve_runtime_sec_total": 0.0,
+    "epsilon_cert": 0.0,
+    "final_alpha": 0.0,
+    "final_lambda_times_FP": 0.0,
+    "final_violation_upper_bound": 0.0,
+    "generated_cut_count": 0,
+    "iteration_count": 0,
+    "lower_bound_sequence": "[]",
+    "master_runtime_sec_total": 0.6253994169999999,
+    "max_iterations": 0,
+    "notes": "direct master baseline; no Benders separation or cut generation",
+    "parameter_regime": "paper_like_tableII",
+    "repeated_cut_signature_flag": false,
+    "repeated_outage_flag": false,
+    "run_id": "normal_only_paper_like_direct_exact",
+    "sampled_problem_gap_bound": 0.0,
+    "selected_outage_trace": "[]",
+    "separation_runtime_sec_total": 0.0,
+    "solver_status": "OPTIMAL",
+    "stop_reason": "direct_optimal",
+    "total_objective": 18793795.328542694,
+    "total_runtime_sec": 0.6253994169999999,
+    "validation_level": "exact",
+    "violation_sequence": "[]",
+    "weighted_normal_term": 18622035.264121648
+  }
+}

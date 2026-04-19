@@ -1,30 +1,56 @@
 critical_buses_config: configs/critical_buses_paper_fig2.yaml
 output_root: results
-report_path: reports/experiment_interpretation_pack.md
+report_path: docs/analysis_packs/paper_style_experiment_pack.md
 runs:
-  - run_id: integrated_mainline_certified_small_smoke
+  - run_id: integrated_mainline_paper_like_smoke
     family_name: smoke_family
-    case_name: integrated_mainline_certified_small_smoke
+    case_name: integrated_mainline_paper_like_smoke
     runtime_source: data/runtime_12
     selection:
       scenarios_a: [1]
       scenarios_b: [1]
     mode: integrated_mainline
     solver: benders
-    parameter_regime: base
-    expected_validation_level: epsilon_certified
+    parameter_regime: paper_like_tableII
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
     benders:
       epsilon_cert: 20000.0
       max_iterations: 2
 
-  - run_id: normal_only_certified_small_smoke
+  - run_id: normal_only_paper_like_smoke
     family_name: smoke_family
-    case_name: normal_only_certified_small_smoke
+    case_name: normal_only_paper_like_smoke
     runtime_source: data/runtime_12
     selection:
       scenarios_a: [1]
       scenarios_b: [1]
     mode: normal_only
     solver: direct_master
-    parameter_regime: normal_only
-    expected_validation_level: exact
+    parameter_regime: paper_like_tableII
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10

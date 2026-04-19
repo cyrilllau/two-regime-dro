@@ -17,12 +17,25 @@ class BendersIterationRecord:
     post_cut_master_objective: float | None
     separation_violation_value: float
     selected_outage_by_line_id: dict[str, int] = field(default_factory=dict)
+    selected_outage_active_lines: tuple[str, ...] = field(default_factory=tuple)
+    repeated_outage_flag: bool = False
     generated_cut_id: str | None = None
+    generated_cut_signature_hash: str | None = None
+    repeated_cut_signature_flag: bool = False
     active_cut_ids_before: tuple[str, ...] = field(default_factory=tuple)
     active_cut_ids_after: tuple[str, ...] = field(default_factory=tuple)
     total_cut_count_before: int = 0
     total_cut_count_after: int = 0
     generated_cut_old_master_violation: float | None = None
+    post_cut_master_objective_change: float | None = None
+    first_stage_plan_changed: bool | None = None
+    alpha_lambda_only_change: bool | None = None
+    cut_added: bool = False
+    cut_addition_status: str | None = None
+    gamma_z_nonzero_count: int | None = None
+    gamma_n_sl_nonzero_count: int | None = None
+    gamma_n_fa_nonzero_count: int | None = None
+    phi_nonzero_count: int | None = None
     construction_cost_value: float = 0.0
     first_stage_attached_objective_value: float | None = None
     first_stage_objective_is_pure_construction: bool = False

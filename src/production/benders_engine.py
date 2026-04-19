@@ -23,6 +23,7 @@ from src.instance.canonical_instance import CanonicalInstance
 from src.instance.validators import RuntimeDataValidationError
 from src.production.cut_factory import (
     GeneratedCutResult,
+    compute_cut_signature_hash,
     generate_cut_from_separation_solution,
 )
 from src.production.master_problem import (
@@ -95,10 +96,44 @@ def _make_generated_cut_id(prefix: str, index: int) -> str:
     return f"{prefix}_{index:03d}"
 
 
+def _active_outage_lines(delta_by_line_id: dict[str, int]) -> tuple[str, ...]:
+    return tuple(sorted(line_id for line_id, value in delta_by_line_id.items() if int(value) == 1))
+
+
+def _plan_signature(
+    solution: RestrictedMasterProblemSolution,
+) -> tuple[tuple[int, int, int, int], ...]:
+    first_stage = solution.first_stage_solution
+    return tuple(
+        (
+            int(bus),
+            int(first_stage.z_by_bus[bus]),
+            int(first_stage.n_sl_by_bus[bus]),
+            int(first_stage.n_fa_by_bus[bus]),
+        )
+        for bus in sorted(first_stage.z_by_bus)
+    )
+
+
+def _alpha_lambda_signature(
+    solution: RestrictedMasterProblemSolution,
+) -> tuple[float, tuple[tuple[str, float], ...]]:
+    return (
+        round(float(solution.alpha_value), 8),
+        tuple(
+            (str(line_id), round(float(value), 8))
+            for line_id, value in sorted(solution.lambda_by_line_id.items())
+            if abs(float(value)) > 1e-9
+        ),
+    )
+
+
 def _copy_iteration_record(
     record: BendersIterationRecord,
     *,
     post_cut_master_objective: float | None,
+    first_stage_plan_changed: bool | None,
+    alpha_lambda_only_change: bool | None,
 ) -> BendersIterationRecord:
     return BendersIterationRecord(
         iteration_id=record.iteration_id,
@@ -106,12 +141,29 @@ def _copy_iteration_record(
         post_cut_master_objective=post_cut_master_objective,
         separation_violation_value=record.separation_violation_value,
         selected_outage_by_line_id=dict(record.selected_outage_by_line_id),
+        selected_outage_active_lines=tuple(record.selected_outage_active_lines),
+        repeated_outage_flag=bool(record.repeated_outage_flag),
         generated_cut_id=record.generated_cut_id,
+        generated_cut_signature_hash=record.generated_cut_signature_hash,
+        repeated_cut_signature_flag=bool(record.repeated_cut_signature_flag),
         active_cut_ids_before=tuple(record.active_cut_ids_before),
         active_cut_ids_after=tuple(record.active_cut_ids_after),
         total_cut_count_before=record.total_cut_count_before,
         total_cut_count_after=record.total_cut_count_after,
         generated_cut_old_master_violation=record.generated_cut_old_master_violation,
+        post_cut_master_objective_change=(
+            None
+            if post_cut_master_objective is None
+            else float(post_cut_master_objective - record.pre_cut_master_objective)
+        ),
+        first_stage_plan_changed=first_stage_plan_changed,
+        alpha_lambda_only_change=alpha_lambda_only_change,
+        cut_added=bool(record.cut_added),
+        cut_addition_status=record.cut_addition_status,
+        gamma_z_nonzero_count=record.gamma_z_nonzero_count,
+        gamma_n_sl_nonzero_count=record.gamma_n_sl_nonzero_count,
+        gamma_n_fa_nonzero_count=record.gamma_n_fa_nonzero_count,
+        phi_nonzero_count=record.phi_nonzero_count,
         construction_cost_value=record.construction_cost_value,
         first_stage_attached_objective_value=record.first_stage_attached_objective_value,
         first_stage_objective_is_pure_construction=record.first_stage_objective_is_pure_construction,
@@ -132,6 +184,8 @@ def run_benders_engine(
     omega_bound_safety_factor: float = 2.0,
     epsilon_cert: float = 0.0,
     max_iterations: int = 25,
+    enable_cut_signature_dedup: bool = False,
+    enable_repeated_outage_guard: bool = False,
     generated_cut_prefix: str = "generated_cut",
     model_name_prefix: str = "round_09_benders",
     master_before_cut_lp_path: str | Path | None = None,
@@ -149,9 +203,13 @@ def run_benders_engine(
     lower_bound_sequence: list[float] = []
     cut_count_sequence: list[int] = []
     pending_post_cut_record_index: int | None = None
+    pending_pre_cut_solution: RestrictedMasterProblemSolution | None = None
     baseline_cut_count: int | None = None
     dumped_before_path: Path | None = None
     dumped_after_path: Path | None = None
+    seen_outage_patterns: set[tuple[str, ...]] = set()
+    seen_cut_signatures: set[str] = set()
+    seen_cut_signatures.update(compute_cut_signature_hash(cut) for cut in current_cuts)
 
     final_master: RestrictedMasterProblem | None = None
     final_solution: RestrictedMasterProblemSolution | None = None
@@ -175,11 +233,23 @@ def run_benders_engine(
         if baseline_cut_count is None:
             baseline_cut_count = len(master_problem.cuts)
         if pending_post_cut_record_index is not None:
+            if pending_pre_cut_solution is None:
+                raise RuntimeDataValidationError("Missing pending pre-cut solution state.")
+            pre_plan_signature = _plan_signature(pending_pre_cut_solution)
+            post_plan_signature = _plan_signature(master_solution)
+            first_stage_plan_changed = pre_plan_signature != post_plan_signature
+            alpha_lambda_changed = (
+                _alpha_lambda_signature(pending_pre_cut_solution)
+                != _alpha_lambda_signature(master_solution)
+            )
             iteration_records[pending_post_cut_record_index] = _copy_iteration_record(
                 iteration_records[pending_post_cut_record_index],
                 post_cut_master_objective=float(master_solution.objective_value or 0.0),
+                first_stage_plan_changed=first_stage_plan_changed,
+                alpha_lambda_only_change=(not first_stage_plan_changed) and alpha_lambda_changed,
             )
             pending_post_cut_record_index = None
+            pending_pre_cut_solution = None
         if dumped_before_path is None and master_before_cut_lp_path is not None:
             dumped_before_path = dump_model_artifact(master_problem, master_before_cut_lp_path)
         if (
@@ -222,6 +292,9 @@ def run_benders_engine(
         lower_bound_value = float(master_solution.objective_value or 0.0)
         violation_value = max(0.0, float(separation_solution.objective_value or 0.0))
         active_cut_ids_before = tuple(cut.cut_id for cut in master_problem.cuts)
+        selected_outage_active_lines = _active_outage_lines(separation_solution.delta_by_line_id)
+        repeated_outage_flag = selected_outage_active_lines in seen_outage_patterns
+        seen_outage_patterns.add(selected_outage_active_lines)
 
         final_master = master_problem
         final_solution = master_solution
@@ -245,12 +318,16 @@ def run_benders_engine(
                     post_cut_master_objective=None,
                     separation_violation_value=violation_value,
                     selected_outage_by_line_id=dict(separation_solution.delta_by_line_id),
+                    selected_outage_active_lines=selected_outage_active_lines,
+                    repeated_outage_flag=repeated_outage_flag,
                     generated_cut_id=None,
                     active_cut_ids_before=active_cut_ids_before,
                     active_cut_ids_after=active_cut_ids_before,
                     total_cut_count_before=len(master_problem.cuts),
                     total_cut_count_after=len(master_problem.cuts),
                     generated_cut_old_master_violation=None,
+                    cut_added=False,
+                    cut_addition_status="certified_stop",
                     construction_cost_value=float(master_solution.construction_cost_value),
                     first_stage_attached_objective_value=master_solution.first_stage_solution.objective_value,
                     first_stage_objective_is_pure_construction=bool(
@@ -273,12 +350,16 @@ def run_benders_engine(
                     post_cut_master_objective=None,
                     separation_violation_value=violation_value,
                     selected_outage_by_line_id=dict(separation_solution.delta_by_line_id),
+                    selected_outage_active_lines=selected_outage_active_lines,
+                    repeated_outage_flag=repeated_outage_flag,
                     generated_cut_id=None,
                     active_cut_ids_before=active_cut_ids_before,
                     active_cut_ids_after=active_cut_ids_before,
                     total_cut_count_before=len(master_problem.cuts),
                     total_cut_count_after=len(master_problem.cuts),
                     generated_cut_old_master_violation=None,
+                    cut_added=False,
+                    cut_addition_status="max_iterations_stop",
                     construction_cost_value=float(master_solution.construction_cost_value),
                     first_stage_attached_objective_value=master_solution.first_stage_solution.objective_value,
                     first_stage_objective_is_pure_construction=bool(
@@ -308,7 +389,23 @@ def run_benders_engine(
         )
         cut_seconds = perf_counter() - cut_start
         generated_cut_results.append(generated_cut_result)
-        current_cuts = list(master_problem.cuts) + [generated_cut_result.cut]
+        repeated_cut_signature_flag = generated_cut_result.cut_signature_hash in seen_cut_signatures
+        cut_added = True
+        cut_addition_status = "added"
+        stop_after_duplicate = False
+        if enable_cut_signature_dedup and repeated_cut_signature_flag:
+            cut_added = False
+            cut_addition_status = (
+                "repeated_outage_duplicate_cut"
+                if enable_repeated_outage_guard and repeated_outage_flag
+                else "duplicate_cut_signature"
+            )
+            stop_after_duplicate = True
+            stop_reason = cut_addition_status
+            current_cuts = list(master_problem.cuts)
+        else:
+            current_cuts = list(master_problem.cuts) + [generated_cut_result.cut]
+            seen_cut_signatures.add(generated_cut_result.cut_signature_hash)
 
         iteration_records.append(
             BendersIterationRecord(
@@ -317,12 +414,22 @@ def run_benders_engine(
                 post_cut_master_objective=None,
                 separation_violation_value=violation_value,
                 selected_outage_by_line_id=dict(separation_solution.delta_by_line_id),
+                selected_outage_active_lines=selected_outage_active_lines,
+                repeated_outage_flag=repeated_outage_flag,
                 generated_cut_id=generated_cut_result.cut.cut_id,
+                generated_cut_signature_hash=generated_cut_result.cut_signature_hash,
+                repeated_cut_signature_flag=repeated_cut_signature_flag,
                 active_cut_ids_before=active_cut_ids_before,
                 active_cut_ids_after=tuple(cut.cut_id for cut in current_cuts),
                 total_cut_count_before=len(master_problem.cuts),
                 total_cut_count_after=len(current_cuts),
                 generated_cut_old_master_violation=generated_cut_result.old_master_cut_violation,
+                cut_added=cut_added,
+                cut_addition_status=cut_addition_status,
+                gamma_z_nonzero_count=generated_cut_result.gamma_z_nonzero_count,
+                gamma_n_sl_nonzero_count=generated_cut_result.gamma_n_sl_nonzero_count,
+                gamma_n_fa_nonzero_count=generated_cut_result.gamma_n_fa_nonzero_count,
+                phi_nonzero_count=generated_cut_result.phi_nonzero_count,
                 construction_cost_value=float(master_solution.construction_cost_value),
                 first_stage_attached_objective_value=master_solution.first_stage_solution.objective_value,
                 first_stage_objective_is_pure_construction=bool(
@@ -331,10 +438,13 @@ def run_benders_engine(
                 master_solve_seconds=float(master_seconds),
                 separation_solve_seconds=float(separation_seconds),
                 cut_generation_seconds=float(cut_seconds),
-                stop_reason=None,
+                stop_reason=stop_reason if stop_after_duplicate else None,
             )
         )
+        if stop_after_duplicate:
+            break
         pending_post_cut_record_index = len(iteration_records) - 1
+        pending_pre_cut_solution = master_solution
 
     if final_master is None or final_solution is None or final_residual is None:
         raise RuntimeDataValidationError("Benders engine produced no master solve.")

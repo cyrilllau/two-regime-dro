@@ -1,6 +1,6 @@
 critical_buses_config: configs/critical_buses_paper_fig2.yaml
 output_root: results
-report_path: reports/experiment_interpretation_pack.md
+report_path: docs/analysis_packs/paper_style_experiment_pack.md
 families:
-  - include: configs/experiments/certified_small_family.yaml
-  - include: configs/experiments/runtime12_smoke_family.yaml
+  - include: configs/experiments/paper_like_tableII_family.yaml
+  - include: configs/experiments/runtime12_directional_family.yaml

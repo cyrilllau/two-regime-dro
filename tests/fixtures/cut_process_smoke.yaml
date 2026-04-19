@@ -1,0 +1,95 @@
+runs:
+  - comparison_group: smoke_integrated_eps20000_i2_k2_a1b1
+    variant: baseline
+    run_id: smoke_integrated_eps20000_i2_k2_a1b1__baseline
+    case_name: integrated_paper_like_exact
+    parameter_regime: paper_like_exact
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: integrated_mainline
+    solver: benders
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+    benders:
+      epsilon_cert: 20000.0
+      max_iterations: 2
+      enable_cut_signature_dedup: false
+      enable_repeated_outage_guard: false
+
+  - comparison_group: smoke_integrated_eps20000_i2_k2_a1b1
+    variant: improved
+    run_id: smoke_integrated_eps20000_i2_k2_a1b1__improved
+    case_name: integrated_paper_like_exact
+    parameter_regime: paper_like_exact
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: integrated_mainline
+    solver: benders
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+    benders:
+      epsilon_cert: 20000.0
+      max_iterations: 2
+      enable_cut_signature_dedup: true
+      enable_repeated_outage_guard: true
+
+  - comparison_group: smoke_disaster_only_exact_i2_k2_a1b1
+    variant: baseline
+    run_id: smoke_disaster_only_exact_i2_k2_a1b1__baseline
+    case_name: disaster_only_paper_like_exact
+    parameter_regime: paper_like_exact
+    runtime_source: data/runtime_12
+    selection:
+      scenarios_a: [1]
+      scenarios_b: [1]
+    mode: disaster_only
+    solver: benders
+    parameter_overrides:
+      economics:
+        cfix: 153600.0
+        ccons_sl: 540.07
+        ccons_fa: 25000.0
+        ctrans_scalar: 0.0435
+        gamma: 0.01
+        theta: 20
+        pi_f: 0.3
+      ev:
+        p_ev_rated_sl: 7.0
+        p_ev_rated_fa: 50.0
+        nbar_sl: 25
+        nbar_fa: 10
+      ambiguity:
+        k_max_outages: 2
+    benders:
+      epsilon_cert: 0.0
+      max_iterations: 2
+      enable_cut_signature_dedup: false
+      enable_repeated_outage_guard: false

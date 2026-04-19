@@ -1,0 +1,640 @@
+{
+  "diagnostics": {
+    "cut_count_sequence": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "cut_efficacy_sequence": [
+      {
+        "alpha_lambda_only": true,
+        "cut_id": "generated_cut_001",
+        "cut_signature": "04284b1dfaca16a8",
+        "iteration_id": 0,
+        "old_master_violation": 151547.58000000287,
+        "plan_changed": false,
+        "post_cut_master_objective_change": 23625.851866569337,
+        "post_plan_signature": [],
+        "pre_plan_signature": []
+      },
+      {
+        "alpha_lambda_only": false,
+        "cut_id": "generated_cut_002",
+        "cut_signature": "240ff0161476698e",
+        "iteration_id": 1,
+        "old_master_violation": 129365.41000000201,
+        "plan_changed": true,
+        "post_cut_master_objective_change": 2067.6952655529167,
+        "post_plan_signature": [
+          [
+            30,
+            25,
+            10
+          ]
+        ],
+        "pre_plan_signature": []
+      },
+      {
+        "alpha_lambda_only": false,
+        "cut_id": "generated_cut_003",
+        "cut_signature": "4525023f49fa1ccd",
+        "iteration_id": 2,
+        "old_master_violation": 50455.2200000009,
+        "plan_changed": true,
+        "post_cut_master_objective_change": 0.0,
+        "post_plan_signature": [
+          [
+            8,
+            25,
+            10
+          ]
+        ],
+        "pre_plan_signature": [
+          [
+            30,
+            25,
+            10
+          ]
+        ]
+      },
+      {
+        "alpha_lambda_only": false,
+        "cut_id": "generated_cut_004",
+        "cut_signature": "b4337d3cdfd5f526",
+        "iteration_id": 3,
+        "old_master_violation": 45091.53000000003,
+        "plan_changed": true,
+        "post_cut_master_objective_change": 3393.5267107963555,
+        "post_plan_signature": [
+          [
+            33,
+            25,
+            10
+          ]
+        ],
+        "pre_plan_signature": [
+          [
+            8,
+            25,
+            10
+          ]
+        ]
+      }
+    ],
+    "generated_cut_ids": [
+      "generated_cut_001",
+      "generated_cut_002",
+      "generated_cut_003",
+      "generated_cut_004"
+    ],
+    "generated_cut_signatures": {
+      "generated_cut_001": "04284b1dfaca16a8",
+      "generated_cut_002": "240ff0161476698e",
+      "generated_cut_003": "4525023f49fa1ccd",
+      "generated_cut_004": "b4337d3cdfd5f526"
+    },
+    "iteration_artifact": {
+      "certificate": {
+        "epsilon_cert": 0.0,
+        "final_rmp_value": 29087.07384291861,
+        "final_violation_upper_bound": 46818.8099999954,
+        "sampled_problem_gap_bound": 0.0
+      },
+      "cut_count_sequence": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "epsilon_cert": 0.0,
+      "generated_cut_count": 4,
+      "iteration_count": 5,
+      "iterations": [
+        {
+          "active_cut_ids_after": [
+            "trivial_cut",
+            "generated_cut_001"
+          ],
+          "active_cut_ids_before": [
+            "trivial_cut"
+          ],
+          "construction_cost_value": 0.0,
+          "cut_generation_seconds": 0.01526737499997921,
+          "first_stage_attached_objective_value": 0.0,
+          "first_stage_objective_is_pure_construction": false,
+          "generated_cut_id": "generated_cut_001",
+          "generated_cut_old_master_violation": 151547.58000000287,
+          "iteration_id": 0,
+          "master_solve_seconds": 0.19124608300001,
+          "post_cut_master_objective": 23625.851866569337,
+          "pre_cut_master_objective": 0.0,
+          "selected_outage_by_line_id": {
+            "line_01_02": 1,
+            "line_02_03": 0,
+            "line_02_19": 0,
+            "line_03_04": 0,
+            "line_03_23": 0,
+            "line_04_05": 0,
+            "line_05_06": 0,
+            "line_06_07": 0,
+            "line_06_26": 0,
+            "line_07_08": 0,
+            "line_08_09": 0,
+            "line_09_10": 0,
+            "line_10_11": 0,
+            "line_11_12": 0,
+            "line_12_13": 0,
+            "line_13_14": 0,
+            "line_14_15": 0,
+            "line_15_16": 0,
+            "line_16_17": 0,
+            "line_17_18": 0,
+            "line_19_20": 0,
+            "line_20_21": 0,
+            "line_21_22": 0,
+            "line_23_24": 0,
+            "line_24_25": 0,
+            "line_26_27": 0,
+            "line_27_28": 0,
+            "line_28_29": 0,
+            "line_29_30": 0,
+            "line_30_31": 0,
+            "line_31_32": 0,
+            "line_32_33": 0
+          },
+          "separation_solve_seconds": 0.02240175000000022,
+          "separation_violation_value": 151547.57999999914,
+          "stop_reason": null,
+          "total_cut_count_after": 2,
+          "total_cut_count_before": 1
+        },
+        {
+          "active_cut_ids_after": [
+            "trivial_cut",
+            "generated_cut_001",
+            "generated_cut_002"
+          ],
+          "active_cut_ids_before": [
+            "trivial_cut",
+            "generated_cut_001"
+          ],
+          "construction_cost_value": 0.0,
+          "cut_generation_seconds": 0.016994875000023058,
+          "first_stage_attached_objective_value": 23625.851866569337,
+          "first_stage_objective_is_pure_construction": false,
+          "generated_cut_id": "generated_cut_002",
+          "generated_cut_old_master_violation": 129365.41000000201,
+          "iteration_id": 1,
+          "master_solve_seconds": 0.21686574999998243,
+          "post_cut_master_objective": 25693.547132122254,
+          "pre_cut_master_objective": 23625.851866569337,
+          "selected_outage_by_line_id": {
+            "line_01_02": 0,
+            "line_02_03": 1,
+            "line_02_19": 0,
+            "line_03_04": 0,
+            "line_03_23": 0,
+            "line_04_05": 0,
+            "line_05_06": 0,
+            "line_06_07": 0,
+            "line_06_26": 0,
+            "line_07_08": 0,
+            "line_08_09": 0,
+            "line_09_10": 0,
+            "line_10_11": 0,
+            "line_11_12": 0,
+            "line_12_13": 0,
+            "line_13_14": 0,
+            "line_14_15": 0,
+            "line_15_16": 0,
+            "line_16_17": 0,
+            "line_17_18": 0,
+            "line_19_20": 0,
+            "line_20_21": 0,
+            "line_21_22": 0,
+            "line_23_24": 0,
+            "line_24_25": 0,
+            "line_26_27": 0,
+            "line_27_28": 0,
+            "line_28_29": 0,
+            "line_29_30": 0,
+            "line_30_31": 0,
+            "line_31_32": 0,
+            "line_32_33": 0
+          },
+          "separation_solve_seconds": 0.025988374999997177,
+          "separation_violation_value": 129365.40999999922,
+          "stop_reason": null,
+          "total_cut_count_after": 3,
+          "total_cut_count_before": 2
+        },
+        {
+          "active_cut_ids_after": [
+            "trivial_cut",
+            "generated_cut_001",
+            "generated_cut_002",
+            "generated_cut_003"
+          ],
+          "active_cut_ids_before": [
+            "trivial_cut",
+            "generated_cut_001",
+            "generated_cut_002"
+          ],
+          "construction_cost_value": 23113.82481765002,
+          "cut_generation_seconds": 0.015837458000021343,
+          "first_stage_attached_objective_value": 25693.547132122254,
+          "first_stage_objective_is_pure_construction": false,
+          "generated_cut_id": "generated_cut_003",
+          "generated_cut_old_master_violation": 50455.2200000009,
+          "iteration_id": 2,
+          "master_solve_seconds": 0.21912454100001355,
+          "post_cut_master_objective": 25693.547132122254,
+          "pre_cut_master_objective": 25693.547132122254,
+          "selected_outage_by_line_id": {
+            "line_01_02": 0,
+            "line_02_03": 0,
+            "line_02_19": 0,
+            "line_03_04": 0,
+            "line_03_23": 0,
+            "line_04_05": 0,
+            "line_05_06": 0,
+            "line_06_07": 1,
+            "line_06_26": 0,
+            "line_07_08": 0,
+            "line_08_09": 0,
+            "line_09_10": 0,
+            "line_10_11": 0,
+            "line_11_12": 0,
+            "line_12_13": 0,
+            "line_13_14": 0,
+            "line_14_15": 0,
+            "line_15_16": 0,
+            "line_16_17": 0,
+            "line_17_18": 0,
+            "line_19_20": 0,
+            "line_20_21": 0,
+            "line_21_22": 0,
+            "line_23_24": 0,
+            "line_24_25": 0,
+            "line_26_27": 0,
+            "line_27_28": 0,
+            "line_28_29": 0,
+            "line_29_30": 0,
+            "line_30_31": 0,
+            "line_31_32": 0,
+            "line_32_33": 0
+          },
+          "separation_solve_seconds": 0.029361458000010998,
+          "separation_violation_value": 50455.21999999508,
+          "stop_reason": null,
+          "total_cut_count_after": 4,
+          "total_cut_count_before": 3
+        },
+        {
+          "active_cut_ids_after": [
+            "trivial_cut",
+            "generated_cut_001",
+            "generated_cut_002",
+            "generated_cut_003",
+            "generated_cut_004"
+          ],
+          "active_cut_ids_before": [
+            "trivial_cut",
+            "generated_cut_001",
+            "generated_cut_002",
+            "generated_cut_003"
+          ],
+          "construction_cost_value": 23113.82481765002,
+          "cut_generation_seconds": 0.01680887499998107,
+          "first_stage_attached_objective_value": 25693.547132122254,
+          "first_stage_objective_is_pure_construction": false,
+          "generated_cut_id": "generated_cut_004",
+          "generated_cut_old_master_violation": 45091.53000000003,
+          "iteration_id": 3,
+          "master_solve_seconds": 0.23106916699998692,
+          "post_cut_master_objective": 29087.07384291861,
+          "pre_cut_master_objective": 25693.547132122254,
+          "selected_outage_by_line_id": {
+            "line_01_02": 0,
+            "line_02_03": 0,
+            "line_02_19": 0,
+            "line_03_04": 0,
+            "line_03_23": 0,
+            "line_04_05": 0,
+            "line_05_06": 0,
+            "line_06_07": 0,
+            "line_06_26": 1,
+            "line_07_08": 0,
+            "line_08_09": 0,
+            "line_09_10": 0,
+            "line_10_11": 0,
+            "line_11_12": 0,
+            "line_12_13": 0,
+            "line_13_14": 0,
+            "line_14_15": 0,
+            "line_15_16": 0,
+            "line_16_17": 0,
+            "line_17_18": 0,
+            "line_19_20": 0,
+            "line_20_21": 0,
+            "line_21_22": 0,
+            "line_23_24": 0,
+            "line_24_25": 0,
+            "line_26_27": 0,
+            "line_27_28": 0,
+            "line_28_29": 0,
+            "line_29_30": 0,
+            "line_30_31": 0,
+            "line_31_32": 0,
+            "line_32_33": 0
+          },
+          "separation_solve_seconds": 0.04506495800001176,
+          "separation_violation_value": 45091.52999999747,
+          "stop_reason": null,
+          "total_cut_count_after": 5,
+          "total_cut_count_before": 4
+        },
+        {
+          "active_cut_ids_after": [
+            "trivial_cut",
+            "generated_cut_001",
+            "generated_cut_002",
+            "generated_cut_003",
+            "generated_cut_004"
+          ],
+          "active_cut_ids_before": [
+            "trivial_cut",
+            "generated_cut_001",
+            "generated_cut_002",
+            "generated_cut_003",
+            "generated_cut_004"
+          ],
+          "construction_cost_value": 23113.82481765002,
+          "cut_generation_seconds": 0.0,
+          "first_stage_attached_objective_value": 29087.07384291861,
+          "first_stage_objective_is_pure_construction": false,
+          "generated_cut_id": null,
+          "generated_cut_old_master_violation": null,
+          "iteration_id": 4,
+          "master_solve_seconds": 0.23304974999999217,
+          "post_cut_master_objective": null,
+          "pre_cut_master_objective": 29087.07384291861,
+          "selected_outage_by_line_id": {
+            "line_01_02": 0,
+            "line_02_03": 0,
+            "line_02_19": 0,
+            "line_03_04": 0,
+            "line_03_23": 0,
+            "line_04_05": 0,
+            "line_05_06": 0,
+            "line_06_07": 0,
+            "line_06_26": 0,
+            "line_07_08": 1,
+            "line_08_09": 0,
+            "line_09_10": 0,
+            "line_10_11": 0,
+            "line_11_12": 0,
+            "line_12_13": 0,
+            "line_13_14": 0,
+            "line_14_15": 0,
+            "line_15_16": 0,
+            "line_16_17": 0,
+            "line_17_18": 0,
+            "line_19_20": 0,
+            "line_20_21": 0,
+            "line_21_22": 0,
+            "line_23_24": 0,
+            "line_24_25": 0,
+            "line_26_27": 0,
+            "line_27_28": 0,
+            "line_28_29": 0,
+            "line_29_30": 0,
+            "line_30_31": 0,
+            "line_31_32": 0,
+            "line_32_33": 0
+          },
+          "separation_solve_seconds": 0.029068332999997892,
+          "separation_violation_value": 46818.8099999954,
+          "stop_reason": "max_iterations",
+          "total_cut_count_after": 5,
+          "total_cut_count_before": 5
+        }
+      ],
+      "lower_bound_sequence": [
+        0.0,
+        23625.851866569337,
+        25693.547132122254,
+        25693.547132122254,
+        29087.07384291861
+      ],
+      "stop_reason": "max_iterations"
+    },
+    "iteration_log_path": "results/convergence_diagnostics/logs/disaster_only_paper_like_exact_i5_k1_a1b1_iteration_log.json",
+    "lower_bound_sequence": [
+      0.0,
+      23625.851866569337,
+      25693.547132122254,
+      25693.547132122254,
+      29087.07384291861
+    ],
+    "omega_diagnostics": {
+      "max_omega_bound_violation": 0.0,
+      "smallest_slack_lines": [
+        {
+          "line_id": "line_01_02",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 800000.0
+        },
+        {
+          "line_id": "line_02_03",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 800000.0
+        },
+        {
+          "line_id": "line_03_04",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 800000.0
+        },
+        {
+          "line_id": "line_04_05",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 800000.0
+        },
+        {
+          "line_id": "line_05_06",
+          "lower_slack": 0.0,
+          "min_slack": 0.0,
+          "upper_slack": 800000.0
+        }
+      ],
+      "tight_lower_count": 31,
+      "tight_upper_count": 9
+    },
+    "selected_outage_trace": [
+      [
+        "line_01_02"
+      ],
+      [
+        "line_02_03"
+      ],
+      [
+        "line_06_07"
+      ],
+      [
+        "line_06_26"
+      ],
+      [
+        "line_07_08"
+      ]
+    ],
+    "summary": {
+      "A_selected": "[1]",
+      "B_selected": "[1]",
+      "K": 1,
+      "case_name": "disaster_only",
+      "construction_cost": 23113.82481765002,
+      "cut_count": 5,
+      "cut_efficacy_sequence": "[{\"alpha_lambda_only\":true,\"cut_id\":\"generated_cut_001\",\"cut_signature\":\"04284b1dfaca16a8\",\"iteration_id\":0,\"old_master_violation\":151547.58000000287,\"plan_changed\":false,\"post_cut_master_objective_change\":23625.851866569337,\"post_plan_signature\":[],\"pre_plan_signature\":[]},{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_002\",\"cut_signature\":\"240ff0161476698e\",\"iteration_id\":1,\"old_master_violation\":129365.41000000201,\"plan_changed\":true,\"post_cut_master_objective_change\":2067.6952655529167,\"post_plan_signature\":[[30,25,10]],\"pre_plan_signature\":[]},{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_003\",\"cut_signature\":\"4525023f49fa1ccd\",\"iteration_id\":2,\"old_master_violation\":50455.2200000009,\"plan_changed\":true,\"post_cut_master_objective_change\":0.0,\"post_plan_signature\":[[8,25,10]],\"pre_plan_signature\":[[30,25,10]]},{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_004\",\"cut_signature\":\"b4337d3cdfd5f526\",\"iteration_id\":3,\"old_master_violation\":45091.53000000003,\"plan_changed\":true,\"post_cut_master_objective_change\":3393.5267107963555,\"post_plan_signature\":[[33,25,10]],\"pre_plan_signature\":[[8,25,10]]}]",
+      "diagnosis_label": "max_iter_noncert",
+      "disaster_master_term": 5973.2490252685875,
+      "dual_resolve_runtime_sec_total": 0.06490858300000468,
+      "epsilon_cert": 0.0,
+      "final_alpha": 0.0,
+      "final_lambda_times_FP": 5973.2490252685875,
+      "final_violation_upper_bound": 46818.8099999954,
+      "generated_cut_count": 4,
+      "iteration_count": 5,
+      "lower_bound_sequence": "[0.0,23625.851866569337,25693.547132122254,25693.547132122254,29087.07384291861]",
+      "master_runtime_sec_total": 1.091355290999985,
+      "max_iterations": 5,
+      "notes": "true non-certification under enlarged iteration budget; lower-bound gain=29087.074; violation drop=104728.770; dominant runtime component: master-side; smoke_only result should not be promoted beyond directional diagnosis",
+      "parameter_regime": "paper_like_tableII",
+      "repeated_cut_signature_flag": false,
+      "repeated_outage_flag": false,
+      "run_id": "disaster_only_paper_like_exact_i5_k1_a1b1",
+      "sampled_problem_gap_bound": 0.0,
+      "selected_outage_trace": "[[\"line_01_02\"],[\"line_02_03\"],[\"line_06_07\"],[\"line_06_26\"],[\"line_07_08\"]]",
+      "separation_runtime_sec_total": 0.15188487400001804,
+      "solver_status": "OPTIMAL",
+      "stop_reason": "max_iterations",
+      "total_objective": 29087.07384291861,
+      "total_runtime_sec": 4.021833291000007,
+      "validation_level": "smoke_only",
+      "violation_sequence": "[151547.57999999914,129365.40999999922,50455.21999999508,45091.52999999747,46818.8099999954]",
+      "weighted_normal_term": 0.0
+    },
+    "type": "benders",
+    "violation_sequence": [
+      151547.57999999914,
+      129365.40999999922,
+      50455.21999999508,
+      45091.52999999747,
+      46818.8099999954
+    ]
+  },
+  "exception": null,
+  "failure_record": {
+    "A_selected": "[1]",
+    "B_selected": "[1]",
+    "K": 1,
+    "case_name": "disaster_only",
+    "cut_count": 5,
+    "diagnosis_label": "max_iter_noncert",
+    "epsilon_cert": 0.0,
+    "final_violation_upper_bound": 46818.8099999954,
+    "iteration_count": 5,
+    "max_iterations": 5,
+    "message": "true non-certification under enlarged iteration budget; lower-bound gain=29087.074; violation drop=104728.770; dominant runtime component: master-side; smoke_only result should not be promoted beyond directional diagnosis",
+    "parameter_regime": "paper_like_tableII",
+    "run_id": "disaster_only_paper_like_exact_i5_k1_a1b1",
+    "sampled_problem_gap_bound": 0.0,
+    "solver_status": "OPTIMAL",
+    "stop_reason": "max_iterations",
+    "total_runtime_sec": 4.021833291000007,
+    "validation_level": "smoke_only"
+  },
+  "run_config": {
+    "benders": {
+      "epsilon_cert": 0.0,
+      "max_iterations": 5
+    },
+    "case_name": "disaster_only",
+    "family_name": "convergence_diagnostics",
+    "mode": "disaster_only",
+    "parameter_overrides": {
+      "ambiguity": {
+        "k_max_outages": 1
+      },
+      "economics": {
+        "ccons_fa": 25000.0,
+        "ccons_sl": 540.07,
+        "cfix": 153600.0,
+        "ctrans_scalar": 0.0435,
+        "gamma": 0.01,
+        "pi_f": 0.3,
+        "theta": 20
+      },
+      "ev": {
+        "nbar_fa": 10,
+        "nbar_sl": 25,
+        "p_ev_rated_fa": 50.0,
+        "p_ev_rated_sl": 7.0
+      }
+    },
+    "parameter_regime": "paper_like_tableII",
+    "run_id": "disaster_only_paper_like_exact_i5_k1_a1b1",
+    "runtime_source": "data/runtime_12",
+    "selection": {
+      "scenarios_a": [
+        1
+      ],
+      "scenarios_b": [
+        1
+      ]
+    },
+    "solver": "benders"
+  },
+  "summary": {
+    "A_selected": "[1]",
+    "B_selected": "[1]",
+    "K": 1,
+    "case_name": "disaster_only",
+    "construction_cost": 23113.82481765002,
+    "cut_count": 5,
+    "cut_efficacy_sequence": "[{\"alpha_lambda_only\":true,\"cut_id\":\"generated_cut_001\",\"cut_signature\":\"04284b1dfaca16a8\",\"iteration_id\":0,\"old_master_violation\":151547.58000000287,\"plan_changed\":false,\"post_cut_master_objective_change\":23625.851866569337,\"post_plan_signature\":[],\"pre_plan_signature\":[]},{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_002\",\"cut_signature\":\"240ff0161476698e\",\"iteration_id\":1,\"old_master_violation\":129365.41000000201,\"plan_changed\":true,\"post_cut_master_objective_change\":2067.6952655529167,\"post_plan_signature\":[[30,25,10]],\"pre_plan_signature\":[]},{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_003\",\"cut_signature\":\"4525023f49fa1ccd\",\"iteration_id\":2,\"old_master_violation\":50455.2200000009,\"plan_changed\":true,\"post_cut_master_objective_change\":0.0,\"post_plan_signature\":[[8,25,10]],\"pre_plan_signature\":[[30,25,10]]},{\"alpha_lambda_only\":false,\"cut_id\":\"generated_cut_004\",\"cut_signature\":\"b4337d3cdfd5f526\",\"iteration_id\":3,\"old_master_violation\":45091.53000000003,\"plan_changed\":true,\"post_cut_master_objective_change\":3393.5267107963555,\"post_plan_signature\":[[33,25,10]],\"pre_plan_signature\":[[8,25,10]]}]",
+    "diagnosis_label": "max_iter_noncert",
+    "disaster_master_term": 5973.2490252685875,
+    "dual_resolve_runtime_sec_total": 0.06490858300000468,
+    "epsilon_cert": 0.0,
+    "final_alpha": 0.0,
+    "final_lambda_times_FP": 5973.2490252685875,
+    "final_violation_upper_bound": 46818.8099999954,
+    "generated_cut_count": 4,
+    "iteration_count": 5,
+    "lower_bound_sequence": "[0.0,23625.851866569337,25693.547132122254,25693.547132122254,29087.07384291861]",
+    "master_runtime_sec_total": 1.091355290999985,
+    "max_iterations": 5,
+    "notes": "true non-certification under enlarged iteration budget; lower-bound gain=29087.074; violation drop=104728.770; dominant runtime component: master-side; smoke_only result should not be promoted beyond directional diagnosis",
+    "parameter_regime": "paper_like_tableII",
+    "repeated_cut_signature_flag": false,
+    "repeated_outage_flag": false,
+    "run_id": "disaster_only_paper_like_exact_i5_k1_a1b1",
+    "sampled_problem_gap_bound": 0.0,
+    "selected_outage_trace": "[[\"line_01_02\"],[\"line_02_03\"],[\"line_06_07\"],[\"line_06_26\"],[\"line_07_08\"]]",
+    "separation_runtime_sec_total": 0.15188487400001804,
+    "solver_status": "OPTIMAL",
+    "stop_reason": "max_iterations",
+    "total_objective": 29087.07384291861,
+    "total_runtime_sec": 4.021833291000007,
+    "validation_level": "smoke_only",
+    "violation_sequence": "[151547.57999999914,129365.40999999922,50455.21999999508,45091.52999999747,46818.8099999954]",
+    "weighted_normal_term": 0.0
+  }
+}
