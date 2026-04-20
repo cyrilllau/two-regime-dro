@@ -1,0 +1,9 @@
+probe_id,ev_penetration_scale,ctrans_scalar,nbar_sl,nbar_fa,opened_bus_count,total_slow_chargers,total_fast_chargers,fast_station_count,capped_slow_station_count,opened_bus_list,interpretation
+C1_scale045_ctransbase_nbar25,0.45,0.0435,25,10,7,163,11,2,5,"3:25/0; 4:17/0; 9:25/0; 18:21/0; 19:25/8; 27:25/0; 28:25/3","Best exact anchor before capacity-relief changes."
+C2_scale045_ctransbase_nbar35,0.45,0.0435,35,10,5,163,11,2,3,"3:35/0; 9:33/0; 19:35/8; 27:25/0; 28:35/3","Raising slow-cap from 25 to 35 concentrates the solution; it does not create more mixed stations."
+C3_scale045_ctransbase_nbar40,0.45,0.0435,40,10,4,160,11,2,4,"3:40/0; 9:40/0; 19:40/8; 28:40/3","Higher slow-cap strengthens consolidation further and worsens the paper-like siting count."
+C4_scale050_ctransbase_nbar35,0.50,0.0435,35,10,6,181,13,2,3,"3:35/0; 9:28/0; 18:16/0; 19:35/9; 27:32/0; 28:35/4","Slightly higher demand keeps one more site open, but still does not improve mixed-station behavior."
+C5_scale050_ctransbase_nbar40,0.50,0.0435,40,10,5,181,12,3,3,"3:40/0; 9:35/1; 19:40/8; 27:26/0; 28:40/3","Fast-capacity remains secondary; larger slow-cap still dominates."
+C6_scale045_ctranslow_nbar35,0.45,0.032625,35,10,5,163,11,2,3,"3:35/0; 9:33/0; 19:35/8; 27:25/0; 28:35/3","Lower transport scalar does not undo the concentration caused by larger slow-cap."
+C7_scale045_ctransbase_nbar35_fast15,0.45,0.0435,35,15,5,163,11,2,3,"3:35/0; 9:33/0; 19:35/8; 27:25/0; 28:35/3","Increasing fast-cap alone does not change the exact normal-only plan."
+C8_scale045_ctransbase_nbar35_fast20,0.45,0.0435,35,20,5,163,11,2,3,"3:35/0; 9:33/0; 19:35/8; 27:25/0; 28:35/3","The active issue is not fast-cap tightness; it is persistent slow-first economics under local demand."

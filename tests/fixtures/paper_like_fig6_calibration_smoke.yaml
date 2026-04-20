@@ -1,0 +1,91 @@
+critical_buses_config: configs/critical_buses_paper_fig2.yaml
+output_root: results/paper_like_calibration_smoke
+report_path: docs/analysis_packs/paper_like_fig6_calibration_smoke.md
+family_name: paper_like_fig6_calibration_smoke
+
+base_run:
+  runtime_source: data/runtime_12
+  selection:
+    scenarios_a: [1]
+    scenarios_b: [1]
+  parameter_regime: paper_like_fig6_calibration_smoke
+  parameter_overrides:
+    economics:
+      cfix: 153600.0
+      ccons_sl: 540.07
+      ccons_fa: 25000.0
+      ctrans_scalar: 0.0435
+      gamma: 0.01
+      theta: 20
+      pi_f: 0.3
+    ev:
+      p_ev_rated_sl: 7.0
+      p_ev_rated_fa: 50.0
+      nbar_sl: 25
+      nbar_fa: 10
+  benders:
+    epsilon_cert: 20000.0
+    max_iterations: 2
+
+stage1_candidates:
+  - candidate_id: S0_baseline
+    description: Current paper-like baseline.
+    mode: normal_only
+    solver: direct_master
+    parameter_overrides: {}
+
+  - candidate_id: S1_site_cost_up
+    description: Raise site fixed cost by 4x.
+    mode: normal_only
+    solver: direct_master
+    parameter_overrides:
+      economics:
+        cfix: 614400.0
+
+stage2_modes:
+  - mode: integrated_mainline
+    solver: benders
+    run_id: integrated_mainline_paper_like_tuned
+    case_name: integrated_mainline_paper_like_tuned
+
+  - mode: normal_only
+    solver: direct_master
+    run_id: normal_only_paper_like_tuned
+    case_name: normal_only_paper_like_tuned
+
+demand_normalization:
+  - candidate_id: D1_scale_0_85
+    ev_penetration_scale: 0.85
+
+stage1_rules:
+  opened_bus_min: 6
+  opened_bus_max: 8
+  total_slow_max: 220
+  min_fast_station_count: 2
+  max_capped_slow_station_count: 2
+  min_cluster_count: 3
+  max_cluster_count: 4
+  max_out_of_cluster_open_count: 1
+
+target_clusters:
+  left_branch:
+    buses: [3, 4, 5, 19, 20, 21, 22]
+  middle:
+    buses: [9, 10]
+  upper_branch:
+    buses: [26, 27, 28, 29]
+  right_upper_branch:
+    buses: [32, 33]
+
+target_semantics:
+  run_id: paper_case1_target_semantics
+  sites:
+    - bus: 3
+      n_sl: 22
+      n_fa: 1
+    - bus: 10
+      n_sl: 0
+      n_fa: 3
+    - bus: 28
+      n_sl: 21
+      n_fa: 4

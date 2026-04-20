@@ -2,71 +2,47 @@
   "anchor_checks": [
     {
       "anchor_id": "certified_small_integrated",
-      "baseline_available": true,
-      "baseline_path": "artifacts/baselines/frozen_pre_improvement/regenerated/certified_small/logs/integrated_mainline_certified_small_run.json",
-      "baseline_stop_reason": "certified_epsilon",
-      "baseline_validation_level": "epsilon_certified",
-      "notes": "baseline source was regenerated because current Round 12 outputs no longer include certified-small artifacts",
-      "objective_components_match": true,
-      "rerun_path": "artifacts/baselines/frozen_pre_improvement/anchor_reruns/certified_small_integrated/logs/integrated_mainline_certified_small_iteration_log.json",
-      "rerun_stop_reason": "certified_epsilon",
-      "rerun_validation_level": "epsilon_certified",
+      "baseline_available": false,
+      "baseline_path": null,
+      "notes": "baseline artifact missing",
+      "objective_components_match": false,
+      "rerun_path": null,
       "run_id": "integrated_mainline_certified_small",
       "source_kind": "regenerated_experiment",
-      "stop_reason_match": true,
-      "validation_match": true
+      "stop_reason_match": false,
+      "validation_match": false
     },
     {
       "anchor_id": "runtime12_integrated",
       "baseline_available": true,
       "baseline_path": "results/logs/integrated_mainline_runtime12_run.json",
-      "baseline_stop_reason": "max_iterations",
-      "baseline_validation_level": "smoke_only",
-      "notes": "rerun matched baseline within configured tolerances",
-      "objective_components_match": true,
-      "rerun_path": "artifacts/baselines/frozen_pre_improvement/anchor_reruns/runtime12_integrated/logs/integrated_mainline_runtime12_iteration_log.json",
-      "rerun_stop_reason": "max_iterations",
-      "rerun_validation_level": "smoke_only",
+      "notes": "anchor rerun skipped by request",
+      "objective_components_match": null,
+      "rerun_path": null,
       "run_id": "integrated_mainline_runtime12",
       "source_kind": "current_experiment",
-      "stop_reason_match": true,
-      "validation_match": true
+      "stop_reason_match": null,
+      "validation_match": null
     },
     {
       "anchor_id": "hard_exact_mode",
       "baseline_available": true,
       "baseline_path": "results/convergence_diagnostics/logs/integrated_paper_like_exact_i20_k2_a1b1_diagnostic.json",
-      "baseline_stop_reason": "max_iterations",
-      "baseline_validation_level": "smoke_only",
-      "notes": "rerun matched baseline within configured tolerances",
-      "objective_components_match": true,
-      "rerun_path": "artifacts/baselines/frozen_pre_improvement/anchor_reruns/hard_exact_mode/logs/integrated_paper_like_exact_i20_k2_a1b1_diagnostic.json",
-      "rerun_stop_reason": "max_iterations",
-      "rerun_validation_level": "smoke_only",
+      "notes": "anchor rerun skipped by request",
+      "objective_components_match": null,
+      "rerun_path": null,
       "run_id": "integrated_paper_like_exact_i20_k2_a1b1",
       "source_kind": "current_convergence",
-      "stop_reason_match": true,
-      "validation_match": true
+      "stop_reason_match": null,
+      "validation_match": null
     }
   ],
   "archive": {
     "archive_root": "artifacts/baselines/frozen_pre_improvement",
     "config_path": "configs/reports/frozen_baseline_review.yaml",
     "missing_artifacts": [],
-    "regenerated_artifacts": [
-      "certified_small_family"
-    ],
-    "regenerated_certified_small": {
-      "failures_path": "artifacts/baselines/frozen_pre_improvement/regenerated/certified_small/failures.csv",
-      "family_name": "certified_small_family",
-      "output_root": "artifacts/baselines/frozen_pre_improvement/regenerated/certified_small",
-      "run_ids": [
-        "integrated_mainline_certified_small",
-        "normal_only_certified_small",
-        "deterministic_mean_value_certified_small"
-      ],
-      "summary_path": "artifacts/baselines/frozen_pre_improvement/regenerated/certified_small/summary.csv"
-    },
+    "regenerated_artifacts": [],
+    "regenerated_certified_small": null,
     "reused_artifacts": [
       "docs/analysis_packs/convergence_diagnostic_pack.md",
       "docs/analysis_packs/experiment_interpretation_pack.md",
@@ -119,6 +95,8 @@
     "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/objective_components_by_run.png",
     "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/benchmark_comparison_safe.png",
     "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/ieee33_runtime12_directional_maps.png",
+    "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/ieee33_runtime12_directional_maps_a.png",
+    "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/ieee33_runtime12_directional_maps_b.png",
     "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/ieee33_paper_like_maps_case123.png",
     "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/ieee33_paper_like_maps_case4_56.png",
     "/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/figures/baseline/iteration_trace_selected.png",

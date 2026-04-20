@@ -27,6 +27,78 @@ IEEE33_EDGES = [
     (24, 25), (26, 27), (27, 28), (28, 29), (29, 30), (30, 31), (31, 32), (32, 33),
 ]
 
+IEEE33_POSITIONS = {
+    1: (0.0, 0.0),
+    2: (1.2, 0.0),
+    3: (2.4, 0.0),
+    4: (3.6, 0.0),
+    5: (4.8, 0.0),
+    6: (6.0, 0.0),
+    7: (7.2, 0.0),
+    8: (8.4, 0.0),
+    9: (9.6, 0.0),
+    10: (10.8, 0.0),
+    11: (12.0, 0.0),
+    12: (13.2, 0.0),
+    13: (14.4, 0.0),
+    14: (15.6, 0.0),
+    15: (16.8, 0.0),
+    16: (18.0, 0.0),
+    17: (19.2, 0.0),
+    18: (20.4, 0.0),
+    19: (1.2, -1.6),
+    20: (1.2, -3.2),
+    21: (2.4, -3.2),
+    22: (3.6, -3.2),
+    23: (2.4, 1.6),
+    24: (2.4, 3.2),
+    25: (3.6, 3.2),
+    26: (6.0, 1.6),
+    27: (7.2, 1.6),
+    28: (8.4, 1.6),
+    29: (9.6, 1.6),
+    30: (10.8, 1.6),
+    31: (12.0, 1.6),
+    32: (13.2, 1.6),
+    33: (14.4, 1.6),
+}
+
+IEEE33_BUBBLE_OFFSETS = {
+    1: (-0.55, 0.9),
+    2: (-0.65, 0.95),
+    3: (0.0, -1.05),
+    4: (0.0, 0.95),
+    5: (0.0, -1.05),
+    6: (0.0, -1.05),
+    7: (0.0, -1.05),
+    8: (0.0, -1.05),
+    9: (0.0, -1.05),
+    10: (0.0, -1.05),
+    11: (0.0, -1.05),
+    12: (0.0, -1.05),
+    13: (0.0, -1.05),
+    14: (0.0, 0.95),
+    15: (0.0, -1.05),
+    16: (0.0, -1.05),
+    17: (0.0, -1.05),
+    18: (0.0, -1.05),
+    19: (-0.8, 0.0),
+    20: (0.0, -1.0),
+    21: (0.0, -1.0),
+    22: (0.0, -1.0),
+    23: (-0.85, 0.0),
+    24: (0.0, 1.0),
+    25: (0.0, 1.0),
+    26: (0.0, 1.0),
+    27: (0.0, 1.0),
+    28: (0.0, 1.0),
+    29: (0.0, 1.0),
+    30: (0.0, 1.0),
+    31: (0.0, 1.0),
+    32: (0.0, 1.0),
+    33: (0.0, 1.0),
+}
+
 VALIDATION_CHAIN_ROWS = [
     {
         "round": "02",
@@ -233,13 +305,19 @@ def _write_latex_table(
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     headers = list(headers or columns)
+    if list(columns) == ["round", "validated_layer", "status", "key_result"]:
+        column_spec = "p{0.8cm} p{3.0cm} p{3.0cm} p{7.0cm}"
+    else:
+        column_spec = " | ".join(["l"] * len(columns))
     lines = [
         "\\begin{table}[htbp]",
         "\\centering",
-        "\\small",
+        "\\footnotesize",
+        "\\setlength{\\tabcolsep}{4pt}",
+        "\\renewcommand{\\arraystretch}{1.12}",
         f"\\caption{{{_escape_latex(caption)}}}",
         f"\\label{{{_escape_latex(label)}}}",
-        "\\begin{tabular}{" + " | ".join(["l"] * len(columns)) + "}",
+        "\\begin{tabular}{" + column_spec + "}",
         "\\hline",
         " & ".join(_escape_latex(header) for header in headers) + " \\\\",
         "\\hline",
@@ -385,78 +463,125 @@ def _read_plan_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def _draw_ieee33_substation(axis) -> None:
+    axis.plot([-0.65, -0.1], [0.0, 0.0], color="black", linewidth=1.2, zorder=1)
+    axis.plot([-0.75, -0.75], [-0.28, 0.28], color="black", linewidth=1.2, zorder=1)
+    axis.plot([-0.9, -0.9], [-0.42, 0.42], color="black", linewidth=1.2, zorder=1)
+
+
 def _plot_plan_panel(axis, title: str, plan_path: Path | None, critical_buses: Sequence[int]) -> None:
-    positions = _tree_positions()
-    axis.set_title(title, fontsize=10)
+    axis.set_title(title, fontsize=12, pad=8)
+    axis.set_aspect("equal")
     axis.axis("off")
     for left, right in IEEE33_EDGES:
-        x1, y1 = positions[left]
-        x2, y2 = positions[right]
-        axis.plot([x1, x2], [y1, y2], color="0.75", linewidth=1.2, zorder=1)
+        x1, y1 = IEEE33_POSITIONS[left]
+        x2, y2 = IEEE33_POSITIONS[right]
+        axis.plot([x1, x2], [y1, y2], color="black", linewidth=1.1, zorder=1)
+    _draw_ieee33_substation(axis)
 
-    all_x = [positions[bus][0] for bus in sorted(positions)]
-    all_y = [positions[bus][1] for bus in sorted(positions)]
-    axis.scatter(all_x, all_y, s=26, color="0.88", edgecolors="0.55", zorder=2)
+    all_buses = sorted(IEEE33_POSITIONS)
+    critical_set = set(int(bus) for bus in critical_buses)
+    critical_x = [IEEE33_POSITIONS[bus][0] for bus in all_buses if bus in critical_set]
+    critical_y = [IEEE33_POSITIONS[bus][1] for bus in all_buses if bus in critical_set]
+    noncritical_x = [IEEE33_POSITIONS[bus][0] for bus in all_buses if bus not in critical_set]
+    noncritical_y = [IEEE33_POSITIONS[bus][1] for bus in all_buses if bus not in critical_set]
 
-    critical_x = [positions[bus][0] for bus in critical_buses]
-    critical_y = [positions[bus][1] for bus in critical_buses]
+    if critical_x:
+        axis.scatter(
+            critical_x,
+            critical_y,
+            s=54,
+            facecolors="#c83c23",
+            edgecolors="black",
+            linewidths=0.8,
+            zorder=3,
+            label="Critical load",
+        )
     axis.scatter(
-        critical_x,
-        critical_y,
-        s=110,
-        facecolors="none",
-        edgecolors="tab:red",
-        linewidths=1.5,
-        zorder=3,
+        noncritical_x,
+        noncritical_y,
+        s=54,
+        facecolors="white",
+        edgecolors="black",
+        linewidths=0.8,
+        zorder=2,
+        label="Non-critical load",
     )
+
+    for bus in all_buses:
+        x, y = IEEE33_POSITIONS[bus]
+        axis.text(x, y + 0.33, str(bus), ha="center", va="bottom", fontsize=9, zorder=4)
 
     if plan_path is None or not plan_path.exists():
         axis.text(0.5, 0.5, "Plan unavailable", transform=axis.transAxes, ha="center", va="center")
+        axis.set_xlim(-1.2, 21.0)
+        axis.set_ylim(-4.5, 4.3)
         return
 
     rows = _read_plan_rows(plan_path)
-    slow_x: list[float] = []
-    slow_y: list[float] = []
-    slow_size: list[float] = []
-    fast_x: list[float] = []
-    fast_y: list[float] = []
-    fast_size: list[float] = []
-    labels: list[tuple[float, float, str]] = []
-
-    for row in rows:
+    installed_rows = [row for row in rows if int(row["is_open"]) == 1]
+    evse_label_added = False
+    for row in installed_rows:
         bus = int(row["bus"])
-        is_open = int(row["is_open"])
         n_sl = int(row["n_sl"])
         n_fa = int(row["n_fa"])
-        x, y = positions[bus]
-        if n_sl > 0:
-            slow_x.append(x)
-            slow_y.append(y)
-            slow_size.append(16.0 + 4.0 * math.sqrt(max(n_sl, 1)))
-        if n_fa > 0:
-            fast_x.append(x)
-            fast_y.append(y)
-            fast_size.append(24.0 + 12.0 * math.sqrt(max(n_fa, 1)))
-        if is_open:
-            labels.append((x, y, f"{bus}\nS{n_sl}/F{n_fa}"))
-
-    if slow_x:
-        axis.scatter(slow_x, slow_y, s=slow_size, color="tab:blue", alpha=0.85, zorder=4, label="slow")
-    if fast_x:
-        axis.scatter(
-            fast_x,
-            fast_y,
-            s=fast_size,
-            color="tab:orange",
-            marker="s",
-            alpha=0.75,
-            zorder=5,
-            label="fast",
+        x, y = IEEE33_POSITIONS[bus]
+        dx, dy = IEEE33_BUBBLE_OFFSETS.get(bus, (0.0, 1.0))
+        bx, by = x + dx, y + dy
+        bubble_size = 430 + 7 * math.sqrt(max(n_sl + 4 * n_fa, 1))
+        axis.plot(
+            [x, bx],
+            [y, by],
+            color="#3f5523",
+            linewidth=1.45,
+            alpha=0.98,
+            zorder=4,
         )
-    for x, y, label in labels:
-        axis.text(x + 0.10, y + 0.10, label, fontsize=7, zorder=6)
-    if slow_x or fast_x:
-        axis.legend(fontsize=7, loc="lower right")
+        axis.scatter(
+            [x],
+            [y],
+            s=26,
+            facecolors="none",
+            edgecolors="#3f5523",
+            linewidths=1.0,
+            zorder=4.5,
+        )
+        axis.scatter(
+            [bx],
+            [by],
+            s=bubble_size,
+            facecolors="#7caf3e",
+            edgecolors="#3a5d1c",
+            linewidths=1.0,
+            alpha=0.92,
+            zorder=5,
+            label="EVCS(No. slow EVSE,\nNo. fast EVSE)" if not evse_label_added else None,
+        )
+        evse_label_added = True
+        axis.text(
+            bx,
+            by,
+            f"{n_sl}/{n_fa}",
+            ha="center",
+            va="center",
+            fontsize=9,
+            fontweight="bold",
+            color="#1f2f0f",
+            zorder=6,
+        )
+
+    axis.set_xlim(-1.2, 23.7)
+    axis.set_ylim(-4.8, 4.6)
+    axis.legend(
+        loc="lower right",
+        fontsize=8.3,
+        frameon=True,
+        fancybox=False,
+        framealpha=1.0,
+        borderpad=0.55,
+        handletextpad=0.5,
+        labelspacing=0.35,
+    )
 
 
 def _plot_plan_maps(
@@ -467,13 +592,17 @@ def _plot_plan_maps(
     ncols: int,
 ) -> None:
     nrows = math.ceil(len(panels) / ncols)
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6.2 * ncols, 4.3 * nrows), squeeze=False)
+    if ncols == 1:
+        figsize = (17.8, 5.1 * nrows + 0.8)
+    else:
+        figsize = (16.8, 5.1 * nrows)
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize, squeeze=False)
     for axis in axes.flatten():
         axis.axis("off")
     for axis, (title, plan_path) in zip(axes.flatten(), panels):
         _plot_plan_panel(axis, title, plan_path, critical_buses)
-    fig.tight_layout()
-    fig.savefig(figure_path, dpi=180)
+    fig.tight_layout(rect=(0.01, 0.01, 0.995, 0.992), pad=0.9)
+    fig.savefig(figure_path, dpi=220, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
 
 
@@ -892,26 +1021,50 @@ def build_figures_and_tables(
     _plot_plan_maps(
         figure_path=runtime_maps_path,
         panels=[
-            ("integrated runtime12", plan_lookup.get("integrated_mainline_runtime12")),
-            ("deterministic runtime12", plan_lookup.get("deterministic_mean_value_runtime12")),
-            ("EV 1.5x runtime12", plan_lookup.get("ev_penetration_1_5x_runtime12")),
-            ("EV 2.0x runtime12", plan_lookup.get("ev_penetration_2_0x_runtime12")),
+            ("Integrated runtime12", plan_lookup.get("integrated_mainline_runtime12")),
+            ("Deterministic runtime12", plan_lookup.get("deterministic_mean_value_runtime12")),
+            ("EV penetration 1.5x runtime12", plan_lookup.get("ev_penetration_1_5x_runtime12")),
+            ("EV penetration 2.0x runtime12", plan_lookup.get("ev_penetration_2_0x_runtime12")),
         ],
         critical_buses=critical_buses,
         ncols=2,
     )
     figure_paths.append(str(runtime_maps_path))
 
+    runtime_maps_path_a = figures_dir / "ieee33_runtime12_directional_maps_a.png"
+    _plot_plan_maps(
+        figure_path=runtime_maps_path_a,
+        panels=[
+            ("Integrated runtime12", plan_lookup.get("integrated_mainline_runtime12")),
+            ("Deterministic runtime12", plan_lookup.get("deterministic_mean_value_runtime12")),
+        ],
+        critical_buses=critical_buses,
+        ncols=1,
+    )
+    figure_paths.append(str(runtime_maps_path_a))
+
+    runtime_maps_path_b = figures_dir / "ieee33_runtime12_directional_maps_b.png"
+    _plot_plan_maps(
+        figure_path=runtime_maps_path_b,
+        panels=[
+            ("EV penetration 1.5x runtime12", plan_lookup.get("ev_penetration_1_5x_runtime12")),
+            ("EV penetration 2.0x runtime12", plan_lookup.get("ev_penetration_2_0x_runtime12")),
+        ],
+        critical_buses=critical_buses,
+        ncols=1,
+    )
+    figure_paths.append(str(runtime_maps_path_b))
+
     paper_case123_path = figures_dir / "ieee33_paper_like_maps_case123.png"
     _plot_plan_maps(
         figure_path=paper_case123_path,
         panels=[
-            ("integrated paper-like", plan_lookup.get("integrated_mainline_paper_like")),
-            ("normal-only paper-like", plan_lookup.get("normal_only_paper_like")),
-            ("disaster-only paper-like", plan_lookup.get("disaster_only_paper_like")),
+            ("(a) Case 1: Proposed model", plan_lookup.get("integrated_mainline_paper_like")),
+            ("(b) Case 2: Only normal operation considered", plan_lookup.get("normal_only_paper_like")),
+            ("(c) Case 3: Only disaster resilience considered", plan_lookup.get("disaster_only_paper_like")),
         ],
         critical_buses=critical_buses,
-        ncols=3,
+        ncols=1,
     )
     figure_paths.append(str(paper_case123_path))
 
@@ -919,12 +1072,12 @@ def build_figures_and_tables(
     _plot_plan_maps(
         figure_path=paper_case456_path,
         panels=[
-            ("deterministic paper-like", plan_lookup.get("deterministic_mean_value_paper_like")),
-            ("EV 1.5x paper-like", plan_lookup.get("ev_penetration_1_5x_paper_like")),
-            ("EV 2.0x paper-like", plan_lookup.get("ev_penetration_2_0x_paper_like")),
+            ("Case 4: Deterministic mean-value", plan_lookup.get("deterministic_mean_value_paper_like")),
+            ("Case 5: EV penetration 1.5x", plan_lookup.get("ev_penetration_1_5x_paper_like")),
+            ("Case 6: EV penetration 2.0x", plan_lookup.get("ev_penetration_2_0x_paper_like")),
         ],
         critical_buses=critical_buses,
-        ncols=3,
+        ncols=1,
     )
     figure_paths.append(str(paper_case456_path))
 

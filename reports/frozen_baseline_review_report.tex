@@ -6,6 +6,7 @@
 \usepackage{array}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{tabularx}
 \title{Frozen Baseline Review Report}
 \author{Round 14 packaging pass}
 \date{}
@@ -13,7 +14,7 @@
 \maketitle
 
 \section{Executive Summary}
-This report freezes the pre-improvement baseline before any future algorithm-strengthening work. The current benchmark inventory contains 14 packaged experiment runs: 3 exact, 6 epsilon-certified, 5 smoke-only, and 0 failed. The validation chain from reference disaster primal through the production Benders engine is already built and individually checked, but the harder exact-mode convergence cases remain non-certified.
+This report freezes the pre-improvement baseline before any future algorithm-strengthening work. The current benchmark inventory contains 11 packaged experiment runs: 2 exact, 4 epsilon-certified, 5 smoke-only, and 0 failed. The validation chain from reference disaster primal through the production Benders engine is already built and individually checked, but the harder exact-mode convergence cases remain non-certified.
 
 \begin{itemize}
 \item Exact results currently cover the fixed disaster primal/dual reference chain, the normal-only direct master baselines, and selected tiny or longer-budget exact-mode Benders diagnostics.
@@ -37,9 +38,7 @@ This report freezes the pre-improvement baseline before any future algorithm-str
 \section{Benchmark Experiment Summary}
 Certified-small family (regenerated in this round because the Round 12 packaged outputs no longer carried those rows separately):
 \begin{itemize}
-\item integrated\_mainline\_certified\_small: validation=epsilon\_certified, stop=certified\_epsilon, construction=4,421,143.360, weighted normal=20,588,064.250, disaster master=167.617432
-\item normal\_only\_certified\_small: validation=exact, stop=direct\_optimal, construction=4,421,143.360, weighted normal=22,875,626.944, disaster master=0.000000
-\item deterministic\_mean\_value\_certified\_small: validation=epsilon\_certified, stop=certified\_epsilon, construction=4,421,143.360, weighted normal=20,588,064.250, disaster master=167.617432
+\item none
 \end{itemize}
 
 Paper-like family:
@@ -63,32 +62,39 @@ Runtime12 directional family:
 
 Validation labels by packaged experiment run:
 \begin{itemize}
-\item - `exact`: `normal\_only\_certified\_small`, `normal\_only\_paper\_like`, `normal\_only\_runtime12`
-\item - `epsilon\_certified`: `integrated\_mainline\_certified\_small`, `deterministic\_mean\_value\_certified\_small`, `integrated\_mainline\_paper\_like`, `deterministic\_mean\_value\_paper\_like`, `ev\_penetration\_1\_5x\_paper\_like`, `ev\_penetration\_2\_0x\_paper\_like`
+\item - `exact`: `normal\_only\_paper\_like`, `normal\_only\_runtime12`
+\item - `epsilon\_certified`: `integrated\_mainline\_paper\_like`, `deterministic\_mean\_value\_paper\_like`, `ev\_penetration\_1\_5x\_paper\_like`, `ev\_penetration\_2\_0x\_paper\_like`
 \item - `smoke\_only`: `disaster\_only\_paper\_like`, `integrated\_mainline\_runtime12`, `deterministic\_mean\_value\_runtime12`, `ev\_penetration\_1\_5x\_runtime12`, `ev\_penetration\_2\_0x\_runtime12`
 \item - `failed`: none
 \end{itemize}
 
 \section{IEEE 33-Bus Station Topology Interpretation}
-Figure~\ref{fig:runtime12-maps} shows the runtime12 directional maps, while Figures~\ref{fig:paper123} and \ref{fig:paper456} show the paper-like maps. Critical buses are highlighted explicitly in red. The current baseline supports a careful topological interpretation: integrated and normal-only plans often place direct capacity at or near critical buses, fast-charger hubs concentrate on a smaller subset of opened buses, and EV-penetration expansion is monotone in buildout. None of these plots should be read as paper-number reproduction.
+Figures~\ref{fig:runtime12-maps-a} and \ref{fig:runtime12-maps-b} show the runtime12 directional maps in two larger panels, while Figures~\ref{fig:paper123} and \ref{fig:paper456} show the paper-like maps. Critical buses are highlighted explicitly in red. The current baseline supports a careful topological interpretation: integrated and normal-only plans often place direct capacity at or near critical buses, fast-charger hubs concentrate on a smaller subset of opened buses, and EV-penetration expansion is monotone in buildout. None of these plots should be read as paper-number reproduction.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/baseline/ieee33_runtime12_directional_maps.png}
-\caption{Runtime12 directional topology maps.}
-\label{fig:runtime12-maps}
+\includegraphics[width=0.82\textwidth,height=0.82\textheight,keepaspectratio]{figures/baseline/ieee33_runtime12_directional_maps_a.png}
+\caption{Runtime12 directional topology maps, part 1: integrated and deterministic runs.}
+\label{fig:runtime12-maps-a}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/baseline/ieee33_paper_like_maps_case123.png}
+\includegraphics[width=0.82\textwidth,height=0.82\textheight,keepaspectratio]{figures/baseline/ieee33_runtime12_directional_maps_b.png}
+\caption{Runtime12 directional topology maps, part 2: EV-penetration runs.}
+\label{fig:runtime12-maps-b}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth,height=0.88\textheight,keepaspectratio]{figures/baseline/ieee33_paper_like_maps_case123.png}
 \caption{Paper-like case 1/2/3 topology maps: integrated, normal-only, disaster-only.}
 \label{fig:paper123}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/baseline/ieee33_paper_like_maps_case4_56.png}
+\includegraphics[width=0.88\textwidth,height=0.88\textheight,keepaspectratio]{figures/baseline/ieee33_paper_like_maps_case4_56.png}
 \caption{Paper-like case 4/5/6 topology maps: deterministic mean-value and EV-penetration cases.}
 \label{fig:paper456}
 \end{figure}
@@ -163,15 +169,11 @@ The convergence and cut-process diagnostics keep non-certified runs visible. Rou
 \section*{Anchor Consistency Checks}
 The round reran three anchors against archived/current baselines:
 \begin{center}
-\begin{tabular}{p{2.4cm} p{3.3cm} p{1.9cm} p{1.7cm} p{1.7cm} p{4.3cm}}
-\hline
-Anchor & Run id & Objective match & Validation match & Stop match & Notes \\
-\hline
-certified\_small\_integrated & integrated\_mainline\_certified\_small & True & True & True & baseline source was regenerated because current Round 12 outputs no longer include certified-small artifacts \\
-runtime12\_integrated & integrated\_mainline\_runtime12 & True & True & True & rerun matched baseline within configured tolerances \\
-hard\_exact\_mode & integrated\_paper\_like\_exact\_i20\_k2\_a1b1 & True & True & True & rerun matched baseline within configured tolerances \\
-\hline
-\end{tabular}
+\begin{itemize}
+\item certified\_small\_integrated: run=integrated\_mainline\_certified\_small, objective match=False, validation match=False, stop match=False, notes=baseline artifact missing
+\item runtime12\_integrated: run=integrated\_mainline\_runtime12, objective match=None, validation match=None, stop match=None, notes=anchor rerun skipped by request
+\item hard\_exact\_mode: run=integrated\_paper\_like\_exact\_i20\_k2\_a1b1, objective match=None, validation match=None, stop match=None, notes=anchor rerun skipped by request
+\end{itemize}
 \end{center}
 
 \end{document}

@@ -272,21 +272,18 @@ def _summary_bullets(rows: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _render_anchor_table(checks: Sequence[Mapping[str, Any]]) -> str:
-    lines = [
-        "\\begin{tabular}{p{2.4cm} p{3.3cm} p{1.9cm} p{1.7cm} p{1.7cm} p{4.3cm}}",
-        "\\hline",
-        "Anchor & Run id & Objective match & Validation match & Stop match & Notes \\\\",
-        "\\hline",
-    ]
+    lines = ["\\begin{itemize}"]
     for row in checks:
         lines.append(
-            f"{_escape_latex(row['anchor_id'])} & {_escape_latex(row['run_id'])} & "
-            f"{_escape_latex(row.get('objective_components_match'))} & "
-            f"{_escape_latex(row.get('validation_match'))} & "
-            f"{_escape_latex(row.get('stop_reason_match'))} & "
-            f"{_escape_latex(row.get('notes', ''))} \\\\"
+            "\\item "
+            f"{_escape_latex(row['anchor_id'])}: "
+            f"run={_escape_latex(row['run_id'])}, "
+            f"objective match={_escape_latex(row.get('objective_components_match'))}, "
+            f"validation match={_escape_latex(row.get('validation_match'))}, "
+            f"stop match={_escape_latex(row.get('stop_reason_match'))}, "
+            f"notes={_escape_latex(row.get('notes', ''))}"
         )
-    lines.extend(["\\hline", "\\end{tabular}"])
+    lines.append("\\end{itemize}")
     return "\n".join(lines)
 
 
@@ -336,6 +333,7 @@ def _build_latex_report(
 \\usepackage{{array}}
 \\usepackage{{float}}
 \\usepackage{{hyperref}}
+\\usepackage{{tabularx}}
 \\title{{Frozen Baseline Review Report}}
 \\author{{Round 14 packaging pass}}
 \\date{{}}
@@ -386,25 +384,32 @@ Validation labels by packaged experiment run:
 \\end{{itemize}}
 
 \\section{{IEEE 33-Bus Station Topology Interpretation}}
-Figure~\\ref{{fig:runtime12-maps}} shows the runtime12 directional maps, while Figures~\\ref{{fig:paper123}} and \\ref{{fig:paper456}} show the paper-like maps. Critical buses are highlighted explicitly in red. The current baseline supports a careful topological interpretation: integrated and normal-only plans often place direct capacity at or near critical buses, fast-charger hubs concentrate on a smaller subset of opened buses, and EV-penetration expansion is monotone in buildout. None of these plots should be read as paper-number reproduction.
+Figures~\\ref{{fig:runtime12-maps-a}} and \\ref{{fig:runtime12-maps-b}} show the runtime12 directional maps in two larger panels, while Figures~\\ref{{fig:paper123}} and \\ref{{fig:paper456}} show the paper-like maps. Critical buses are highlighted explicitly in red. The current baseline supports a careful topological interpretation: integrated and normal-only plans often place direct capacity at or near critical buses, fast-charger hubs concentrate on a smaller subset of opened buses, and EV-penetration expansion is monotone in buildout. None of these plots should be read as paper-number reproduction.
 
 \\begin{{figure}}[H]
 \\centering
-\\includegraphics[width=\\textwidth]{{figures/baseline/ieee33_runtime12_directional_maps.png}}
-\\caption{{Runtime12 directional topology maps.}}
-\\label{{fig:runtime12-maps}}
+\\includegraphics[width=0.82\\textwidth,height=0.82\\textheight,keepaspectratio]{{figures/baseline/ieee33_runtime12_directional_maps_a.png}}
+\\caption{{Runtime12 directional topology maps, part 1: integrated and deterministic runs.}}
+\\label{{fig:runtime12-maps-a}}
 \\end{{figure}}
 
 \\begin{{figure}}[H]
 \\centering
-\\includegraphics[width=\\textwidth]{{figures/baseline/ieee33_paper_like_maps_case123.png}}
+\\includegraphics[width=0.82\\textwidth,height=0.82\\textheight,keepaspectratio]{{figures/baseline/ieee33_runtime12_directional_maps_b.png}}
+\\caption{{Runtime12 directional topology maps, part 2: EV-penetration runs.}}
+\\label{{fig:runtime12-maps-b}}
+\\end{{figure}}
+
+\\begin{{figure}}[H]
+\\centering
+\\includegraphics[width=0.88\\textwidth,height=0.88\\textheight,keepaspectratio]{{figures/baseline/ieee33_paper_like_maps_case123.png}}
 \\caption{{Paper-like case 1/2/3 topology maps: integrated, normal-only, disaster-only.}}
 \\label{{fig:paper123}}
 \\end{{figure}}
 
 \\begin{{figure}}[H]
 \\centering
-\\includegraphics[width=\\textwidth]{{figures/baseline/ieee33_paper_like_maps_case4_56.png}}
+\\includegraphics[width=0.88\\textwidth,height=0.88\\textheight,keepaspectratio]{{figures/baseline/ieee33_paper_like_maps_case4_56.png}}
 \\caption{{Paper-like case 4/5/6 topology maps: deterministic mean-value and EV-penetration cases.}}
 \\label{{fig:paper456}}
 \\end{{figure}}

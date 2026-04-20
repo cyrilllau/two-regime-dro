@@ -24,13 +24,11 @@
 
 ## Reused vs regenerated artifacts
 - reused artifacts count: `44`
-- regenerated artifacts: `certified_small_family`
+- regenerated artifacts: `none`
 - missing artifacts after path normalization: `none`
 
 ## Consistency checks
-- `certified_small_integrated` / `integrated_mainline_certified_small`: objective_match=`True`, validation_match=`True`, stop_reason_match=`True`; baseline source was regenerated because current Round 12 outputs no longer include certified-small artifacts
-- `runtime12_integrated` / `integrated_mainline_runtime12`: objective_match=`True`, validation_match=`True`, stop_reason_match=`True`; rerun matched baseline within configured tolerances
-- `hard_exact_mode` / `integrated_paper_like_exact_i20_k2_a1b1`: objective_match=`True`, validation_match=`True`, stop_reason_match=`True`; rerun matched baseline within configured tolerances
+- anchor reruns were skipped in this invocation
 
 ## Tests run
 - `pytest tests/integration/test_frozen_baseline_report_packaging.py -q`
@@ -44,7 +42,7 @@
 - `reports/frozen_baseline_review_report.tex`
 - `reports/frozen_baseline_review_report.log`
 - `reports/frozen_baseline_review_report.pdf`: `/Users/shixinliu/Desktop/Research/GitHub_Research/two-regime-dro/two-regime-dro/reports/frozen_baseline_review_report.pdf`
-- figures generated: `9`
+- figures generated: `11`
 - tables generated: `6`
 
 ## Known limitations

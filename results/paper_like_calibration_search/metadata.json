@@ -1,0 +1,13 @@
+{
+  "best_fit_parameters": {
+    "ccons_fa": 6000.0,
+    "ev_penetration_scale": 0.45,
+    "nbar_sl": 25
+  },
+  "best_fit_run_id": "phase2_scale0p45_nsl25_fa6000",
+  "best_fit_score": 302.0,
+  "figure_path": "",
+  "report_path": "docs/analysis_packs/paper_like_fig6_search_log.md",
+  "search_results_csv": "results/paper_like_calibration_search/search_results.csv",
+  "target_plan_path": "results/paper_like_calibration_search/plans/paper_case1_target_semantics_plan.csv"
+}
