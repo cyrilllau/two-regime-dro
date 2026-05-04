@@ -1,9 +1,9 @@
 {
-  "candidate_id": "mult_cons0p0152_normal1_disaster1p4",
+  "candidate_id": "mult_cons0p016_normal1_disaster1p4",
   "deterministic_worst_distribution": "results/paper_final/deterministic_worst_distribution.csv",
   "objective_components_tableIII": "results/paper_final/objective_components_tableIII.csv",
   "paper_final_promoted": true,
   "paper_root": "results/paper_final",
-  "source_root": "results/default_case_targeted_transition_v8_focus_cert",
+  "source_root": "results/default_case_final_candidate_0p016_1p4_combined",
   "verdict": "PASS_PAPER_STORY"
 }

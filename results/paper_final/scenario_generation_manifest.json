@@ -1,5 +1,5 @@
 {
-  "profile_figure_source": "data/colleague_default_10x10",
+  "profile_figure_source_unperturbed_base": "data/colleague_default_10x10",
   "default_optimization_source": "data/colleague_default_10x10",
   "paper_common_evaluator": {
     "A": 10,
@@ -11,5 +11,5 @@
     "normal_ev": "results/paper_final/figures/scenario_profile_normal_ev.png",
     "disaster_ev": "results/paper_final/figures/scenario_profile_disaster_ev.png"
   },
-  "note": "Scenario-profile figures use representative scenario a=1/b=1 from the same audited 10x10 runtime source used by the default optimization/evaluation pack."
+  "note": "Scenario-profile figures use the unperturbed colleague-provided base profiles for representative scenario a=1/b=1. The accepted optimization/evaluation pack uses the 10x10 runtime source generated from the same colleague data."
 }

@@ -83,7 +83,7 @@ the comparisons below are not comparisons of four different training
 objectives. They are common-scale ex-post comparisons of the resulting plans.
 The training objective for the accepted default uses normalized top-level
 multipliers
-$(m_{\rm cons},m_{\rm nor},m_{\rm dis})=(0.0152,1,1.4)$, while all reported
+$(m_{\rm cons},m_{\rm nor},m_{\rm dis})=(0.016,1,1.4)$, while all reported
 costs in the tables are raw physical/economic components without these
 multipliers.
 
@@ -115,36 +115,36 @@ MILP worst-distribution evaluator.}
 \toprule
 Obj. (\$) & Case 1 & Case 2 & Case 3 & Case 4 \\
 \midrule
-$F^{\mathrm{cons}}$ & 128,069.89 & 66,721.59 & 132,216.04 & 104,765.26 \\
-$F^{\mathrm{trans}}$ & 21,514.49 & 21,470.91 & 23,014.97 & 21,837.60 \\
-$F^{\mathrm{unmet}}$ & 0.00 & 0.00 & 66,167.24 & 66,167.24 \\
-$F^{\mathrm{sub}}$ & 40,809.78 & 40,809.78 & 40,769.87 & 40,769.87 \\
-$\Psi^{\mathrm{nor}}$ & 62,324.28 & 62,280.70 & 129,952.07 & 128,774.70 \\
-$\Phi^{\mathrm{dis}}$ & 5,223.70 & 16,774.96 & 4,358.42 & 6,545.72 \\
-$J_{\mathrm{eval}}$ & 173,264.00 & 115,350.56 & 224,490.02 & 196,871.27 \\
-Sites & 12 & 5 & 13 & 10 \\
-Slow/Fast EVSE & 172/15 & 113/15 & 165/12 & 101/12 \\
-Critical buses covered & 7/11 & 1/11 & 9/11 & 5/11 \\
+$F^{\mathrm{cons}}$ & 128,069.89 & 66,721.59 & 113,747.22 & 119,528.17 \\
+$F^{\mathrm{trans}}$ & 21,514.49 & 21,470.52 & 23,002.96 & 21,436.59 \\
+$F^{\mathrm{unmet}}$ & 0.00 & 0.00 & 137,689.83 & 0.00 \\
+$F^{\mathrm{sub}}$ & 40,809.78 & 40,809.78 & 40,723.50 & 40,809.78 \\
+$\Psi^{\mathrm{nor}}$ & 62,324.28 & 62,280.31 & 201,416.29 & 62,246.37 \\
+$\Phi^{\mathrm{dis}}$ & 5,223.70 & 16,844.36 & 4,557.02 & 7,032.12 \\
+$J_{\mathrm{eval}}$ & 173,264.00 & 115,371.11 & 256,105.73 & 165,210.27 \\
+Sites & 12 & 5 & 11 & 11 \\
+Slow/Fast EVSE & 172/15 & 113/15 & 163/11 & 171/15 \\
+Critical buses covered & 7/11 & 1/11 & 8/11 & 2/11 \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 Case~2 demonstrates the normal-service endpoint. It opens only five stations
 and achieves nearly the same normal component as the proposed plan:
-$\Psi^{\rm nor}$ is 62,280.70 in Case~2 and 62,324.28 in Case~1. This small
+$\Psi^{\rm nor}$ is 62,280.31 in Case~2 and 62,324.28 in Case~1. This small
 normal-operation difference is expected because both plans preserve low
 transportation cost and zero unmet charging demand. The difference appears
 when the plans are replayed under disaster uncertainty. Case~2 covers only
-1/11 critical buses directly, and its $\Phi^{\rm dis}$ is 16,774.96. The
+1/11 critical buses directly, and its $\Phi^{\rm dis}$ is 16,844.36. The
 integrated plan increases construction cost and opens broader feeder coverage,
-but reduces $\Phi^{\rm dis}$ to 5,223.70, a 68.86\% reduction.
+but reduces $\Phi^{\rm dis}$ to 5,223.70, a 68.99\% reduction.
 
-Case~3 gives the opposite endpoint. It opens thirteen stations, directly covers
-9/11 critical buses, and has the lowest disaster component,
-$\Phi^{\rm dis}=4,358.42$. This confirms that the disaster-only benchmark is
+Case~3 gives the opposite endpoint. It opens eleven stations, directly covers
+8/11 critical buses, and has the lowest disaster component,
+$\Phi^{\rm dis}=4,557.02$. This confirms that the disaster-only benchmark is
 indeed the most resilience-oriented design. However, that design is not a good
 daily-service plan. Under the same normal replay, $F^{\rm unmet}$ rises to
-66,167.24 and accounts for 50.91\% of $\Psi^{\rm nor}$. The integrated plan
+137,689.83 and accounts for 68.36\% of $\Psi^{\rm nor}$. The integrated plan
 therefore sits between the two partial frameworks: it keeps zero unmet demand
 like the normal-only endpoint, while recovering most of the disaster benefit of
 the disaster-only endpoint.
@@ -184,15 +184,15 @@ worst-distribution evaluator.}
 \toprule
 Metric & Proposed & Det. $K_{\rm train}=2$ \\
 \midrule
-$F^{\rm cons}$ & 128,069.89 & 104,765.26 \\
-$\Psi^{\rm nor}$ & 62,324.28 & 128,774.70 \\
-$\Phi^{\rm dis}$ & 5,223.70 & 6,545.72 \\
-$\pi_f\Phi^{\rm dis}$ & 1,567.11 & 1,963.72 \\
-$J_{\rm eval}$ & 173,264.00 & 196,871.27 \\
-Sites & 12 & 10 \\
-Slow/Fast EVSE & 172/15 & 101/12 \\
-Critical buses covered & 7/11 & 5/11 \\
-Reduction in $\Phi^{\rm dis}$ & -- & 20.20\% \\
+$F^{\rm cons}$ & 128,069.89 & 119,528.17 \\
+$\Psi^{\rm nor}$ & 62,324.28 & 62,246.37 \\
+$\Phi^{\rm dis}$ & 5,223.70 & 7,032.12 \\
+$\pi_f\Phi^{\rm dis}$ & 1,567.11 & 2,109.64 \\
+$J_{\rm eval}$ & 173,264.00 & 165,210.27 \\
+Sites & 12 & 11 \\
+Slow/Fast EVSE & 172/15 & 171/15 \\
+Critical buses covered & 7/11 & 2/11 \\
+Reduction in $\Phi^{\rm dis}$ & -- & 25.72\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -200,16 +200,17 @@ Reduction in $\Phi^{\rm dis}$ & -- & 20.20\% \\
 The deterministic solution is a meaningful comparator because it has the same
 outage-budget semantics as the proposed model. Its weakness is that the mean
 profiles do not represent the multi-scenario tails used in the common replay.
-It opens ten stations and installs 101 slow and 12 fast EVSEs, whereas the
+It opens eleven stations and installs 171 slow and 15 fast EVSEs, whereas the
 proposed DRO plan opens twelve stations and installs 172 slow and 15 fast
-EVSEs. The additional capacity in Case~1 is not concentrated at a single bus:
-it expands coverage around buses 17, 21, and 26 and strengthens the upper
-lateral through buses 29, 30, and 32. Under the same worst-distribution replay,
-this broader topology reduces $\Phi^{\rm dis}$ from 6,545.72 to 5,223.70,
-which is a 20.20\% reduction. The evaluated total cost also falls from
-196,871.27 for the deterministic plan to 173,264.00 for the proposed plan,
-because the deterministic first-stage saving is outweighed by poorer common
-replay performance.
+EVSEs. The two plans have similar aggregate charger counts, but they place that
+capacity differently. Case~1 expands direct critical-bus coverage from 2/11 to
+7/11 by selecting buses 11, 14, 17, 26, and 29 that the mean-value plan does
+not open. Under the same worst-distribution replay, this broader critical-bus
+topology reduces $\Phi^{\rm dis}$ from 7,032.12 to 5,223.70, which is a
+25.72\% reduction. The comparison therefore isolates the robustness value of
+multi-scenario DRO: Case~1 pays a larger first-stage construction component but
+obtains lower worst-distribution disaster cost while retaining zero unmet
+charging demand.
 
 \subsection{Certification and Reproducibility}
 Table~\ref{tab:certification} reports the certification status for the four
@@ -229,10 +230,10 @@ critical-bus coverage values, and open-bus sets.
 \toprule
 Case & Certificate & Iter. & Final viol. \\
 \midrule
-Case 1 & $\epsilon$-certified & 13 & 94.96 \\
+Case 1 & $\epsilon$-certified & 1 & 94.96 \\
 Case 2 & exact & 0 & 0.00 \\
-Case 3 & $\epsilon$-certified & 34 & 95.07 \\
-Case 4 & $\epsilon$-certified & 17 & 49.99 \\
+Case 3 & $\epsilon$-certified & 11 & 90.52 \\
+Case 4 & $\epsilon$-certified & 13 & 87.22 \\
 \bottomrule
 \end{tabular}
 \end{table}

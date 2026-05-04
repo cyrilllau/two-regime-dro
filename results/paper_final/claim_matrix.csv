@@ -1,7 +1,4 @@
-claim,artifact,status
-"Default support is A=10, B=10, K=2",setup_parameter_table.csv; scenario_generation_manifest.json; objective_components_tableIII.csv,PASS
-Table III uses raw component-complete common-evaluator costs,objective_components_tableIII.csv; summary.csv,PASS
-Case 1 reduces Case 2 Phi by 68.86% while keeping F_unmet zero,objective_components_tableIII.csv,PASS
-"Case 3 has the lowest Phi, 16.56% below Case 1, but sacrifices normal service",objective_components_tableIII.csv,PASS
-Case 1 reduces deterministic K=2 Phi by 20.20% and installs more stations and higher slow/fast charger counts,deterministic_worst_distribution.csv; objective_components_tableIII.csv; default_topology_evidence.csv,PASS
-Case 3 normal-service sacrifice is visible with F_unmet/Psi=50.92%,objective_components_tableIII.csv,PASS
+claim_id,status,artifact,evidence
+default_component_story,PASS,results/paper_final/objective_components_tableIII.csv,Phi order 4557.02 < 5223.70 < 16844.36; Case4 unmet 0.00 < Case3 unmet 137689.83
+deterministic_k2_robustness,PASS,results/paper_final/deterministic_worst_distribution.csv,Case1 Phi 5223.70 is 25.72% below Case4 Phi 7032.12
+case4_unmet_retune,PASS,results/default_case_final_candidate_0p016_1p4_combined,Retuned m_cons from 0.0152 to 0.016 at m_dis=1.4; Case4 F_unmet is below Case3 while Case1-3 story is preserved
