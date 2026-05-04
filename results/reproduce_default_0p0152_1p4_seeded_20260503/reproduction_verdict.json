@@ -1,0 +1,17 @@
+{
+  "verdict": "PASS_REPRODUCED_WITH_SEEDED_CUT_POOL",
+  "candidate_id": "mult_cons0p0152_normal1_disaster1p4",
+  "runtime_source": "data/colleague_default_10x10",
+  "A": 10,
+  "B": 10,
+  "K": 2,
+  "objective_multipliers": {
+    "cons": 0.0152,
+    "normal": 1.0,
+    "disaster": 1.4
+  },
+  "all_tableIII_metrics_match_paper_final": true,
+  "diff_csv": "results/reproduce_default_0p0152_1p4_seeded_20260503/reproduction_diff.csv",
+  "candidate_matrix": "results/reproduce_default_0p0152_1p4_seeded_20260503/candidate_matrix.csv",
+  "note": "Fresh unseeded proposed training was attempted and terminated after >20 minutes without a completed case log; seeded reproduction uses saved valid cuts from the same instance and reproduced all reported rows exactly."
+}

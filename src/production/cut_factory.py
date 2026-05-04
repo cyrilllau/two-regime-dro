@@ -7,6 +7,8 @@ import hashlib
 import json
 from typing import Mapping, Sequence
 
+from gurobipy import GRB, quicksum
+
 from src.audit.cut_audit import GeneratedCutAuditRecord, build_cut_audit_record
 from src.audit.residual_report import (
     RestrictedMasterProblemResidualReport,
@@ -43,7 +45,9 @@ from src.reference.outage_enumerator import (
 
 
 PAPER_DUAL_SIMPLEX_METHOD = 0
+CUT_FROM_SEPARATION_DUAL_METHOD = -1
 CUT_SIGNATURE_TOLERANCE = 1e-9
+DUAL_OBJECTIVE_TIEBREAK_TOLERANCE = 1e-6
 
 
 @dataclass(frozen=True)
@@ -296,6 +300,37 @@ def evaluate_generated_cut_violation(
     return base_value, float(support.objective_value), float(lower_bound - float(alpha))
 
 
+def _canonicalize_paper_dual_solution(
+    paper_dual_model,
+    *,
+    optimal_objective_value: float,
+) -> None:
+    """Pick a stable minimum-rho representative among optimal fixed-outage duals."""
+
+    original_objective = paper_dual_model.model.getObjective()
+    paper_dual_model.model.addConstr(
+        original_objective
+        >= float(optimal_objective_value) - DUAL_OBJECTIVE_TIEBREAK_TOLERANCE,
+        name="canonical_dual_objective_floor",
+    )
+    rho_total = quicksum(
+        var
+        for block in (
+            paper_dual_model.eq32_upper_vars,
+            paper_dual_model.eq32_lower_vars,
+        )
+        for var in block.values()
+    )
+    paper_dual_model.model.setObjective(rho_total, sense=GRB.MINIMIZE)
+    paper_dual_model.model.Params.Method = PAPER_DUAL_SIMPLEX_METHOD
+    paper_dual_model.model.optimize()
+    if paper_dual_model.model.Status != GRB.OPTIMAL:
+        raise ValueError(
+            "Paper dual canonical tie-break did not reach OPTIMAL status: "
+            f"{paper_dual_model.model.Status}."
+        )
+
+
 def generate_structured_cut(
     instance: CanonicalInstance,
     *,
@@ -307,6 +342,7 @@ def generate_structured_cut(
     source_alpha: float | None = None,
     source_lambda_by_line_id: Mapping[str, float] | None = None,
     source_violation_value: float | None = None,
+    canonicalize_degenerate_dual: bool = False,
     log_to_console: bool = False,
 ) -> GeneratedCutResult:
     """Generate one structured master cut from simplex-solved paper-dual samples."""
@@ -326,17 +362,26 @@ def generate_structured_cut(
         )
         paper_dual_model.model.Params.Method = PAPER_DUAL_SIMPLEX_METHOD
         paper_dual_model.model.optimize()
-        paper_dual_solution = extract_disaster_dual_paper_solution(paper_dual_model)
-        if paper_dual_solution.model_status != "OPTIMAL":
+        if paper_dual_model.model.Status != GRB.OPTIMAL:
             raise ValueError(
                 "Paper dual solve did not reach OPTIMAL status during cut generation: "
-                f"{paper_dual_solution.model_status} (code {paper_dual_solution.raw_status_code})."
+                f"{paper_dual_model.model.Status}."
             )
+        optimal_objective_value = float(paper_dual_model.model.ObjVal)
+        if canonicalize_degenerate_dual:
+            _canonicalize_paper_dual_solution(
+                paper_dual_model,
+                optimal_objective_value=optimal_objective_value,
+            )
+        paper_dual_solution = extract_disaster_dual_paper_solution(paper_dual_model)
         samplewise_decompositions_by_scenario[scenario_id] = (
             paper_dual_solution.samplewise_decomposition
         )
         samplewise_objective_by_scenario[scenario_id] = float(
-            paper_dual_solution.objective_value or 0.0
+            paper_dual_solution.samplewise_decomposition.evaluate(
+                plan=plan,
+                outage=outage,
+            )
         )
 
     cut = _build_aggregated_cut(
@@ -396,6 +441,95 @@ def generate_structured_cut(
     )
 
 
+def generate_structured_cut_from_decompositions(
+    instance: CanonicalInstance,
+    *,
+    plan: FixedFirstStagePlan,
+    outage: FixedOutageVector,
+    samplewise_decompositions_by_scenario: Mapping[int, SamplewisePaperDualDecomposition],
+    cut_id: str = "generated_cut",
+    provenance: str = "round_08_cut_factory",
+    source_alpha: float | None = None,
+    source_lambda_by_line_id: Mapping[str, float] | None = None,
+    source_violation_value: float | None = None,
+    simplex_method: int = CUT_FROM_SEPARATION_DUAL_METHOD,
+) -> GeneratedCutResult:
+    """Build one structured cut from already-solved paper-dual decompositions."""
+
+    selected_scenarios = _resolve_disaster_scenario_ids(
+        instance,
+        tuple(sorted(int(scenario_id) for scenario_id in samplewise_decompositions_by_scenario)),
+    )
+    normalized_decompositions = {
+        int(scenario_id): samplewise_decompositions_by_scenario[int(scenario_id)]
+        for scenario_id in selected_scenarios
+    }
+    samplewise_objective_by_scenario = {
+        scenario_id: float(
+            normalized_decompositions[scenario_id].evaluate(
+                plan=plan,
+                outage=outage,
+            )
+        )
+        for scenario_id in selected_scenarios
+    }
+    cut = _build_aggregated_cut(
+        instance,
+        cut_id=cut_id,
+        samplewise_decompositions_by_scenario=normalized_decompositions,
+    )
+    cut_signature_hash = compute_cut_signature_hash(cut)
+    nonzero_counts = compute_cut_nonzero_counts(cut)
+    support_value_at_source = None
+    old_master_cut_violation = None
+    if source_alpha is not None:
+        _, support_value, violation = evaluate_generated_cut_violation(
+            instance,
+            cut=cut,
+            plan=plan,
+            alpha=float(source_alpha),
+            lambda_by_line_id=source_lambda_by_line_id,
+        )
+        support_value_at_source = float(support_value)
+        old_master_cut_violation = float(violation)
+
+    audit = build_cut_audit_record(
+        cut_id=cut.cut_id,
+        provenance=provenance,
+        simplex_method=simplex_method,
+        source_plan=plan,
+        source_outage=outage,
+        source_alpha=source_alpha,
+        source_lambda_by_line_id=source_lambda_by_line_id,
+        source_violation_value=(
+            source_violation_value
+            if source_violation_value is not None
+            else old_master_cut_violation
+        ),
+        cut_signature_hash=cut_signature_hash,
+        gamma_z_nonzero_count=nonzero_counts["gamma_z_nonzero_count"],
+        gamma_n_sl_nonzero_count=nonzero_counts["gamma_n_sl_nonzero_count"],
+        gamma_n_fa_nonzero_count=nonzero_counts["gamma_n_fa_nonzero_count"],
+        phi_nonzero_count=nonzero_counts["phi_nonzero_count"],
+        samplewise_decompositions_by_scenario=normalized_decompositions,
+        samplewise_objective_by_scenario=samplewise_objective_by_scenario,
+        aggregated_cut=cut,
+    )
+    return GeneratedCutResult(
+        cut=cut,
+        audit=audit,
+        scenario_ids=selected_scenarios,
+        simplex_method=simplex_method,
+        support_value_at_source=support_value_at_source,
+        old_master_cut_violation=old_master_cut_violation,
+        cut_signature_hash=cut_signature_hash,
+        gamma_z_nonzero_count=nonzero_counts["gamma_z_nonzero_count"],
+        gamma_n_sl_nonzero_count=nonzero_counts["gamma_n_sl_nonzero_count"],
+        gamma_n_fa_nonzero_count=nonzero_counts["gamma_n_fa_nonzero_count"],
+        phi_nonzero_count=nonzero_counts["phi_nonzero_count"],
+    )
+
+
 def generate_cut_from_separation_solution(
     instance: CanonicalInstance,
     *,
@@ -407,7 +541,7 @@ def generate_cut_from_separation_solution(
     lambda_by_line_id: Mapping[str, float] | None = None,
     log_to_console: bool = False,
 ) -> GeneratedCutResult:
-    """Generate one structured cut from the separation-selected outage."""
+    """Generate a stable cut for the separation-selected outage pattern."""
 
     outage = build_fixed_outage_vector(
         instance,
@@ -423,6 +557,7 @@ def generate_cut_from_separation_solution(
         source_alpha=separation_solution.alpha_value,
         source_lambda_by_line_id=lambda_by_line_id,
         source_violation_value=separation_solution.objective_value,
+        canonicalize_degenerate_dual=True,
         log_to_console=log_to_console,
     )
 

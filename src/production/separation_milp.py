@@ -81,6 +81,10 @@ class SeparationMilpSolution:
     objective_value: float | None
     model_status: str
     raw_status_code: int
+    obj_bound: float | None
+    mip_gap: float | None
+    node_count: float | None
+    runtime_seconds: float | None
     delta_by_line_id: dict[str, int]
     omega_by_line_id: dict[str, float]
     tau_by_line_id: dict[str, float]
@@ -609,7 +613,10 @@ def build_separation_milp(
     omega_bounds_by_line_id: Mapping[str, tuple[float, float]],
     budget_k: int | None = None,
     scenario_ids: Sequence[int] | None = None,
+    forbidden_outage_patterns: Sequence[Sequence[str]] | None = None,
     model_name: str = "separation_milp",
+    time_limit_seconds: float | None = None,
+    mip_gap: float | None = None,
     log_to_console: bool = False,
 ) -> SeparationMilpModel:
     """Build the fixed-`(x, alpha, lambda)` separation MILP for Eq. (41)."""
@@ -630,9 +637,28 @@ def build_separation_milp(
     normalized_lambda = _resolve_lambda_by_line_id(line_ids, lambda_by_line_id)
     normalized_omega_bounds = _resolve_omega_bounds(line_ids, omega_bounds_by_line_id)
     selected_scenarios = _resolve_scenarios(instance, scenario_ids)
+    forbidden_patterns = tuple(tuple(str(line_id) for line_id in pattern) for pattern in (forbidden_outage_patterns or ()))
+    line_id_set = set(line_ids)
+    invalid_forbidden = sorted(
+        {
+            line_id
+            for pattern in forbidden_patterns
+            for line_id in pattern
+            if line_id not in line_id_set
+        }
+    )
+    if invalid_forbidden:
+        raise RuntimeDataValidationError(
+            "forbidden_outage_patterns contains invalid line ids: "
+            f"{tuple(invalid_forbidden)}."
+        )
 
     model = Model(model_name)
     model.Params.OutputFlag = 1 if log_to_console else 0
+    if time_limit_seconds is not None:
+        model.Params.TimeLimit = float(time_limit_seconds)
+    if mip_gap is not None:
+        model.Params.MIPGap = float(mip_gap)
 
     delta_vars = {
         line_id: model.addVar(vtype=GRB.BINARY, name=f"delta_{line_id}")
@@ -677,6 +703,14 @@ def build_separation_milp(
         quicksum(delta_vars[line_id] for line_id in line_ids) <= effective_budget,
         name="outage_budget",
     )
+    for index, pattern in enumerate(forbidden_patterns):
+        active = set(pattern)
+        model.addConstr(
+            quicksum(1 - delta_vars[line_id] for line_id in active)
+            + quicksum(delta_vars[line_id] for line_id in line_ids if line_id not in active)
+            >= 1,
+            name=f"forbid_outage_pattern_{index:03d}",
+        )
     for line_id in line_ids:
         model.addConstr(
             omega_vars[line_id]
@@ -741,13 +775,44 @@ def extract_separation_milp_solution(
         status_name = "INFEASIBLE"
     elif status_code == GRB.UNBOUNDED:
         status_name = "UNBOUNDED"
+    elif status_code == GRB.TIME_LIMIT:
+        status_name = "TIME_LIMIT"
+    elif status_code == GRB.INTERRUPTED:
+        status_name = "INTERRUPTED"
+    elif status_code == GRB.SUBOPTIMAL:
+        status_name = "SUBOPTIMAL"
 
-    objective_value = float(model.ObjVal) if status_code == GRB.OPTIMAL else None
-    if status_code != GRB.OPTIMAL:
+    sol_count = int(getattr(model, "SolCount", 0))
+    objective_value = float(model.ObjVal) if sol_count > 0 else None
+    obj_bound = None
+    mip_gap = None
+    node_count = None
+    runtime_seconds = None
+    try:
+        obj_bound = float(model.ObjBound)
+    except Exception:
+        obj_bound = None
+    try:
+        mip_gap = float(model.MIPGap) if sol_count > 0 else None
+    except Exception:
+        mip_gap = None
+    try:
+        node_count = float(model.NodeCount)
+    except Exception:
+        node_count = None
+    try:
+        runtime_seconds = float(model.Runtime)
+    except Exception:
+        runtime_seconds = None
+    if sol_count <= 0:
         return SeparationMilpSolution(
             objective_value=objective_value,
             model_status=status_name,
             raw_status_code=status_code,
+            obj_bound=obj_bound,
+            mip_gap=mip_gap,
+            node_count=node_count,
+            runtime_seconds=runtime_seconds,
             delta_by_line_id={line_id: 0 for line_id in separation_model.instance.sets.line_ids},
             omega_by_line_id={line_id: 0.0 for line_id in separation_model.instance.sets.line_ids},
             tau_by_line_id={line_id: 0.0 for line_id in separation_model.instance.sets.line_ids},
@@ -898,6 +963,10 @@ def extract_separation_milp_solution(
         objective_value=objective_value,
         model_status=status_name,
         raw_status_code=status_code,
+        obj_bound=obj_bound,
+        mip_gap=mip_gap,
+        node_count=node_count,
+        runtime_seconds=runtime_seconds,
         delta_by_line_id=delta_by_line_id,
         omega_by_line_id=omega_by_line_id,
         tau_by_line_id=tau_by_line_id,
@@ -924,7 +993,11 @@ def solve_separation_milp(
     omega_bounds_by_line_id: Mapping[str, tuple[float, float]],
     budget_k: int | None = None,
     scenario_ids: Sequence[int] | None = None,
+    forbidden_outage_patterns: Sequence[Sequence[str]] | None = None,
     model_name: str = "separation_milp",
+    time_limit_seconds: float | None = None,
+    mip_gap: float | None = None,
+    require_optimal: bool = True,
     log_to_console: bool = False,
 ) -> tuple[SeparationMilpModel, SeparationMilpSolution]:
     """Build, solve, and extract the fixed-point separation MILP."""
@@ -937,12 +1010,15 @@ def solve_separation_milp(
         omega_bounds_by_line_id=omega_bounds_by_line_id,
         budget_k=budget_k,
         scenario_ids=scenario_ids,
+        forbidden_outage_patterns=forbidden_outage_patterns,
         model_name=model_name,
+        time_limit_seconds=time_limit_seconds,
+        mip_gap=mip_gap,
         log_to_console=log_to_console,
     )
     separation_model.model.optimize()
     solution = extract_separation_milp_solution(separation_model)
-    if solution.model_status != "OPTIMAL":
+    if require_optimal and solution.model_status != "OPTIMAL":
         raise ValueError(
             f"Separation MILP did not reach OPTIMAL status: "
             f"{solution.model_status} (code {solution.raw_status_code})."

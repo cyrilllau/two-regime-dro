@@ -22,6 +22,7 @@ from src.production.normal_block import (
     build_normal_operation_block,
     extract_normal_operation_solution,
 )
+from src.reference.disaster_primal_ref import FixedFirstStagePlan
 
 
 @dataclass(frozen=True)
@@ -90,6 +91,7 @@ class RestrictedMasterProblem:
     budget_k: int
     fp_by_line_id: dict[str, float]
     normal_average_weight: float
+    normal_recourse_active: bool
     alpha_var: object
     lambda_by_line_id: dict[str, object] = field(default_factory=dict)
     s_by_cut_id: dict[str, object] = field(default_factory=dict)
@@ -272,11 +274,18 @@ def _resolve_fp_by_line_id(instance: CanonicalInstance) -> dict[str, float]:
     return {line_id: p_bar[index] for index, line_id in enumerate(line_ids)}
 
 
+def _normal_recourse_is_active(instance: CanonicalInstance) -> bool:
+    """Return whether the training master should include normal-operation blocks."""
+
+    return str(instance.metadata.get("benchmark_mode", "")).strip() != "disaster_only"
+
+
 def build_master_problem(
     instance: CanonicalInstance,
     *,
     cuts: Sequence[RestrictedMasterCut] | None = None,
     normal_scenario_ids: Sequence[int] | None = None,
+    warm_start_plan: FixedFirstStagePlan | None = None,
     model_name: str = "restricted_master_problem",
     log_to_console: bool = False,
 ) -> RestrictedMasterProblem:
@@ -285,6 +294,7 @@ def build_master_problem(
     ordered_buses = instance.sets.buses
     ordered_line_ids = instance.sets.line_ids
     selected_normal_scenarios = _resolve_normal_scenario_ids(instance, normal_scenario_ids)
+    normal_recourse_active = _normal_recourse_is_active(instance)
     budget_k = _resolve_budget_k(instance)
     normalized_cuts = _resolve_cuts(instance, cuts)
     fp_by_line_id = _resolve_fp_by_line_id(instance)
@@ -296,18 +306,24 @@ def build_master_problem(
         attach_objective=False,
     )
     model = first_stage.model
+    if warm_start_plan is not None:
+        for bus in ordered_buses:
+            first_stage.z_by_bus[bus].Start = float(warm_start_plan.z_by_bus[bus])
+            first_stage.n_sl_by_bus[bus].Start = float(warm_start_plan.n_sl_by_bus[bus])
+            first_stage.n_fa_by_bus[bus].Start = float(warm_start_plan.n_fa_by_bus[bus])
 
     normal_blocks_by_scenario: dict[int, NormalOperationBlock] = {}
-    for scenario_id in selected_normal_scenarios:
-        normal_blocks_by_scenario[scenario_id] = build_normal_operation_block(
-            instance,
-            first_stage=first_stage,
-            scenario_id=scenario_id,
-            model=model,
-            model_name=model_name,
-            log_to_console=log_to_console,
-            attach_objective=False,
-        )
+    if normal_recourse_active:
+        for scenario_id in selected_normal_scenarios:
+            normal_blocks_by_scenario[scenario_id] = build_normal_operation_block(
+                instance,
+                first_stage=first_stage,
+                scenario_id=scenario_id,
+                model=model,
+                model_name=model_name,
+                log_to_console=log_to_console,
+                attach_objective=False,
+            )
 
     alpha_var = model.addVar(
         lb=float(instance.economics.alpha_min),
@@ -354,11 +370,20 @@ def build_master_problem(
                 name=f"eq39_u_link_{cut.cut_id}_{line_id}",
             )
 
-    normal_average_weight = float((1.0 - instance.economics.pi_f) / len(selected_normal_scenarios))
+    normal_average_weight = (
+        float((1.0 - instance.economics.pi_f) / len(selected_normal_scenarios))
+        if normal_recourse_active
+        else 0.0
+    )
     construction_cost_expression = first_stage.construction_cost_expression
-    averaged_normal_cost_expression = normal_average_weight * quicksum(
-        normal_blocks_by_scenario[scenario_id].total_normal_cost_expression
-        for scenario_id in selected_normal_scenarios
+    averaged_normal_cost_expression = (
+        normal_average_weight
+        * quicksum(
+            normal_blocks_by_scenario[scenario_id].total_normal_cost_expression
+            for scenario_id in selected_normal_scenarios
+        )
+        if normal_recourse_active
+        else 0.0
     )
     disaster_master_expression = float(instance.economics.pi_f) * (
         alpha_var
@@ -367,10 +392,11 @@ def build_master_problem(
             for line_id in ordered_line_ids
         )
     )
+    objective_multipliers = instance.economics.objective_multipliers
     total_objective_expression = (
-        construction_cost_expression
-        + averaged_normal_cost_expression
-        + disaster_master_expression
+        objective_multipliers.cons * construction_cost_expression
+        + objective_multipliers.normal * averaged_normal_cost_expression
+        + objective_multipliers.disaster * disaster_master_expression
     )
     model.setObjective(total_objective_expression, sense=GRB.MINIMIZE)
     model.update()
@@ -387,6 +413,7 @@ def build_master_problem(
         budget_k=budget_k,
         fp_by_line_id=fp_by_line_id,
         normal_average_weight=normal_average_weight,
+        normal_recourse_active=normal_recourse_active,
         alpha_var=alpha_var,
         lambda_by_line_id=lambda_by_line_id,
         s_by_cut_id=s_by_cut_id,
@@ -410,6 +437,8 @@ def extract_master_problem_solution(
     status_name = str(model.Status)
     if status_code == GRB.OPTIMAL:
         status_name = "OPTIMAL"
+    elif status_code == GRB.TIME_LIMIT:
+        status_name = "TIME_LIMIT"
     elif status_code == GRB.INFEASIBLE:
         status_name = "INFEASIBLE"
     elif status_code == GRB.UNBOUNDED:
@@ -420,7 +449,8 @@ def extract_master_problem_solution(
         scenario_id: extract_normal_operation_solution(normal_block)
         for scenario_id, normal_block in master_problem.normal_blocks_by_scenario.items()
     }
-    if status_code != GRB.OPTIMAL:
+    has_solution = bool(status_code == GRB.OPTIMAL or int(getattr(model, "SolCount", 0)) > 0)
+    if not has_solution:
         return RestrictedMasterProblemSolution(
             objective_value=None,
             model_status=status_name,
@@ -438,31 +468,43 @@ def extract_master_problem_solution(
             construction_cost_value=first_stage_solution.construction_cost_value,
             averaged_normal_cost_value=0.0,
             unweighted_average_normal_cost_value=0.0,
-            normal_cost_by_scenario={
-                scenario_id: 0.0 for scenario_id in master_problem.normal_scenario_ids
-            },
+            normal_cost_by_scenario={},
             disaster_master_cost_value=0.0,
             lambda_fp_value=0.0,
             objective_reconstruction_gap=0.0,
         )
 
+    def nonnegative_solution_value(value: float, *, label: str, atol: float = 1.0e-5) -> float:
+        numeric = float(value)
+        if numeric < -atol:
+            raise RuntimeDataValidationError(f"{label} must be nonnegative, got {numeric}.")
+        return max(0.0, numeric)
+
     alpha_value = float(master_problem.alpha_var.X)
     lambda_values = {
-        line_id: float(var.X) for line_id, var in master_problem.lambda_by_line_id.items()
+        line_id: nonnegative_solution_value(var.X, label=f"lambda_by_line_id[{line_id!r}]")
+        for line_id, var in master_problem.lambda_by_line_id.items()
     }
     s_values = {
-        cut_id: float(var.X) for cut_id, var in master_problem.s_by_cut_id.items()
+        cut_id: nonnegative_solution_value(var.X, label=f"s_by_cut_id[{cut_id!r}]")
+        for cut_id, var in master_problem.s_by_cut_id.items()
     }
     u_values = {
-        key: float(var.X) for key, var in master_problem.u_by_cut_id_and_line_id.items()
+        key: nonnegative_solution_value(
+            var.X,
+            label=f"u_by_cut_id_and_line_id[{key!r}]",
+        )
+        for key, var in master_problem.u_by_cut_id_and_line_id.items()
     }
     normal_cost_by_scenario = {
         scenario_id: float(solution.normal_objective_value)
         for scenario_id, solution in normal_solutions_by_scenario.items()
     }
     construction_cost_value = float(first_stage_solution.construction_cost_value)
-    unweighted_average_normal_cost_value = float(
-        sum(normal_cost_by_scenario.values()) / len(master_problem.normal_scenario_ids)
+    unweighted_average_normal_cost_value = (
+        float(sum(normal_cost_by_scenario.values()) / len(normal_cost_by_scenario))
+        if normal_cost_by_scenario
+        else 0.0
     )
     averaged_normal_cost_value = float(
         master_problem.normal_average_weight * sum(normal_cost_by_scenario.values())
@@ -476,8 +518,11 @@ def extract_master_problem_solution(
     disaster_master_cost_value = float(
         master_problem.instance.economics.pi_f * (alpha_value + lambda_fp_value)
     )
+    objective_multipliers = master_problem.instance.economics.objective_multipliers
     reconstructed_objective = float(
-        construction_cost_value + averaged_normal_cost_value + disaster_master_cost_value
+        objective_multipliers.cons * construction_cost_value
+        + objective_multipliers.normal * averaged_normal_cost_value
+        + objective_multipliers.disaster * disaster_master_cost_value
     )
     objective_value = float(model.ObjVal)
 
@@ -506,6 +551,10 @@ def solve_master_problem(
     *,
     cuts: Sequence[RestrictedMasterCut] | None = None,
     normal_scenario_ids: Sequence[int] | None = None,
+    warm_start_plan: FixedFirstStagePlan | None = None,
+    time_limit_seconds: float | None = None,
+    mip_gap: float | None = None,
+    allow_suboptimal_incumbent: bool = False,
     model_name: str = "restricted_master_problem",
     log_to_console: bool = False,
 ) -> tuple[RestrictedMasterProblem, RestrictedMasterProblemSolution]:
@@ -515,12 +564,19 @@ def solve_master_problem(
         instance,
         cuts=cuts,
         normal_scenario_ids=normal_scenario_ids,
+        warm_start_plan=warm_start_plan,
         model_name=model_name,
         log_to_console=log_to_console,
     )
+    if time_limit_seconds is not None:
+        master_problem.model.Params.TimeLimit = float(time_limit_seconds)
+    if mip_gap is not None:
+        master_problem.model.Params.MIPGap = float(mip_gap)
     master_problem.model.optimize()
     solution = extract_master_problem_solution(master_problem)
-    if solution.model_status != "OPTIMAL":
+    if solution.model_status != "OPTIMAL" and not (
+        allow_suboptimal_incumbent and solution.objective_value is not None
+    ):
         raise ValueError(
             "Restricted master problem did not reach OPTIMAL status: "
             f"{solution.model_status} (code {solution.raw_status_code})."

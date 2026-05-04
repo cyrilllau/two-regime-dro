@@ -1,0 +1,15 @@
+symbol,description,value,unit
+Cfix,Fixed infrastructure cost,153600,$
+Ccons_sl,Installation cost per slow EVSE,540.07,$/EVSE
+Ccons_fa,Installation cost per fast EVSE,25000,$/EVSE
+Ctrans,Transportation cost scalar,0.0435,$/km
+Cunmet,Unmet charging-demand penalty,3,$/kWh
+CLS_cri/noncri,Critical/non-critical load-shedding penalty,50/10,$/kWh
+gamma,Discount rate,0.01,-
+theta,Payback period,20,year
+pi_f,Disaster-regime weight,0.3,-
+P_EV_sl/fa,Rated charging power of slow/fast EVSE,7/50,kW
+Nmax_sl/fa,Maximum slow/fast EVSE per EVCS,25/10,-
+K,Default outage budget,2,lines
+"|A|, |B|",Default common evaluator support,"10, 10",scenarios
+"|A|, |B|",Largest generated scalability support,"10, 10",scenarios

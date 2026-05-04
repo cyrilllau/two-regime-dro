@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from math import isfinite
 from pathlib import Path
 from typing import Any
 
@@ -94,6 +95,28 @@ class NodeMeta:
 
 
 @dataclass(frozen=True)
+class ObjectiveMultipliers:
+    """Training-objective scaling factors for first-stage and recourse terms."""
+
+    cons: float = 1.0
+    normal: float = 1.0
+    disaster: float = 1.0
+
+    def __post_init__(self) -> None:
+        for name, value in (
+            ("cons", self.cons),
+            ("normal", self.normal),
+            ("disaster", self.disaster),
+        ):
+            normalized = float(value)
+            if not isfinite(normalized) or normalized <= 0.0:
+                raise ValueError(
+                    f"objective_multipliers.{name} must be finite and positive, got {value!r}."
+                )
+            object.__setattr__(self, name, normalized)
+
+
+@dataclass(frozen=True)
 class EconomicParameters:
     """Runtime economic parameters plus frozen cost semantics."""
 
@@ -112,6 +135,8 @@ class EconomicParameters:
     annualize_disaster_cost_by_365: bool
     ctrans_mode: str
     power_unit: str
+    ccons_sl_extra_multiplier: float = 1.0
+    objective_multipliers: ObjectiveMultipliers = field(default_factory=ObjectiveMultipliers)
 
 
 @dataclass(frozen=True)
@@ -124,6 +149,9 @@ class EVParameters:
     delta_t_hours: float
     nbar_sl: int
     nbar_fa: int
+    nbar_sl_by_bus: dict[int, int] = field(default_factory=dict)
+    nbar_fa_by_bus: dict[int, int] = field(default_factory=dict)
+    slow_block_threshold: int = 0
 
 
 @dataclass(frozen=True)

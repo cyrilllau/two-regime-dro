@@ -41,6 +41,14 @@ class BendersIterationRecord:
     first_stage_objective_is_pure_construction: bool = False
     master_solve_seconds: float = 0.0
     separation_solve_seconds: float = 0.0
+    separation_model_status: str | None = None
+    separation_mip_gap: float | None = None
+    separation_obj_bound: float | None = None
+    separation_node_count: float | None = None
+    separation_max_omega_bound_violation: float | None = None
+    separation_min_omega_upper_slack: float | None = None
+    separation_min_active_omega_upper_slack: float | None = None
+    separation_reconstruction_gap: float | None = None
     cut_generation_seconds: float = 0.0
     stop_reason: str | None = None
 

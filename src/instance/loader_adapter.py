@@ -22,6 +22,7 @@ from src.instance.schema import (
     LineData,
     NodeMeta,
     NormalScenarioTensor,
+    ObjectiveMultipliers,
 )
 from src.instance.selection import RuntimeSelection, resolve_runtime_selection
 from src.instance.validators import (
@@ -121,6 +122,17 @@ def _build_lines(parameters: dict[str, Any]) -> tuple[LineData, ...]:
 
 def _build_economics(parameters: dict[str, Any], frozen_config: FrozenConfig) -> EconomicParameters:
     econ_raw = parameters["econ"]
+    objective_multipliers_raw = parameters.get("objective_multipliers", {})
+    if not isinstance(objective_multipliers_raw, dict):
+        raise RuntimeDataValidationError("objective_multipliers must be an object when provided.")
+    try:
+        objective_multipliers = ObjectiveMultipliers(
+            cons=float(objective_multipliers_raw.get("cons", 1.0)),
+            normal=float(objective_multipliers_raw.get("normal", 1.0)),
+            disaster=float(objective_multipliers_raw.get("disaster", 1.0)),
+        )
+    except (TypeError, ValueError) as exc:
+        raise RuntimeDataValidationError(str(exc)) from exc
     return EconomicParameters(
         cfix=float(econ_raw["Cfix"]),
         ccons_sl=float(econ_raw["Ccons_sl"]),
@@ -137,6 +149,7 @@ def _build_economics(parameters: dict[str, Any], frozen_config: FrozenConfig) ->
         annualize_disaster_cost_by_365=frozen_config.economics.annualize_disaster_cost_by_365,
         ctrans_mode=frozen_config.economics.ctrans_mode,
         power_unit=frozen_config.economics.power_unit,
+        objective_multipliers=objective_multipliers,
     )
 
 

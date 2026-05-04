@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
+from src.instance.schema import ObjectiveMultipliers
 from src.production.master_problem import build_master_problem
 from tests.oracle.test_master_problem_toy_cases import build_round_07_toy_case
 
@@ -45,6 +48,72 @@ def test_master_problem_objective_coefficients_match_alpha_lambda_and_normal_ave
     assert phi_master.lambda_by_line_id[line_id].Obj == pytest.approx(
         phi_instance.economics.pi_f * phi_instance.ambiguity.p_bar[0]
     )
+
+
+def test_master_problem_objective_multipliers_scale_training_coefficients_only() -> None:
+    """Objective multipliers should affect only the optimized master objective."""
+
+    instance, cuts, _ = build_round_07_toy_case("master_problem_normal_averaging.yaml")
+    instance = replace(
+        instance,
+        economics=replace(
+            instance.economics,
+            objective_multipliers=ObjectiveMultipliers(
+                cons=2.0,
+                normal=3.0,
+                disaster=5.0,
+            ),
+        ),
+    )
+    master = build_master_problem(
+        instance,
+        cuts=cuts,
+        model_name="round_07_master_coeffs_objective_multipliers",
+    )
+    normal_weight = (1.0 - instance.economics.pi_f) / len(
+        instance.sets.loaded_normal_scenarios
+    )
+    scenario_1_block = master.normal_blocks_by_scenario[1]
+    line_id = instance.sets.line_ids[0]
+
+    assert master.first_stage.z_by_bus[2].Obj == pytest.approx(
+        2.0 * instance.economics.cfix
+    )
+    assert scenario_1_block.unmet_slow_vars[(1, 1)].Obj == pytest.approx(
+        3.0 * normal_weight * instance.economics.cunmet
+    )
+    assert master.alpha_var.Obj == pytest.approx(5.0 * instance.economics.pi_f)
+    assert master.lambda_by_line_id[line_id].Obj == pytest.approx(
+        5.0 * instance.economics.pi_f * instance.ambiguity.p_bar[0]
+    )
+
+
+def test_disaster_only_master_excludes_normal_recourse_blocks() -> None:
+    """Case 3 should not include normal-stage recourse variables or constraints."""
+
+    instance, cuts, _ = build_round_07_toy_case("master_problem_normal_averaging.yaml")
+    instance = replace(
+        instance,
+        economics=replace(instance.economics, pi_f=1.0),
+        metadata={**instance.metadata, "benchmark_mode": "disaster_only"},
+    )
+    master = build_master_problem(
+        instance,
+        cuts=cuts,
+        model_name="round_07_master_disaster_only_no_normal_blocks",
+    )
+
+    variable_names = {var.VarName for var in master.model.getVars()}
+
+    assert master.normal_recourse_active is False
+    assert master.normal_blocks_by_scenario == {}
+    assert master.normal_average_weight == pytest.approx(0.0)
+    assert master.averaged_normal_cost_expression == pytest.approx(0.0)
+    assert not any(name.startswith("p_sub_") for name in variable_names)
+    assert not any(name.startswith("unmet_slow_") for name in variable_names)
+    assert not any(name.startswith("unmet_fast_") for name in variable_names)
+    assert not any(name.startswith("charge_slow_") for name in variable_names)
+    assert not any(name.startswith("charge_fast_") for name in variable_names)
 
 
 def test_master_problem_cut_rows_match_eq39_sign_patterns() -> None:

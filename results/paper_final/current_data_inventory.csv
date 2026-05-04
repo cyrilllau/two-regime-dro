@@ -1,0 +1,7 @@
+runtime_source,file,rows,scenario_col,scenario_count,scenario_min,scenario_max,time_col,scenario1_time_count,scenario1_time_min,scenario1_time_max,total_by_value_column
+data/colleague_default_10x10,normal_load_scenarios.csv,7680,scenario_a,10,1,10,t,24,1,24,"{""P_kW"": 482804.6610049994, ""Q_kvar"": 193191.5170090008}"
+data/colleague_default_10x10,normal_ev_demand_slow.csv,720,scenario_a,10,1,10,t,24,1,24,"{""DEV_ch_sl_kW"": 116180.848288}"
+data/colleague_default_10x10,normal_ev_demand_fast.csv,720,scenario_a,10,1,10,t,24,1,24,"{""DEV_ch_fa_kW"": 47371.56230899995}"
+data/colleague_default_10x10,disaster_load_scenarios.csv,1280,scenario_b,10,1,10,ts,4,1,4,"{""P_kW"": 74342.23500199996}"
+data/colleague_default_10x10,disaster_ev_discharge_slow.csv,120,scenario_b,10,1,10,ts,4,1,4,"{""DEV_dis_sl_kW"": 28743.248112999998}"
+data/colleague_default_10x10,disaster_ev_discharge_fast.csv,120,scenario_b,10,1,10,ts,4,1,4,"{""DEV_dis_fa_kW"": 14236.779082999996}"

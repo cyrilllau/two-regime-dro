@@ -12,7 +12,7 @@ import pytest
 from src.audit.model_dump import dump_model_artifact
 from src.instance.canonical_instance import load_canonical_instance
 from src.production.cut_factory import (
-    PAPER_DUAL_SIMPLEX_METHOD,
+    CUT_FROM_SEPARATION_DUAL_METHOD,
     run_single_iteration_cut_addition,
 )
 
@@ -62,10 +62,14 @@ def test_runtime_fixture_supports_one_generated_cut_addition_under_raw_guard() -
     assert before_dump.exists()
     assert after_dump.exists()
     assert result.generated_cut_result is not None
-    assert result.generated_cut_result.simplex_method == PAPER_DUAL_SIMPLEX_METHOD
+    assert result.generated_cut_result.simplex_method == CUT_FROM_SEPARATION_DUAL_METHOD
     assert result.generated_cut_result.cut.is_trivial() is False
     assert result.generated_cut_result.old_master_cut_violation is not None
     assert result.generated_cut_result.old_master_cut_violation > 1e-6
+    assert result.generated_cut_result.old_master_cut_violation == pytest.approx(
+        result.separation_solution.objective_value,
+        abs=1e-6,
+    )
     assert result.post_solution.objective_value >= result.pre_solution.objective_value - 1e-8
     assert result.post_residual.max_cut_support_violation <= 1e-8
     assert result.post_residual.max_u_link_violation <= 1e-8

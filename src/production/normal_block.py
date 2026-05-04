@@ -461,12 +461,15 @@ def extract_normal_operation_solution(normal_block: NormalOperationBlock) -> Nor
     status_name = str(model.Status)
     if status_code == GRB.OPTIMAL:
         status_name = "OPTIMAL"
+    elif status_code == GRB.TIME_LIMIT:
+        status_name = "TIME_LIMIT"
     elif status_code == GRB.INFEASIBLE:
         status_name = "INFEASIBLE"
     elif status_code == GRB.UNBOUNDED:
         status_name = "UNBOUNDED"
 
-    if status_code != GRB.OPTIMAL:
+    has_solution = bool(status_code == GRB.OPTIMAL or int(getattr(model, "SolCount", 0)) > 0)
+    if not has_solution:
         return NormalOperationSolution(
             objective_value=None,
             normal_objective_value=0.0,

@@ -29,10 +29,19 @@ from src.instance.schema import (
     CanonicalSets,
     DisasterScenarioTensor,
     NormalScenarioTensor,
+    ObjectiveMultipliers,
 )
 from src.instance.selection import build_runtime_selection, default_runtime_selection
+from src.instance.validators import build_criticality_maps
+from src.instance.validators import RuntimeDataValidationError
 from src.production.benders_engine import BendersEngineResult, run_benders_engine
-from src.production.master_problem import RestrictedMasterProblemSolution, solve_master_problem
+from src.production.cut_factory import compute_cut_signature_hash
+from src.production.master_problem import (
+    RestrictedMasterCut,
+    RestrictedMasterProblemSolution,
+    solve_master_problem,
+)
+from src.reference.disaster_primal_ref import FixedFirstStagePlan, build_fixed_first_stage_plan
 
 
 def load_yaml_file(path: str | Path) -> dict[str, Any]:
@@ -251,6 +260,97 @@ def build_mean_value_instance(instance: CanonicalInstance) -> CanonicalInstance:
     )
 
 
+def build_disaster_mean_value_instance(instance: CanonicalInstance) -> CanonicalInstance:
+    """Collapse only the disaster support to a mean-value scenario.
+
+    This benchmark keeps the full normal-operation support so that the
+    deterministic comparison isolates disaster uncertainty instead of becoming a
+    weak normal-service strawman when the normal scenarios are highly variable.
+    """
+
+    mean_disaster_id = 1
+    normal_support = instance.sets.loaded_normal_scenarios
+    disaster_support = instance.sets.loaded_disaster_scenarios
+
+    disaster_tensors = DisasterScenarioTensor(
+        support=(mean_disaster_id,),
+        p_load={
+            (mean_disaster_id, time_id, bus): _average_values(
+                [
+                    instance.disaster_tensors.p_load[(scenario_id, time_id, bus)]
+                    for scenario_id in disaster_support
+                ]
+            )
+            for time_id in instance.sets.disaster_times
+            for bus in instance.sets.buses
+        },
+        dev_dis_sl={
+            (mean_disaster_id, time_id, region): _average_values(
+                [
+                    instance.disaster_tensors.dev_dis_sl[(scenario_id, time_id, region)]
+                    for scenario_id in disaster_support
+                ]
+            )
+            for time_id in instance.sets.disaster_times
+            for region in instance.sets.regions
+        },
+        dev_dis_fa={
+            (mean_disaster_id, time_id, region): _average_values(
+                [
+                    instance.disaster_tensors.dev_dis_fa[(scenario_id, time_id, region)]
+                    for scenario_id in disaster_support
+                ]
+            )
+            for time_id in instance.sets.disaster_times
+            for region in instance.sets.regions
+        },
+    )
+    sets = CanonicalSets(
+        buses=instance.sets.buses,
+        line_ids=instance.sets.line_ids,
+        regions=instance.sets.regions,
+        normal_times=instance.sets.normal_times,
+        disaster_times=instance.sets.disaster_times,
+        declared_normal_scenarios=normal_support,
+        declared_disaster_scenarios=(mean_disaster_id,),
+        available_normal_scenarios=normal_support,
+        available_disaster_scenarios=(mean_disaster_id,),
+        loaded_normal_scenarios=normal_support,
+        loaded_disaster_scenarios=(mean_disaster_id,),
+    )
+    index_map = build_index_map(
+        buses=instance.sets.buses,
+        lines=instance.sets.line_ids,
+        regions=instance.sets.regions,
+        normal_times=instance.sets.normal_times,
+        disaster_times=instance.sets.disaster_times,
+        normal_scenarios=normal_support,
+        disaster_scenarios=(mean_disaster_id,),
+    )
+    scenario_support = ScenarioSupport(
+        normal=normal_support,
+        disaster=(mean_disaster_id,),
+        available_normal=normal_support,
+        available_disaster=(mean_disaster_id,),
+        declared_normal=normal_support,
+        declared_disaster=(mean_disaster_id,),
+        csv_support_by_file=dict(instance.scenario_support.csv_support_by_file),
+        manifest_messages=tuple(instance.scenario_support.manifest_messages),
+        selection_source=f"{instance.scenario_support.selection_source}|disaster_mean_value_benchmark",
+    )
+    metadata = dict(instance.metadata)
+    metadata["benchmark_mode"] = "deterministic_disaster_mean_value"
+    metadata["mean_value_source_disaster_support"] = list(disaster_support)
+    return replace(
+        instance,
+        sets=sets,
+        disaster_tensors=disaster_tensors,
+        index_map=index_map,
+        scenario_support=scenario_support,
+        metadata=metadata,
+    )
+
+
 def build_ev_penetration_instance(instance: CanonicalInstance, *, scale: float) -> CanonicalInstance:
     """Scale EV charging/discharging tensors by an explicit penetration factor."""
 
@@ -299,6 +399,7 @@ def build_disaster_only_instance(instance: CanonicalInstance) -> CanonicalInstan
     economics = replace(instance.economics, pi_f=1.0)
     metadata = dict(instance.metadata)
     metadata["benchmark_mode"] = "disaster_only"
+    metadata["station_sizing_policy"] = "unrestricted_disaster_capacity"
     return replace(instance, economics=economics, metadata=metadata)
 
 
@@ -319,6 +420,133 @@ def _resolve_tuple_override(
     return tuple(scalar for _ in range(expected_length))
 
 
+def _resolve_capacity_map(
+    raw_value: Any,
+    *,
+    buses: Sequence[int],
+    label: str,
+) -> dict[int, int]:
+    if raw_value is None:
+        return {}
+    if not isinstance(raw_value, Mapping):
+        raise RuntimeDataValidationError(f"{label} must be a mapping from bus id to integer cap.")
+
+    bus_set = set(int(bus) for bus in buses)
+    resolved: dict[int, int] = {}
+    for raw_bus, raw_cap in raw_value.items():
+        try:
+            bus = int(raw_bus)
+        except (TypeError, ValueError) as exc:
+            raise RuntimeDataValidationError(
+                f"{label} has a non-integer bus key: {raw_bus!r}."
+            ) from exc
+        if bus not in bus_set:
+            raise RuntimeDataValidationError(
+                f"{label} references bus {bus}, which is not in the instance bus set."
+            )
+        if isinstance(raw_cap, bool):
+            raise RuntimeDataValidationError(f"{label}[{bus}] must be a nonnegative integer.")
+        try:
+            cap = int(raw_cap)
+        except (TypeError, ValueError) as exc:
+            raise RuntimeDataValidationError(
+                f"{label}[{bus}] must be a nonnegative integer, got {raw_cap!r}."
+            ) from exc
+        if float(raw_cap) != float(cap) or cap < 0:
+            raise RuntimeDataValidationError(
+                f"{label}[{bus}] must be a nonnegative integer, got {raw_cap!r}."
+            )
+        resolved[bus] = cap
+    return resolved
+
+
+def build_station_capacity_profile(
+    instance: CanonicalInstance,
+    *,
+    profile_name: str,
+) -> tuple[dict[int, int], dict[int, int]]:
+    """Build a deterministic paper-facing capacity profile from input metadata."""
+
+    if profile_name not in {"paper_heterogeneous", "paper_heterogeneous_headroom"}:
+        raise RuntimeDataValidationError(f"Unsupported EVCS capacity profile: {profile_name!r}.")
+
+    candidate_by_bus = {node.bus_id: bool(node.candidate_for_evcs) for node in instance.nodes}
+    critical = set(instance.critical_buses or ())
+    topology = instance.network_topology
+    critical_neighbors: set[int] = set()
+    for bus in critical:
+        parent = topology.parent_by_bus.get(bus)
+        if parent is not None:
+            critical_neighbors.add(parent)
+        critical_neighbors.update(topology.children_by_bus.get(bus, ()))
+
+    min_distance_by_bus: dict[int, float] = {}
+    for index, bus in enumerate(instance.sets.buses):
+        min_distance_by_bus[bus] = min(float(row[index]) for row in instance.ev.distance_km)
+
+    slow_caps: dict[int, int] = {}
+    fast_caps: dict[int, int] = {}
+    for bus in instance.sets.buses:
+        if not candidate_by_bus.get(bus, False):
+            slow_caps[bus] = 0
+            fast_caps[bus] = 0
+            continue
+
+        degree = len(topology.children_by_bus.get(bus, ())) + (1 if bus in topology.parent_by_bus else 0)
+        distance = min_distance_by_bus[bus]
+        score = 0
+        if bus in critical:
+            score += 3
+        elif bus in critical_neighbors:
+            score += 2
+        if distance <= 2.5:
+            score += 2
+        elif distance <= 4.0:
+            score += 1
+        if degree >= 3:
+            score += 1
+        if topology.bus_depth.get(bus, 999) <= 3:
+            score += 1
+
+        if profile_name == "paper_heterogeneous_headroom":
+            large_cap = (40, 10)
+            medium_cap = (25, 6)
+            small_cap = (12, 3)
+        else:
+            large_cap = (25, 10)
+            medium_cap = (16, 6)
+            small_cap = (8, 3)
+
+        if score >= 5:
+            slow_caps[bus], fast_caps[bus] = large_cap
+        elif score >= 3:
+            slow_caps[bus], fast_caps[bus] = medium_cap
+        else:
+            slow_caps[bus], fast_caps[bus] = small_cap
+
+    return slow_caps, fast_caps
+
+
+def _validate_candidate_capacity_feasibility(
+    instance: CanonicalInstance,
+    *,
+    slow_caps: Mapping[int, int],
+    fast_caps: Mapping[int, int],
+    default_slow_cap: int,
+    default_fast_cap: int,
+) -> None:
+    for node in instance.nodes:
+        if not node.candidate_for_evcs:
+            continue
+        slow_cap = int(slow_caps.get(node.bus_id, default_slow_cap))
+        fast_cap = int(fast_caps.get(node.bus_id, default_fast_cap))
+        if slow_cap + fast_cap < 3:
+            raise RuntimeDataValidationError(
+                "EVCS capacity profile makes candidate bus "
+                f"{node.bus_id} infeasible for the three-charger minimum."
+            )
+
+
 def apply_parameter_overrides(
     instance: CanonicalInstance,
     overrides: Mapping[str, Any] | None,
@@ -334,6 +562,9 @@ def apply_parameter_overrides(
     metadata = dict(instance.metadata)
 
     economics_overrides = overrides.get("economics", {})
+    objective_multiplier_overrides = overrides.get("objective_multipliers", {})
+    if objective_multiplier_overrides and not isinstance(objective_multiplier_overrides, Mapping):
+        raise RuntimeDataValidationError("objective_multipliers override must be a mapping.")
     if economics_overrides:
         economics_kwargs = {
             "cfix": float(economics_overrides.get("cfix", economics.cfix)),
@@ -366,7 +597,17 @@ def apply_parameter_overrides(
                 economics_overrides.get("ctrans_mode", economics.ctrans_mode)
             ),
             "power_unit": str(economics_overrides.get("power_unit", economics.power_unit)),
+            "ccons_sl_extra_multiplier": float(
+                economics_overrides.get(
+                    "ccons_sl_extra_multiplier",
+                    economics.ccons_sl_extra_multiplier,
+                )
+            ),
         }
+        if economics_kwargs["ccons_sl_extra_multiplier"] < 1.0:
+            raise RuntimeDataValidationError(
+                "economics.ccons_sl_extra_multiplier must be at least 1.0."
+            )
         ctrans_source = economics_overrides.get(
             "ctrans_scalar",
             economics_overrides.get("ctrans", economics.ctrans),
@@ -377,16 +618,74 @@ def apply_parameter_overrides(
             label="economics.ctrans",
         )
         economics = replace(economics, **economics_kwargs)
+    if objective_multiplier_overrides:
+        economics = replace(
+            economics,
+            objective_multipliers=ObjectiveMultipliers(
+                cons=float(
+                    objective_multiplier_overrides.get(
+                        "cons", economics.objective_multipliers.cons
+                    )
+                ),
+                normal=float(
+                    objective_multiplier_overrides.get(
+                        "normal", economics.objective_multipliers.normal
+                    )
+                ),
+                disaster=float(
+                    objective_multiplier_overrides.get(
+                        "disaster", economics.objective_multipliers.disaster
+                    )
+                ),
+            ),
+        )
 
     ev_overrides = overrides.get("ev", {})
     if ev_overrides:
+        nbar_sl = int(ev_overrides.get("nbar_sl", ev.nbar_sl))
+        nbar_fa = int(ev_overrides.get("nbar_fa", ev.nbar_fa))
+        slow_block_threshold = int(
+            ev_overrides.get("slow_block_threshold", ev.slow_block_threshold)
+        )
+        if slow_block_threshold < 0:
+            raise RuntimeDataValidationError("ev.slow_block_threshold must be nonnegative.")
+        nbar_sl_by_bus = dict(ev.nbar_sl_by_bus)
+        nbar_fa_by_bus = dict(ev.nbar_fa_by_bus)
+        capacity_profile = ev_overrides.get("capacity_profile")
+        if capacity_profile:
+            nbar_sl_by_bus, nbar_fa_by_bus = build_station_capacity_profile(
+                instance,
+                profile_name=str(capacity_profile),
+            )
+        if "nbar_sl_by_bus" in ev_overrides:
+            nbar_sl_by_bus = _resolve_capacity_map(
+                ev_overrides["nbar_sl_by_bus"],
+                buses=instance.sets.buses,
+                label="ev.nbar_sl_by_bus",
+            )
+        if "nbar_fa_by_bus" in ev_overrides:
+            nbar_fa_by_bus = _resolve_capacity_map(
+                ev_overrides["nbar_fa_by_bus"],
+                buses=instance.sets.buses,
+                label="ev.nbar_fa_by_bus",
+            )
+        _validate_candidate_capacity_feasibility(
+            instance,
+            slow_caps=nbar_sl_by_bus,
+            fast_caps=nbar_fa_by_bus,
+            default_slow_cap=nbar_sl,
+            default_fast_cap=nbar_fa,
+        )
         ev = replace(
             ev,
             p_ev_rated_sl=float(ev_overrides.get("p_ev_rated_sl", ev.p_ev_rated_sl)),
             p_ev_rated_fa=float(ev_overrides.get("p_ev_rated_fa", ev.p_ev_rated_fa)),
             delta_t_hours=float(ev_overrides.get("delta_t_hours", ev.delta_t_hours)),
-            nbar_sl=int(ev_overrides.get("nbar_sl", ev.nbar_sl)),
-            nbar_fa=int(ev_overrides.get("nbar_fa", ev.nbar_fa)),
+            nbar_sl=nbar_sl,
+            nbar_fa=nbar_fa,
+            nbar_sl_by_bus=nbar_sl_by_bus,
+            nbar_fa_by_bus=nbar_fa_by_bus,
+            slow_block_threshold=slow_block_threshold,
         )
 
     ambiguity_overrides = overrides.get("ambiguity", {})
@@ -402,8 +701,39 @@ def apply_parameter_overrides(
             ),
         )
 
+    cls_by_bus = instance.cls_by_bus
+    is_critical_by_bus = instance.is_critical_by_bus
+    disaster_overrides = overrides.get("disaster_objective", {})
+    if disaster_overrides:
+        cls_critical = float(
+            disaster_overrides.get(
+                "cls_critical",
+                instance.frozen_config.disaster_objective.cls_critical,
+            )
+        )
+        cls_noncritical = float(
+            disaster_overrides.get(
+                "cls_noncritical",
+                instance.frozen_config.disaster_objective.cls_noncritical,
+            )
+        )
+        is_critical_by_bus, cls_by_bus = build_criticality_maps(
+            buses=instance.sets.buses,
+            critical_buses=instance.critical_buses,
+            cls_critical=cls_critical,
+            cls_noncritical=cls_noncritical,
+        )
+
     metadata["parameter_overrides"] = json.loads(json.dumps(overrides))
-    return replace(instance, economics=economics, ev=ev, ambiguity=ambiguity, metadata=metadata)
+    return replace(
+        instance,
+        economics=economics,
+        ev=ev,
+        ambiguity=ambiguity,
+        cls_by_bus=cls_by_bus,
+        is_critical_by_bus=is_critical_by_bus,
+        metadata=metadata,
+    )
 
 
 def prepare_instance_for_run(
@@ -420,6 +750,8 @@ def prepare_instance_for_run(
         )
     if run_config.get("mode") == "deterministic_mean_value":
         instance = build_mean_value_instance(instance)
+    if run_config.get("mode") == "deterministic_disaster_mean_value":
+        instance = build_disaster_mean_value_instance(instance)
     if run_config.get("mode") == "normal_only":
         instance = build_normal_only_instance(instance)
     if run_config.get("mode") == "disaster_only":
@@ -544,6 +876,183 @@ def write_json(path: str | Path, payload: Mapping[str, Any]) -> Path:
         encoding="utf-8",
     )
     return file_path
+
+
+def _load_fixed_plan_from_csv(
+    instance: CanonicalInstance,
+    path: str | Path,
+) -> FixedFirstStagePlan:
+    rows: list[dict[str, str]] = []
+    with Path(path).open("r", encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    return build_fixed_first_stage_plan(
+        instance,
+        z_by_bus={int(row["bus"]): int(float(row["is_open"])) for row in rows},
+        n_sl_by_bus={int(row["bus"]): int(float(row["n_sl"])) for row in rows},
+        n_fa_by_bus={int(row["bus"]): int(float(row["n_fa"])) for row in rows},
+    )
+
+
+def _resolve_warm_start_plan(
+    instance: CanonicalInstance,
+    benders_config: Mapping[str, Any],
+) -> FixedFirstStagePlan | None:
+    raw_paths: list[str] = []
+    if benders_config.get("warm_start_plan_path"):
+        raw_paths.append(str(benders_config["warm_start_plan_path"]))
+    if isinstance(benders_config.get("warm_start_plan_paths"), Sequence):
+        raw_paths.extend(str(path) for path in benders_config["warm_start_plan_paths"])
+    for raw_path in raw_paths:
+        path = Path(raw_path)
+        if path.exists():
+            return _load_fixed_plan_from_csv(instance, path)
+    return None
+
+
+def _cut_to_payload(cut: RestrictedMasterCut) -> dict[str, Any]:
+    return {
+        "cut_id": str(cut.cut_id),
+        "beta": float(cut.beta),
+        "gamma_z_by_bus": {str(bus): float(value) for bus, value in cut.gamma_z_by_bus.items()},
+        "gamma_n_sl_by_bus": {
+            str(bus): float(value) for bus, value in cut.gamma_n_sl_by_bus.items()
+        },
+        "gamma_n_fa_by_bus": {
+            str(bus): float(value) for bus, value in cut.gamma_n_fa_by_bus.items()
+        },
+        "phi_by_line_id": {
+            str(line_id): float(value) for line_id, value in cut.phi_by_line_id.items()
+        },
+        "cut_signature_hash": compute_cut_signature_hash(cut),
+    }
+
+
+def _cut_from_payload(
+    payload: Mapping[str, Any],
+    *,
+    cut_id_prefix: str = "",
+) -> RestrictedMasterCut:
+    raw_cut_id = str(payload["cut_id"])
+    return RestrictedMasterCut(
+        cut_id=f"{cut_id_prefix}{raw_cut_id}",
+        beta=float(payload["beta"]),
+        gamma_z_by_bus={
+            int(bus): float(value)
+            for bus, value in dict(payload.get("gamma_z_by_bus", {})).items()
+        },
+        gamma_n_sl_by_bus={
+            int(bus): float(value)
+            for bus, value in dict(payload.get("gamma_n_sl_by_bus", {})).items()
+        },
+        gamma_n_fa_by_bus={
+            int(bus): float(value)
+            for bus, value in dict(payload.get("gamma_n_fa_by_bus", {})).items()
+        },
+        phi_by_line_id={
+            str(line_id): float(value)
+            for line_id, value in dict(payload.get("phi_by_line_id", {})).items()
+        },
+    )
+
+
+def _cut_pool_metadata(
+    instance: CanonicalInstance,
+    run_config: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "runtime_source": str(run_config.get("runtime_source", "")),
+        "mode": str(run_config.get("mode", "")),
+        "benchmark_mode": str(instance.metadata.get("benchmark_mode", "")),
+        "normal_scenarios": [int(value) for value in instance.sets.loaded_normal_scenarios],
+        "disaster_scenarios": [int(value) for value in instance.sets.loaded_disaster_scenarios],
+        "K": int(instance.ambiguity.k_max_outages),
+        "buses": [int(value) for value in instance.sets.buses],
+        "line_ids": [str(value) for value in instance.sets.line_ids],
+    }
+
+
+def _cut_pool_matches(
+    *,
+    expected: Mapping[str, Any],
+    observed: Mapping[str, Any],
+) -> bool:
+    return all(observed.get(key) == expected.get(key) for key in expected)
+
+
+def _write_cut_pool(
+    path: Path,
+    *,
+    instance: CanonicalInstance,
+    run_config: Mapping[str, Any],
+    cuts: Sequence[RestrictedMasterCut],
+) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    nontrivial_cuts = [cut for cut in cuts if not cut.is_trivial()]
+    payload = {
+        "metadata": _cut_pool_metadata(instance, run_config),
+        "cut_count": len(nontrivial_cuts),
+        "cuts": [_cut_to_payload(cut) for cut in nontrivial_cuts],
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def _resolve_cut_pool_paths(benders_config: Mapping[str, Any]) -> list[Path]:
+    raw_paths: list[str] = []
+    if benders_config.get("initial_cut_pool_path"):
+        raw_paths.append(str(benders_config["initial_cut_pool_path"]))
+    if isinstance(benders_config.get("initial_cut_pool_paths"), Sequence):
+        raw_paths.extend(str(path) for path in benders_config["initial_cut_pool_paths"])
+    return [Path(path) for path in raw_paths]
+
+
+def _load_initial_cuts_from_pools(
+    instance: CanonicalInstance,
+    run_config: Mapping[str, Any],
+    benders_config: Mapping[str, Any],
+) -> tuple[list[RestrictedMasterCut], list[dict[str, Any]]]:
+    expected_metadata = _cut_pool_metadata(instance, run_config)
+    loaded_cuts: list[RestrictedMasterCut] = []
+    audit_rows: list[dict[str, Any]] = []
+    seen_signatures: set[str] = set()
+    for pool_index, path in enumerate(_resolve_cut_pool_paths(benders_config), start=1):
+        if not path.exists():
+            audit_rows.append({
+                "path": str(path),
+                "status": "rejected_missing",
+                "loaded_cut_count": 0,
+                "reason": "path_not_found",
+            })
+            continue
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        observed_metadata = dict(payload.get("metadata", {}))
+        if not _cut_pool_matches(expected=expected_metadata, observed=observed_metadata):
+            audit_rows.append({
+                "path": str(path),
+                "status": "rejected_metadata_mismatch",
+                "loaded_cut_count": 0,
+                "reason": "runtime_source/mode/support/K/buses/lines mismatch",
+            })
+            continue
+        pool_loaded = 0
+        pool_duplicate = 0
+        for cut_payload in payload.get("cuts", ()):
+            cut = _cut_from_payload(cut_payload, cut_id_prefix=f"seed{pool_index}_")
+            signature = compute_cut_signature_hash(cut)
+            if signature in seen_signatures:
+                pool_duplicate += 1
+                continue
+            seen_signatures.add(signature)
+            loaded_cuts.append(cut)
+            pool_loaded += 1
+        audit_rows.append({
+            "path": str(path),
+            "status": "accepted",
+            "loaded_cut_count": pool_loaded,
+            "duplicate_cut_count": pool_duplicate,
+            "reason": "",
+        })
+    return loaded_cuts, audit_rows
 
 
 def build_summary_row(
@@ -674,6 +1183,8 @@ def execute_run(
         "master_before_cut_lp_path": None,
         "master_after_cut_lp_path": None,
         "iteration_log_path": None,
+        "cut_pool_path": None,
+        "cut_pool_audit_path": None,
     }
 
     instance: CanonicalInstance | None = None
@@ -693,6 +1204,7 @@ def execute_run(
     validation_level = "failed"
     message = ""
     exception_payload: dict[str, Any] | None = None
+    cut_pool_audit_rows: list[dict[str, Any]] = []
 
     try:
         base_instance = load_instance_for_run(run_config, critical_buses=critical_buses)
@@ -719,14 +1231,90 @@ def execute_run(
                     Path("/tmp") / f"{run_id}_master_after_cut.lp"
                 )
             artifact_paths["iteration_log_path"] = str(logs_dir / f"{run_id}_iteration_log.json")
+            warm_start_plan = _resolve_warm_start_plan(instance, benders_config)
+            initial_cuts, cut_pool_audit_rows = _load_initial_cuts_from_pools(
+                instance,
+                run_config,
+                benders_config,
+            )
+            if cut_pool_audit_rows:
+                artifact_paths["cut_pool_audit_path"] = str(
+                    logs_dir / f"{run_id}_cut_pool_audit.csv"
+                )
+                with Path(artifact_paths["cut_pool_audit_path"]).open(
+                    "w", encoding="utf-8", newline=""
+                ) as handle:
+                    fieldnames = [
+                        "path",
+                        "status",
+                        "loaded_cut_count",
+                        "duplicate_cut_count",
+                        "reason",
+                    ]
+                    writer = csv.DictWriter(handle, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for row in cut_pool_audit_rows:
+                        writer.writerow({key: row.get(key, "") for key in fieldnames})
+            omega_bounds_by_line_id = None
+            if benders_config.get("omega_bound_upper") not in (None, ""):
+                omega_upper = float(benders_config["omega_bound_upper"])
+                omega_bounds_by_line_id = {
+                    line_id: (0.0, omega_upper)
+                    for line_id in instance.sets.line_ids
+                }
             benders_result: BendersEngineResult = run_benders_engine(
                 instance,
+                cuts=initial_cuts or None,
+                omega_bounds_by_line_id=omega_bounds_by_line_id,
+                omega_bound_safety_factor=float(
+                    benders_config.get("omega_bound_safety_factor", 2.0)
+                ),
+                warm_start_plan=warm_start_plan,
+                master_time_limit_seconds=(
+                    None
+                    if benders_config.get("master_time_limit_seconds") in (None, "")
+                    else float(benders_config["master_time_limit_seconds"])
+                ),
+                master_mip_gap=(
+                    None
+                    if benders_config.get("master_mip_gap") in (None, "")
+                    else float(benders_config["master_mip_gap"])
+                ),
+                separation_time_limit_seconds=(
+                    None
+                    if benders_config.get("separation_time_limit_seconds") in (None, "")
+                    else float(benders_config["separation_time_limit_seconds"])
+                ),
+                separation_mip_gap=(
+                    None
+                    if benders_config.get("separation_mip_gap") in (None, "")
+                    else float(benders_config["separation_mip_gap"])
+                ),
+                allow_master_suboptimal_incumbent=bool(
+                    benders_config.get("allow_master_suboptimal_incumbent", False)
+                ),
                 epsilon_cert=float(benders_config.get("epsilon_cert", 0.0)),
                 max_iterations=int(benders_config.get("max_iterations", 25)),
+                separation_top_cuts_per_iteration=int(
+                    benders_config.get("separation_top_cuts_per_iteration", 1)
+                ),
+                enable_cut_signature_dedup=bool(
+                    benders_config.get("enable_cut_signature_dedup", False)
+                ),
+                enable_repeated_outage_guard=bool(
+                    benders_config.get("enable_repeated_outage_guard", False)
+                ),
                 model_name_prefix=run_id,
                 master_before_cut_lp_path=artifact_paths["master_before_cut_lp_path"],
                 master_after_cut_lp_path=artifact_paths["master_after_cut_lp_path"],
                 iteration_log_path=artifact_paths["iteration_log_path"],
+            )
+            artifact_paths["cut_pool_path"] = str(logs_dir / f"{run_id}_cut_pool.json")
+            _write_cut_pool(
+                Path(artifact_paths["cut_pool_path"]),
+                instance=instance,
+                run_config=run_config,
+                cuts=[result.cut for result in benders_result.generated_cut_results],
             )
             solution = benders_result.final_solution
             stop_reason = str(benders_result.stop_reason)
@@ -836,6 +1424,7 @@ def execute_run(
         "lower_bound_sequence": lower_bound_sequence,
         "cut_count_sequence": cut_count_sequence,
         "iteration_log": iteration_payload,
+        "cut_pool_audit": cut_pool_audit_rows,
         "metadata": {} if instance is None else dict(instance.metadata),
         "exception": exception_payload,
     }

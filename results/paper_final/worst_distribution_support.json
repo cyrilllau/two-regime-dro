@@ -1,0 +1,14 @@
+{
+  "proposed_active_outage_lines": [
+    "line_06_26",
+    "line_27_28"
+  ],
+  "deterministic_active_outage_lines": [
+    "line_06_07",
+    "line_26_27"
+  ],
+  "K_eval": 2,
+  "A": 10,
+  "B": 10,
+  "note": "MILP worst-distribution evaluator records the active outage pattern for the accepted default candidate."
+}

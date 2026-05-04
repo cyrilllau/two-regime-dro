@@ -1,0 +1,20 @@
+item,paper_section_value,current_default_value,status
+runtime_source,audited 10x10 default support,data/colleague_default_10x10,PASS
+network,IEEE 33-node radial distribution system,"33 buses, 32 radial lines",PASS
+regions,3 EV regions,"1, 2, 3",PASS
+normal_horizon,24 hourly periods,24 periods,PASS
+disaster_horizon,10:00-14:00 emergency window,4 periods,PASS
+Cfix,153600,153600,PASS
+Ccons_sl,540.07,540.07,PASS
+Ccons_fa,25000,25000,PASS
+Ctrans,0.0435,0.0435 for all time periods,PASS
+Cunmet,3,3,PASS
+CLS_critical/noncritical,50/10,50/10,PASS
+gamma,0.01,0.01,PASS
+theta,20,20,PASS
+pi_f,0.3,0.3,PASS
+P_EV_sl/fa,7/50,7/50,PASS
+Nmax_sl/fa,25/10,25/10,PASS
+A/B/K,10/10/2,10/10/2,PASS
+objective_multipliers,training-only calibration,"cons=0.015, normal=1.0, disaster=1.25; raw reported costs unmultiplied",PASS
+common_evaluator,same ex-post evaluator for Cases 1-4,"A=10, B=10, K=2, MILP worst-distribution replay",PASS

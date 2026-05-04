@@ -162,6 +162,14 @@ PAPER_STYLE_PANEL_TITLES = {
     "normal_only_paper_like_tuned_D1_scale_0_85": "Demand scale 0.85",
     "normal_only_paper_like_tuned_D2_scale_0_70": "Demand scale 0.70",
     "paper_case1_target_semantics": "Paper Fig. 6 target semantics",
+    "default_scale_v2_proposed": "(a) Case 1: Proposed model",
+    "default_scale_v2_normal": "(b) Case 2: Only normal operation considered",
+    "default_scale_v2_disaster": "(c) Case 3: Only disaster resilience considered",
+    "default_scale_v2_deterministic": "Deterministic mean-value benchmark",
+    "default_scale_v2_deterministic_k2": "Deterministic mean-value benchmark (K=2)",
+    "ev_sensitivity_base": "(a) Base EV demand",
+    "ev_sensitivity_1p5": "(b) EV penetration 1.5x",
+    "ev_sensitivity_2p0": "(c) EV penetration 2.0x",
 }
 
 

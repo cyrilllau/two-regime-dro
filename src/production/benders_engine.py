@@ -38,6 +38,7 @@ from src.production.separation_milp import (
     solve_separation_milp,
 )
 from src.reference.disaster_primal_ref import build_fixed_first_stage_plan
+from src.reference.disaster_primal_ref import FixedFirstStagePlan
 from src.reference.outage_enumerator import derive_single_line_omega_bounds
 
 
@@ -169,9 +170,72 @@ def _copy_iteration_record(
         first_stage_objective_is_pure_construction=record.first_stage_objective_is_pure_construction,
         master_solve_seconds=record.master_solve_seconds,
         separation_solve_seconds=record.separation_solve_seconds,
+        separation_model_status=record.separation_model_status,
+        separation_mip_gap=record.separation_mip_gap,
+        separation_obj_bound=record.separation_obj_bound,
+        separation_node_count=record.separation_node_count,
+        separation_max_omega_bound_violation=record.separation_max_omega_bound_violation,
+        separation_min_omega_upper_slack=record.separation_min_omega_upper_slack,
+        separation_min_active_omega_upper_slack=(
+            record.separation_min_active_omega_upper_slack
+        ),
+        separation_reconstruction_gap=record.separation_reconstruction_gap,
         cut_generation_seconds=record.cut_generation_seconds,
         stop_reason=record.stop_reason,
     )
+
+
+def _min_omega_upper_slack(solution: SeparationMilpSolution) -> float | None:
+    if not solution.omega_upper_slack_by_line_id:
+        return None
+    return float(min(solution.omega_upper_slack_by_line_id.values()))
+
+
+def _min_active_omega_upper_slack(solution: SeparationMilpSolution) -> float | None:
+    active_slacks = [
+        float(solution.omega_upper_slack_by_line_id[line_id])
+        for line_id, active in solution.delta_by_line_id.items()
+        if int(active) == 1 and line_id in solution.omega_upper_slack_by_line_id
+    ]
+    return float(min(active_slacks)) if active_slacks else None
+
+
+def _max_omega_bound_violation(
+    solutions: Sequence[SeparationMilpSolution],
+) -> float | None:
+    if not solutions:
+        return None
+    return float(max(solution.max_omega_bound_violation for solution in solutions))
+
+
+def _min_batch_omega_upper_slack(
+    solutions: Sequence[SeparationMilpSolution],
+) -> float | None:
+    slacks: list[float] = []
+    for solution in solutions:
+        slack = _min_omega_upper_slack(solution)
+        if slack is not None:
+            slacks.append(float(slack))
+    return float(min(slacks)) if slacks else None
+
+
+def _min_batch_active_omega_upper_slack(
+    solutions: Sequence[SeparationMilpSolution],
+) -> float | None:
+    slacks: list[float] = []
+    for solution in solutions:
+        slack = _min_active_omega_upper_slack(solution)
+        if slack is not None:
+            slacks.append(float(slack))
+    return float(min(slacks)) if slacks else None
+
+
+def _max_reconstruction_gap(
+    solutions: Sequence[SeparationMilpSolution],
+) -> float | None:
+    if not solutions:
+        return None
+    return float(max(solution.reconstruction_gap for solution in solutions))
 
 
 def run_benders_engine(
@@ -182,8 +246,15 @@ def run_benders_engine(
     disaster_scenario_ids: Sequence[int] | None = None,
     omega_bounds_by_line_id: dict[str, tuple[float, float]] | None = None,
     omega_bound_safety_factor: float = 2.0,
+    warm_start_plan: FixedFirstStagePlan | None = None,
+    master_time_limit_seconds: float | None = None,
+    master_mip_gap: float | None = None,
+    separation_time_limit_seconds: float | None = None,
+    separation_mip_gap: float | None = None,
+    allow_master_suboptimal_incumbent: bool = False,
     epsilon_cert: float = 0.0,
     max_iterations: int = 25,
+    separation_top_cuts_per_iteration: int = 1,
     enable_cut_signature_dedup: bool = False,
     enable_repeated_outage_guard: bool = False,
     generated_cut_prefix: str = "generated_cut",
@@ -196,6 +267,10 @@ def run_benders_engine(
     """Run the full iterative Benders-like engine."""
 
     resolved_max_iterations = _resolve_positive_int("max_iterations", max_iterations)
+    resolved_top_cuts = _resolve_positive_int(
+        "separation_top_cuts_per_iteration",
+        separation_top_cuts_per_iteration,
+    )
     resolved_epsilon = _resolve_nonnegative_float("epsilon_cert", epsilon_cert)
     current_cuts = list(cuts or [])
     generated_cut_results: list[GeneratedCutResult] = []
@@ -210,6 +285,7 @@ def run_benders_engine(
     seen_outage_patterns: set[tuple[str, ...]] = set()
     seen_cut_signatures: set[str] = set()
     seen_cut_signatures.update(compute_cut_signature_hash(cut) for cut in current_cuts)
+    current_warm_start_plan = warm_start_plan
 
     final_master: RestrictedMasterProblem | None = None
     final_solution: RestrictedMasterProblemSolution | None = None
@@ -224,6 +300,10 @@ def run_benders_engine(
             instance,
             cuts=current_cuts,
             normal_scenario_ids=normal_scenario_ids,
+            warm_start_plan=current_warm_start_plan,
+            time_limit_seconds=master_time_limit_seconds,
+            mip_gap=master_mip_gap,
+            allow_suboptimal_incumbent=allow_master_suboptimal_incumbent,
             model_name=f"{model_name_prefix}_master_{iteration_id:03d}",
             log_to_console=log_to_console,
         )
@@ -260,6 +340,7 @@ def run_benders_engine(
             dumped_after_path = dump_model_artifact(master_problem, master_after_cut_lp_path)
 
         plan = _plan_from_solution(instance, master_solution)
+        current_warm_start_plan = plan
         resolved_omega_bounds = (
             {
                 str(line_id): (float(bounds[0]), float(bounds[1]))
@@ -285,9 +366,75 @@ def run_benders_engine(
             budget_k=int(instance.ambiguity.k_max_outages),
             scenario_ids=disaster_scenario_ids,
             model_name=f"{model_name_prefix}_separation_{iteration_id:03d}",
+            time_limit_seconds=separation_time_limit_seconds,
+            mip_gap=separation_mip_gap,
+            require_optimal=False,
             log_to_console=log_to_console,
         )
         separation_seconds = perf_counter() - separation_start
+        if separation_solution.model_status != "OPTIMAL":
+            lower_bound_value = float(master_solution.objective_value or 0.0)
+            violation_value = max(0.0, float(separation_solution.objective_value or 0.0))
+            active_cut_ids_before = tuple(cut.cut_id for cut in master_problem.cuts)
+            selected_outage_active_lines = _active_outage_lines(
+                separation_solution.delta_by_line_id
+            )
+            repeated_outage_flag = selected_outage_active_lines in seen_outage_patterns
+            seen_outage_patterns.add(selected_outage_active_lines)
+
+            final_master = master_problem
+            final_solution = master_solution
+            final_residual = master_residual
+            final_separation_model = separation_model
+            final_separation_solution = separation_solution
+            lower_bound_sequence.append(lower_bound_value)
+            cut_count_sequence.append(len(master_problem.cuts))
+            stop_reason = f"separation_{separation_solution.model_status.lower()}"
+            iteration_records.append(
+                BendersIterationRecord(
+                    iteration_id=iteration_id,
+                    pre_cut_master_objective=lower_bound_value,
+                    post_cut_master_objective=None,
+                    separation_violation_value=violation_value,
+                    selected_outage_by_line_id=dict(separation_solution.delta_by_line_id),
+                    selected_outage_active_lines=selected_outage_active_lines,
+                    repeated_outage_flag=repeated_outage_flag,
+                    generated_cut_id=None,
+                    active_cut_ids_before=active_cut_ids_before,
+                    active_cut_ids_after=active_cut_ids_before,
+                    total_cut_count_before=len(master_problem.cuts),
+                    total_cut_count_after=len(master_problem.cuts),
+                    generated_cut_old_master_violation=None,
+                    cut_added=False,
+                    cut_addition_status=stop_reason,
+                    construction_cost_value=float(master_solution.construction_cost_value),
+                    first_stage_attached_objective_value=(
+                        master_solution.first_stage_solution.objective_value
+                    ),
+                    first_stage_objective_is_pure_construction=bool(
+                        master_solution.first_stage_solution.objective_is_pure_construction
+                    ),
+                    master_solve_seconds=float(master_seconds),
+                    separation_solve_seconds=float(separation_seconds),
+                    separation_model_status=separation_solution.model_status,
+                    separation_mip_gap=separation_solution.mip_gap,
+                    separation_obj_bound=separation_solution.obj_bound,
+                    separation_node_count=separation_solution.node_count,
+                    separation_max_omega_bound_violation=(
+                        separation_solution.max_omega_bound_violation
+                    ),
+                    separation_min_omega_upper_slack=_min_omega_upper_slack(
+                        separation_solution
+                    ),
+                    separation_min_active_omega_upper_slack=(
+                        _min_active_omega_upper_slack(separation_solution)
+                    ),
+                    separation_reconstruction_gap=separation_solution.reconstruction_gap,
+                    cut_generation_seconds=0.0,
+                    stop_reason=stop_reason,
+                )
+            )
+            break
 
         lower_bound_value = float(master_solution.objective_value or 0.0)
         violation_value = max(0.0, float(separation_solution.objective_value or 0.0))
@@ -335,6 +482,20 @@ def run_benders_engine(
                     ),
                     master_solve_seconds=float(master_seconds),
                     separation_solve_seconds=float(separation_seconds),
+                    separation_model_status=separation_solution.model_status,
+                    separation_mip_gap=separation_solution.mip_gap,
+                    separation_obj_bound=separation_solution.obj_bound,
+                    separation_node_count=separation_solution.node_count,
+                    separation_max_omega_bound_violation=(
+                        separation_solution.max_omega_bound_violation
+                    ),
+                    separation_min_omega_upper_slack=_min_omega_upper_slack(
+                        separation_solution
+                    ),
+                    separation_min_active_omega_upper_slack=(
+                        _min_active_omega_upper_slack(separation_solution)
+                    ),
+                    separation_reconstruction_gap=separation_solution.reconstruction_gap,
                     cut_generation_seconds=0.0,
                     stop_reason=stop_reason,
                 )
@@ -367,34 +528,123 @@ def run_benders_engine(
                     ),
                     master_solve_seconds=float(master_seconds),
                     separation_solve_seconds=float(separation_seconds),
+                    separation_model_status=separation_solution.model_status,
+                    separation_mip_gap=separation_solution.mip_gap,
+                    separation_obj_bound=separation_solution.obj_bound,
+                    separation_node_count=separation_solution.node_count,
+                    separation_max_omega_bound_violation=(
+                        separation_solution.max_omega_bound_violation
+                    ),
+                    separation_min_omega_upper_slack=_min_omega_upper_slack(
+                        separation_solution
+                    ),
+                    separation_min_active_omega_upper_slack=(
+                        _min_active_omega_upper_slack(separation_solution)
+                    ),
+                    separation_reconstruction_gap=separation_solution.reconstruction_gap,
                     cut_generation_seconds=0.0,
                     stop_reason=stop_reason,
                 )
             )
             break
 
+        batch_solutions: list[SeparationMilpSolution] = [separation_solution]
+        forbidden_patterns: list[tuple[str, ...]] = [selected_outage_active_lines]
+        batch_statuses = [separation_solution.model_status]
+        batch_gaps = [
+            float(separation_solution.mip_gap)
+            for _ in (0,)
+            if separation_solution.mip_gap is not None
+        ]
+        batch_bounds = [
+            float(separation_solution.obj_bound)
+            for _ in (0,)
+            if separation_solution.obj_bound is not None
+        ]
+        batch_nodes = [
+            float(separation_solution.node_count)
+            for _ in (0,)
+            if separation_solution.node_count is not None
+        ]
+        batch_truncated_status: str | None = None
+
+        for batch_index in range(1, resolved_top_cuts):
+            extra_start = perf_counter()
+            _, extra_solution = solve_separation_milp(
+                instance,
+                plan=plan,
+                alpha=master_solution.alpha_value,
+                lambda_by_line_id=master_solution.lambda_by_line_id,
+                omega_bounds_by_line_id=resolved_omega_bounds,
+                budget_k=int(instance.ambiguity.k_max_outages),
+                scenario_ids=disaster_scenario_ids,
+                forbidden_outage_patterns=forbidden_patterns,
+                model_name=(
+                    f"{model_name_prefix}_separation_{iteration_id:03d}_"
+                    f"rank_{batch_index + 1:03d}"
+                ),
+                time_limit_seconds=separation_time_limit_seconds,
+                mip_gap=separation_mip_gap,
+                require_optimal=False,
+                log_to_console=log_to_console,
+            )
+            separation_seconds += perf_counter() - extra_start
+            batch_statuses.append(extra_solution.model_status)
+            if extra_solution.mip_gap is not None:
+                batch_gaps.append(float(extra_solution.mip_gap))
+            if extra_solution.obj_bound is not None:
+                batch_bounds.append(float(extra_solution.obj_bound))
+            if extra_solution.node_count is not None:
+                batch_nodes.append(float(extra_solution.node_count))
+            if extra_solution.model_status != "OPTIMAL":
+                batch_truncated_status = f"top_m_truncated_{extra_solution.model_status}"
+                break
+            extra_violation = max(0.0, float(extra_solution.objective_value or 0.0))
+            if extra_violation <= resolved_epsilon + CERTIFICATION_TOLERANCE:
+                break
+            extra_active_lines = _active_outage_lines(extra_solution.delta_by_line_id)
+            forbidden_patterns.append(extra_active_lines)
+            seen_outage_patterns.add(extra_active_lines)
+            batch_solutions.append(extra_solution)
+
         cut_start = perf_counter()
-        generated_cut_result = generate_cut_from_separation_solution(
-            instance,
-            plan=plan,
-            separation_solution=separation_solution,
-            scenario_ids=disaster_scenario_ids,
-            cut_id=_make_generated_cut_id(
-                generated_cut_prefix,
-                len(generated_cut_results) + 1,
-            ),
-            provenance=f"{model_name_prefix}_iteration_{iteration_id:03d}",
-            lambda_by_line_id=master_solution.lambda_by_line_id,
-            log_to_console=log_to_console,
-        )
+        batch_cut_results: list[GeneratedCutResult] = []
+        for batch_index, batch_solution in enumerate(batch_solutions):
+            batch_cut_result = generate_cut_from_separation_solution(
+                instance,
+                plan=plan,
+                separation_solution=batch_solution,
+                scenario_ids=disaster_scenario_ids,
+                cut_id=_make_generated_cut_id(
+                    generated_cut_prefix,
+                    len(generated_cut_results) + len(batch_cut_results) + 1,
+                ),
+                provenance=(
+                    f"{model_name_prefix}_iteration_{iteration_id:03d}_"
+                    f"rank_{batch_index + 1:03d}"
+                ),
+                lambda_by_line_id=master_solution.lambda_by_line_id,
+                log_to_console=log_to_console,
+            )
+            batch_cut_results.append(batch_cut_result)
         cut_seconds = perf_counter() - cut_start
-        generated_cut_results.append(generated_cut_result)
-        repeated_cut_signature_flag = generated_cut_result.cut_signature_hash in seen_cut_signatures
-        cut_added = True
-        cut_addition_status = "added"
+
+        current_cuts = list(master_problem.cuts)
+        repeated_cut_signature_flag = False
+        added_cut_count = 0
+        for batch_cut_result in batch_cut_results:
+            generated_cut_results.append(batch_cut_result)
+            is_repeated = batch_cut_result.cut_signature_hash in seen_cut_signatures
+            repeated_cut_signature_flag = repeated_cut_signature_flag or is_repeated
+            if enable_cut_signature_dedup and is_repeated:
+                continue
+            current_cuts.append(batch_cut_result.cut)
+            added_cut_count += 1
+            seen_cut_signatures.add(batch_cut_result.cut_signature_hash)
+
+        cut_added = added_cut_count > 0
         stop_after_duplicate = False
-        if enable_cut_signature_dedup and repeated_cut_signature_flag:
-            cut_added = False
+        if not cut_added:
             cut_addition_status = (
                 "repeated_outage_duplicate_cut"
                 if enable_repeated_outage_guard and repeated_outage_flag
@@ -402,10 +652,8 @@ def run_benders_engine(
             )
             stop_after_duplicate = True
             stop_reason = cut_addition_status
-            current_cuts = list(master_problem.cuts)
         else:
-            current_cuts = list(master_problem.cuts) + [generated_cut_result.cut]
-            seen_cut_signatures.add(generated_cut_result.cut_signature_hash)
+            cut_addition_status = batch_truncated_status or f"added_batch_{added_cut_count}"
 
         iteration_records.append(
             BendersIterationRecord(
@@ -416,20 +664,31 @@ def run_benders_engine(
                 selected_outage_by_line_id=dict(separation_solution.delta_by_line_id),
                 selected_outage_active_lines=selected_outage_active_lines,
                 repeated_outage_flag=repeated_outage_flag,
-                generated_cut_id=generated_cut_result.cut.cut_id,
-                generated_cut_signature_hash=generated_cut_result.cut_signature_hash,
+                generated_cut_id=";".join(result.cut.cut_id for result in batch_cut_results),
+                generated_cut_signature_hash=";".join(
+                    result.cut_signature_hash for result in batch_cut_results
+                ),
                 repeated_cut_signature_flag=repeated_cut_signature_flag,
                 active_cut_ids_before=active_cut_ids_before,
                 active_cut_ids_after=tuple(cut.cut_id for cut in current_cuts),
                 total_cut_count_before=len(master_problem.cuts),
                 total_cut_count_after=len(current_cuts),
-                generated_cut_old_master_violation=generated_cut_result.old_master_cut_violation,
+                generated_cut_old_master_violation=max(
+                    result.old_master_cut_violation or 0.0
+                    for result in batch_cut_results
+                ),
                 cut_added=cut_added,
                 cut_addition_status=cut_addition_status,
-                gamma_z_nonzero_count=generated_cut_result.gamma_z_nonzero_count,
-                gamma_n_sl_nonzero_count=generated_cut_result.gamma_n_sl_nonzero_count,
-                gamma_n_fa_nonzero_count=generated_cut_result.gamma_n_fa_nonzero_count,
-                phi_nonzero_count=generated_cut_result.phi_nonzero_count,
+                gamma_z_nonzero_count=sum(
+                    result.gamma_z_nonzero_count for result in batch_cut_results
+                ),
+                gamma_n_sl_nonzero_count=sum(
+                    result.gamma_n_sl_nonzero_count for result in batch_cut_results
+                ),
+                gamma_n_fa_nonzero_count=sum(
+                    result.gamma_n_fa_nonzero_count for result in batch_cut_results
+                ),
+                phi_nonzero_count=sum(result.phi_nonzero_count for result in batch_cut_results),
                 construction_cost_value=float(master_solution.construction_cost_value),
                 first_stage_attached_objective_value=master_solution.first_stage_solution.objective_value,
                 first_stage_objective_is_pure_construction=bool(
@@ -437,6 +696,20 @@ def run_benders_engine(
                 ),
                 master_solve_seconds=float(master_seconds),
                 separation_solve_seconds=float(separation_seconds),
+                separation_model_status=";".join(batch_statuses),
+                separation_mip_gap=max(batch_gaps) if batch_gaps else None,
+                separation_obj_bound=max(batch_bounds) if batch_bounds else None,
+                separation_node_count=sum(batch_nodes) if batch_nodes else None,
+                separation_max_omega_bound_violation=_max_omega_bound_violation(
+                    batch_solutions
+                ),
+                separation_min_omega_upper_slack=_min_batch_omega_upper_slack(
+                    batch_solutions
+                ),
+                separation_min_active_omega_upper_slack=(
+                    _min_batch_active_omega_upper_slack(batch_solutions)
+                ),
+                separation_reconstruction_gap=_max_reconstruction_gap(batch_solutions),
                 cut_generation_seconds=float(cut_seconds),
                 stop_reason=stop_reason if stop_after_duplicate else None,
             )

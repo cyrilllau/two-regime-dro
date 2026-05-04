@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts.experiment_pack_utils import prepare_instance_for_run
 from src.instance.canonical_instance import load_canonical_instance
 from src.instance.manifest import inspect_available_support
 from src.instance.raw_package import load_raw_data_package
@@ -198,6 +199,115 @@ def test_valid_synthetic_runtime_loads_and_fills_sparse_zeros(tmp_path: Path) ->
     assert instance.critical_buses is None
     assert instance.is_critical_by_bus is None
     assert instance.cls_by_bus is None
+
+
+def test_parameter_overrides_accept_bus_specific_evcs_capacity(tmp_path: Path) -> None:
+    """Packaging overrides should allow per-bus station capacity maps."""
+
+    runtime_dir = tmp_path / "runtime_small"
+    _write_valid_runtime_fixture(runtime_dir)
+    base = load_canonical_instance(runtime_dir)
+
+    instance = prepare_instance_for_run(
+        base,
+        {
+            "parameter_overrides": {
+                "ev": {
+                    "nbar_sl_by_bus": {"2": 4, "3": 8},
+                    "nbar_fa_by_bus": {"2": 2, "3": 3},
+                }
+            }
+        },
+    )
+
+    assert instance.ev.nbar_sl == 5
+    assert instance.ev.nbar_fa == 2
+    assert instance.ev.nbar_sl_by_bus == {2: 4, 3: 8}
+    assert instance.ev.nbar_fa_by_bus == {2: 2, 3: 3}
+
+
+def test_parameter_overrides_reject_candidate_capacity_below_minimum(tmp_path: Path) -> None:
+    """A candidate bus cannot have less total capacity than the min-charger rule."""
+
+    runtime_dir = tmp_path / "runtime_small"
+    _write_valid_runtime_fixture(runtime_dir)
+    base = load_canonical_instance(runtime_dir)
+
+    with pytest.raises(RuntimeDataValidationError, match="three-charger minimum"):
+        prepare_instance_for_run(
+            base,
+            {
+                "parameter_overrides": {
+                    "ev": {
+                        "nbar_sl_by_bus": {"2": 1},
+                        "nbar_fa_by_bus": {"2": 1},
+                    }
+                }
+            },
+        )
+
+
+def test_parameter_overrides_accept_slow_block_cost_controls(tmp_path: Path) -> None:
+    """Packaging overrides should carry optional slow-block cost settings."""
+
+    runtime_dir = tmp_path / "runtime_small"
+    _write_valid_runtime_fixture(runtime_dir)
+    base = load_canonical_instance(runtime_dir)
+
+    instance = prepare_instance_for_run(
+        base,
+        {
+            "parameter_overrides": {
+                "economics": {"ccons_sl_extra_multiplier": 2.5},
+                "ev": {"slow_block_threshold": 4},
+            }
+        },
+    )
+
+    assert instance.economics.ccons_sl_extra_multiplier == pytest.approx(2.5)
+    assert instance.ev.slow_block_threshold == 4
+
+
+def test_runtime_objective_multipliers_default_to_one(tmp_path: Path) -> None:
+    """Missing objective multipliers should preserve the historical objective."""
+
+    runtime_dir = tmp_path / "runtime_small"
+    _write_valid_runtime_fixture(runtime_dir)
+
+    instance = load_canonical_instance(runtime_dir)
+
+    assert instance.economics.objective_multipliers.cons == pytest.approx(1.0)
+    assert instance.economics.objective_multipliers.normal == pytest.approx(1.0)
+    assert instance.economics.objective_multipliers.disaster == pytest.approx(1.0)
+
+
+def test_runtime_objective_multipliers_load_and_validate(tmp_path: Path) -> None:
+    """Runtime objective multipliers must be finite positive values."""
+
+    runtime_dir = tmp_path / "runtime_small"
+    _write_valid_runtime_fixture(runtime_dir)
+    parameter_path = runtime_dir / "parameters.json"
+    parameters = json.loads(parameter_path.read_text(encoding="utf-8"))
+    parameters["objective_multipliers"] = {
+        "cons": 2.0,
+        "normal": 3.0,
+        "disaster": 5.0,
+    }
+    parameter_path.write_text(json.dumps(parameters), encoding="utf-8")
+
+    instance = load_canonical_instance(runtime_dir)
+
+    assert instance.economics.objective_multipliers.cons == pytest.approx(2.0)
+    assert instance.economics.objective_multipliers.normal == pytest.approx(3.0)
+    assert instance.economics.objective_multipliers.disaster == pytest.approx(5.0)
+
+    parameters["objective_multipliers"]["normal"] = 0.0
+    parameter_path.write_text(json.dumps(parameters), encoding="utf-8")
+    with pytest.raises(
+        RuntimeDataValidationError,
+        match=r"objective_multipliers\.normal must be finite and positive",
+    ):
+        load_canonical_instance(runtime_dir)
 
 
 def test_raw_package_manifest_and_default_selection_compose_cleanly() -> None:

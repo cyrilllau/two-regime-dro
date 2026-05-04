@@ -170,12 +170,23 @@ where $e_{\ell}$ is the $\ell$th unit vector. Let
 &\tau_{\ell}\le \omega_{\ell}-\underline{\omega}_{\ell}(1-\delta_{\ell}),\qquad \forall \ell\in\mathcal{L}.
 \end{aligned}
 \end{equation}
-\hspace*{0.7em}If the optimal value of \eqref{eq:sg_sep_milp_main} is at most $\varepsilon_{\mathrm{cert}}$, the current RMP solution is certified. Otherwise, let $\delta^{\star}$ be an optimal outage vector of \eqref{eq:sg_sep_milp_main}. The sample-wise dual LPs
+\hspace*{0.7em}Let $\widehat v$ and $\overline v$ denote, respectively, the incumbent value
+and the valid solver upper bound returned by the maximization problem
+\eqref{eq:sg_sep_milp_main}. If $\overline v\le
+\varepsilon_{\mathrm{cert}}$, the current RMP solution is certified. Otherwise,
+let $\delta^{\star}$ be the outage vector selected by
+\eqref{eq:sg_sep_milp_main}. The sample-wise dual LPs
 \[
 \max_{\pi_b\in\Pi}\ \pi_b^\top(H^b-Z^b x^{\star}+U\delta^{\star}),
 \qquad b=1,\dots,B,
 \]
-are then re-solved and extreme optimal dual solutions $\widehat{\pi}_b^{\star}\in\mathrm{ext}(\Pi)$ are selected. The new cut coefficients are obtained by setting $\boldsymbol{\pi}=(\widehat{\pi}_1^{\star},\dots,\widehat{\pi}_B^{\star})$, and the corresponding cut is added to $\mathcal{R}$.
+are then re-solved. Among the optimal fixed-outage dual solutions, we select a
+canonical representative by retaining the optimal objective value and minimizing
+the total line-flow dual mass. The new cut coefficients are obtained by setting
+$\boldsymbol{\pi}=(\widehat{\pi}_1^{\star},\dots,\widehat{\pi}_B^{\star})$, and
+the corresponding cut is added to $\mathcal{R}$. Thus the compact MILP
+separator is used for outage-pattern selection, whereas the master cut
+coefficients are generated from fixed-outage duals.
 
 \begin{algorithm}[H]
 \captionsetup{font=footnotesize}
@@ -192,16 +203,17 @@ and set $k \leftarrow 0$.
 \STATE \hspace{1em} Solve the restricted master problem \eqref{eq:sg_rmp}
 and obtain $(x^k,\alpha^k,\lambda^k)$.
 \STATE \hspace{1em} Solve the separation MILP \eqref{eq:sg_sep_milp_main}
-at $(x^k,\alpha^k,\lambda^k)$, and obtain its optimal value
-$\widehat{v}^k$ and an optimal outage vector $\delta^k$.
-\STATE \hspace{1em} If $\widehat{v}^k \le \varepsilon_{\mathrm{cert}}$,
+at $(x^k,\alpha^k,\lambda^k)$, and obtain an incumbent violation
+$\widehat{v}^k$, a valid upper bound $\overline v^k$, and an outage vector
+$\delta^k$.
+\STATE \hspace{1em} If $\overline v^k \le \varepsilon_{\mathrm{cert}}$,
 output $(x^k,\alpha^k,\lambda^k)$ and stop.
 \STATE \hspace{1em} For each $b=1,\ldots,B$, solve
 \[
 \max_{\pi_b \in \Pi}\ \pi_b^\top(H^b - Z^b x^k + U\delta^k),
 \]
 and select an extreme optimal solution $\widehat{\pi}_b^k$.
-\STATE \hspace{1em} Compute
+\STATE \hspace{1em} Select a canonical optimal representative and compute
 $(\beta_{\mathrm{new}},\gamma_{\mathrm{new}},\phi_{\mathrm{new}})$
 using $\widehat{\pi}_1^k,\ldots,\widehat{\pi}_B^k$.
 \STATE \hspace{1em} Add the resulting cut to $\mathcal{R}$.
@@ -240,5 +252,4 @@ tolerance $\varepsilon_{\mathrm{cert}}$, the returned solution is still
 near-optimal for \eqref{eq:overall_saa_compact}, with a worst-case gap bounded
 by $\pi_f\varepsilon_{\mathrm{cert}}$.
 \end{remark}
-
 

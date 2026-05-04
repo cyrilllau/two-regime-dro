@@ -1,0 +1,245 @@
+\section{Case Studies}
+\subsection{Experimental Setup}
+The case study is performed on the IEEE 33-node radial distribution feeder. The
+feeder contains critical and non-critical load buses, and EV charging stations
+can be placed at candidate buses along the main feeder and laterals. Each
+opened station may install slow and fast EVSEs, with the station-level upper
+bounds given in Table~\ref{tab:setup_parameters}. The normal-operation stage
+models 24 hours of EV charging service and distribution-system operation. The
+disaster stage models the 10:00--14:00 emergency window, in which available EV
+discharging capability is used to support loads after line outages.
+
+Table~\ref{tab:setup_parameters} lists the parameters used in the default
+study. The default uncertainty support contains ten normal scenarios and ten
+disaster operating scenarios. The outage ambiguity set uses budget $K=2$, so
+the adversarial replay can select two failed lines when evaluating disaster
+resilience. The reported objective components are always computed after the
+first-stage siting and sizing decisions are fixed and replayed under this
+common evaluator.
+
+\begin{table}[t]
+\centering
+\caption{Main model parameters in the default case study.}
+\label{tab:setup_parameters}
+\input{docs/analysis_packs/setup_parameter_table_input.tex}
+\end{table}
+
+\subsection{Scenario Generation and Uncertainty Support}
+The normal scenarios $a\in A$ contain the time-varying load and regional EV
+charging-demand profiles. The disaster scenarios $b\in B$ contain the
+post-disaster load and available V2G discharging profiles. The line-outage
+uncertainty is not treated as another sampled scenario. Instead, the outage
+pattern is chosen by the DRO separation problem subject to the budget $K$.
+Thus $B$ describes disaster operating conditions, while $K$ controls the
+adversarial line-outage support.
+
+Figs.~\ref{fig:normal_load_profile}--\ref{fig:disaster_ev_profile} show
+representative profiles from the same audited $10\times 10$ data source used
+in the default optimization and replay. The slow-charging demand has a broad
+daily profile, whereas fast charging is more concentrated in short peaks. The
+disaster V2G profiles are defined on the four-period emergency window, which
+creates a different operating tradeoff from ordinary charging service.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.48\textwidth]{results/paper_final/figures/scenario_profile_normal_load.png}
+\caption{Active and reactive load profile under representative normal scenario
+$a=1$.}
+\label{fig:normal_load_profile}
+\end{figure}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.82\textwidth]{results/paper_final/figures/scenario_profile_normal_ev.png}
+\caption{Slow and fast EV charging demand profiles for each region under
+representative normal scenario $a=1$.}
+\label{fig:normal_ev_profile}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.82\textwidth]{results/paper_final/figures/scenario_profile_disaster_ev.png}
+\caption{Slow and fast EV discharging availability profiles for each region
+under representative disaster scenario $b=1$.}
+\label{fig:disaster_ev_profile}
+\end{figure*}
+
+\subsection{Benchmark Definitions}
+Four cases are compared. Case~1 is the proposed integrated DRO planner, which
+jointly optimizes annualized construction cost, normal-operation recourse, and
+disaster-stage DRO recourse. Case~2 is the normal-operation-only benchmark,
+which removes the disaster term and therefore represents the daily-service
+endpoint. Case~3 is the disaster-resilience-only benchmark, which removes the
+normal-stage EV service objective and constraints during training; the resulting
+plan is then replayed under the normal evaluator to show the daily-service
+consequence of a disaster-only design. Case~4 is a fair deterministic
+mean-value benchmark. It replaces the multi-scenario normal and disaster
+supports by their mean profiles, but solves the same integrated planning model
+with the same outage budget, $K_{\rm train}=2$.
+
+All four first-stage plans are frozen and evaluated under the same
+$|A|=10$, $|B|=10$, $K_{\rm eval}=2$ MILP worst-distribution evaluator. Hence
+the comparisons below are not comparisons of four different training
+objectives. They are common-scale ex-post comparisons of the resulting plans.
+The training objective for the accepted default uses normalized top-level
+multipliers
+$(m_{\rm cons},m_{\rm nor},m_{\rm dis})=(0.0152,1,1.4)$, while all reported
+costs in the tables are raw physical/economic components without these
+multipliers.
+
+\subsection{Default Component Comparison}
+Fig.~\ref{fig:default_maps} shows the three partial-framework first-stage
+plans, and Table~\ref{tab:default_components} reports the corresponding
+component costs. The table follows the same decomposition as the reference
+case-study structure: $F^{\rm cons}$ is the construction component,
+$F^{\rm trans}$ is EV user transportation cost, $F^{\rm unmet}$ is unmet
+charging-demand penalty, $F^{\rm sub}$ is substation purchase cost,
+$\Psi^{\rm nor}=F^{\rm trans}+F^{\rm unmet}+F^{\rm sub}$ is the normal
+operation component, and $\Phi^{\rm dis}$ is the worst-distribution disaster
+component.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.9\textwidth]{results/paper_final/figures/fig6_like_plan_maps.png}
+\caption{Planning maps for the proposed integrated, normal-only, and
+disaster-only cases.}
+\label{fig:default_maps}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\caption{Objective components under the common $|A|=10$, $|B|=10$, $K=2$
+MILP worst-distribution evaluator.}
+\label{tab:default_components}
+\begin{tabular}{lrrrr}
+\toprule
+Obj. (\$) & Case 1 & Case 2 & Case 3 & Case 4 \\
+\midrule
+$F^{\mathrm{cons}}$ & 128,069.89 & 66,721.59 & 132,216.04 & 104,765.26 \\
+$F^{\mathrm{trans}}$ & 21,514.49 & 21,470.91 & 23,014.97 & 21,837.60 \\
+$F^{\mathrm{unmet}}$ & 0.00 & 0.00 & 66,167.24 & 66,167.24 \\
+$F^{\mathrm{sub}}$ & 40,809.78 & 40,809.78 & 40,769.87 & 40,769.87 \\
+$\Psi^{\mathrm{nor}}$ & 62,324.28 & 62,280.70 & 129,952.07 & 128,774.70 \\
+$\Phi^{\mathrm{dis}}$ & 5,223.70 & 16,774.96 & 4,358.42 & 6,545.72 \\
+$J_{\mathrm{eval}}$ & 173,264.00 & 115,350.56 & 224,490.02 & 196,871.27 \\
+Sites & 12 & 5 & 13 & 10 \\
+Slow/Fast EVSE & 172/15 & 113/15 & 165/12 & 101/12 \\
+Critical buses covered & 7/11 & 1/11 & 9/11 & 5/11 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Case~2 demonstrates the normal-service endpoint. It opens only five stations
+and achieves nearly the same normal component as the proposed plan:
+$\Psi^{\rm nor}$ is 62,280.70 in Case~2 and 62,324.28 in Case~1. This small
+normal-operation difference is expected because both plans preserve low
+transportation cost and zero unmet charging demand. The difference appears
+when the plans are replayed under disaster uncertainty. Case~2 covers only
+1/11 critical buses directly, and its $\Phi^{\rm dis}$ is 16,774.96. The
+integrated plan increases construction cost and opens broader feeder coverage,
+but reduces $\Phi^{\rm dis}$ to 5,223.70, a 68.86\% reduction.
+
+Case~3 gives the opposite endpoint. It opens thirteen stations, directly covers
+9/11 critical buses, and has the lowest disaster component,
+$\Phi^{\rm dis}=4,358.42$. This confirms that the disaster-only benchmark is
+indeed the most resilience-oriented design. However, that design is not a good
+daily-service plan. Under the same normal replay, $F^{\rm unmet}$ rises to
+66,167.24 and accounts for 50.91\% of $\Psi^{\rm nor}$. The integrated plan
+therefore sits between the two partial frameworks: it keeps zero unmet demand
+like the normal-only endpoint, while recovering most of the disaster benefit of
+the disaster-only endpoint.
+
+The topology in Fig.~\ref{fig:default_maps} explains this tradeoff. Case~1
+keeps daily-service anchors at buses 3, 6, 30, and 32, but adds buses 8, 11,
+14, 17, 18, 21, 26, and 29 relative to Case~2 while dropping bus 19. These
+additional stations spread capacity along the main radial backbone and the two
+laterals. In physical terms, the integrated model does not simply add chargers
+at the cheapest daily-demand locations. It shifts siting toward critical-bus
+neighborhoods and the far upper lateral, increasing direct critical-bus
+coverage from 1/11 to 7/11. This is the mechanism behind the component table:
+the plan pays for wider first-stage coverage, not for a large change in daily
+EV transportation service.
+
+\subsection{Deterministic Worst-Distribution Comparison}
+Case~4 isolates the value of multi-scenario DRO support from the value of the
+outage budget itself. The deterministic plan is trained on mean normal and
+mean disaster profiles, but it still uses $K_{\rm train}=2$. Table
+~\ref{tab:det_worst} then freezes the proposed and deterministic plans and
+replays both under the same $|A|=10$, $|B|=10$, $K_{\rm eval}=2$ evaluator.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.48\textwidth]{results/paper_final/figures/deterministic_k2_map_milp.png}
+\caption{Fair deterministic mean-value planning map using mean normal and
+disaster supports with $K_{\rm train}=2$.}
+\label{fig:det_map}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Proposed and fair deterministic mean-value plans under the common
+worst-distribution evaluator.}
+\label{tab:det_worst}
+\begin{tabular}{lrr}
+\toprule
+Metric & Proposed & Det. $K_{\rm train}=2$ \\
+\midrule
+$F^{\rm cons}$ & 128,069.89 & 104,765.26 \\
+$\Psi^{\rm nor}$ & 62,324.28 & 128,774.70 \\
+$\Phi^{\rm dis}$ & 5,223.70 & 6,545.72 \\
+$\pi_f\Phi^{\rm dis}$ & 1,567.11 & 1,963.72 \\
+$J_{\rm eval}$ & 173,264.00 & 196,871.27 \\
+Sites & 12 & 10 \\
+Slow/Fast EVSE & 172/15 & 101/12 \\
+Critical buses covered & 7/11 & 5/11 \\
+Reduction in $\Phi^{\rm dis}$ & -- & 20.20\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The deterministic solution is a meaningful comparator because it has the same
+outage-budget semantics as the proposed model. Its weakness is that the mean
+profiles do not represent the multi-scenario tails used in the common replay.
+It opens ten stations and installs 101 slow and 12 fast EVSEs, whereas the
+proposed DRO plan opens twelve stations and installs 172 slow and 15 fast
+EVSEs. The additional capacity in Case~1 is not concentrated at a single bus:
+it expands coverage around buses 17, 21, and 26 and strengthens the upper
+lateral through buses 29, 30, and 32. Under the same worst-distribution replay,
+this broader topology reduces $\Phi^{\rm dis}$ from 6,545.72 to 5,223.70,
+which is a 20.20\% reduction. The evaluated total cost also falls from
+196,871.27 for the deterministic plan to 173,264.00 for the proposed plan,
+because the deterministic first-stage saving is outweighed by poorer common
+replay performance.
+
+\subsection{Certification and Reproducibility}
+Table~\ref{tab:certification} reports the certification status for the four
+default runs. The normal-only benchmark is solved directly to optimality. The
+three DRO/Benders runs reach the $\epsilon$-certified stopping rule under the
+same $|A|=10$, $|B|=10$, $K=2$ support. For traceability, the component rows,
+plans, replay logs, and figure sources are retained with the experiment pack;
+rerunning the recorded instance reproduces all entries in
+Table~\ref{tab:default_components}, including station counts, charger counts,
+critical-bus coverage values, and open-bus sets.
+
+\begin{table}[t]
+\centering
+\caption{Certification record for the default case.}
+\label{tab:certification}
+\begin{tabular}{lrrr}
+\toprule
+Case & Certificate & Iter. & Final viol. \\
+\midrule
+Case 1 & $\epsilon$-certified & 13 & 94.96 \\
+Case 2 & exact & 0 & 0.00 \\
+Case 3 & $\epsilon$-certified & 34 & 95.07 \\
+Case 4 & $\epsilon$-certified & 17 & 49.99 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The resulting default case supports the main claim of this section: compared
+with normal-only planning, the integrated DRO model purchases broader critical
+coverage with almost no normal-service degradation; compared with
+disaster-only planning, it avoids the large unmet-demand penalty; and compared
+with a fair mean-value deterministic planner using the same outage budget, it
+achieves lower worst-distribution disaster cost under the common replay.
