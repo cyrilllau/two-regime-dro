@@ -17,7 +17,7 @@
     "benchmark_mode": "normal_only",
     "parameter_overrides": {
       "objective_multipliers": {
-        "cons": 0.016,
+        "cons": 0.0152,
         "disaster": 1.4,
         "normal": 1.0
       }
@@ -47,7 +47,7 @@
         9,
         10
       ],
-      "source": "default_multiplier_mult_cons0p016_normal1_disaster1p4_normal"
+      "source": "default_multiplier_mult_cons0p0152_normal1_disaster1p4_normal"
     },
     "support_manifest": {
       "disaster": {
@@ -187,25 +187,25 @@
     }
   },
   "normal_cost_by_scenario": {
-    "1": 62856.205865703,
-    "10": 61148.734800282444,
-    "2": 62271.98483631077,
-    "3": 64153.50033801637,
-    "4": 60447.755629122505,
-    "5": 63522.07826144564,
-    "6": 60218.91819079981,
-    "7": 63638.105088712735,
-    "8": 60855.0741843227,
-    "9": 63702.58301077528
+    "1": 62856.97259146329,
+    "10": 61147.051842873305,
+    "2": 62272.357086940196,
+    "3": 64154.841363601176,
+    "4": 60447.048318916684,
+    "5": 63522.96325940981,
+    "6": 60219.24507301018,
+    "7": 63639.04490332147,
+    "8": 60855.43167615797,
+    "9": 63703.47422611943
   },
   "objective_components": {
     "alpha": 0.0,
     "construction_cost": 66721.5857696624,
     "disaster_master_term": 0.0,
     "lambda_times_FP": 0.0,
-    "objective_reconstruction_gap": 2.0372681319713593e-10,
-    "unweighted_normal_term": 62281.49402054913,
-    "weighted_normal_term": 62281.49402054913
+    "objective_reconstruction_gap": 2.6921043172478676e-10,
+    "unweighted_normal_term": 62281.84303418136,
+    "weighted_normal_term": 62281.843034181366
   },
   "plan_rows": [
     {
@@ -444,7 +444,7 @@
       "bus": 30,
       "is_critical": 0,
       "is_open": 1,
-      "n_fa": 1,
+      "n_fa": 2,
       "n_sl": 22,
       "region": ""
     },
@@ -460,7 +460,7 @@
       "bus": 32,
       "is_critical": 1,
       "is_open": 1,
-      "n_fa": 5,
+      "n_fa": 4,
       "n_sl": 25,
       "region": ""
     },
@@ -479,11 +479,6 @@
       "enable_cut_signature_dedup": true,
       "enable_repeated_outage_guard": false,
       "epsilon_cert": 100.0,
-      "initial_cut_pool_paths": [
-        "results/paper_final/logs/default_scale_v2_proposed_cut_pool.json",
-        "results/default_case_accelerated_retuning/runs/default_multiplier_mult_cons0p018_normal1_disaster1p25_proposed/logs/default_multiplier_mult_cons0p018_normal1_disaster1p25_proposed_cut_pool.json",
-        "results/default_case_accelerated_retuning/runs/default_multiplier_mult_cons0p018_normal1_disaster1p25_disaster/logs/default_multiplier_mult_cons0p018_normal1_disaster1p25_disaster_cut_pool.json"
-      ],
       "master_mip_gap": 0.03,
       "master_time_limit_seconds": 120.0,
       "max_iterations": 100,
@@ -492,18 +487,18 @@
       "separation_time_limit_seconds": 180.0,
       "separation_top_cuts_per_iteration": 20
     },
-    "case_name": "default_multiplier_mult_cons0p016_normal1_disaster1p4_normal",
+    "case_name": "default_multiplier_mult_cons0p0152_normal1_disaster1p4_normal",
     "family_name": "default_multiplier_calibration",
     "mode": "normal_only",
     "parameter_overrides": {
       "objective_multipliers": {
-        "cons": 0.016,
+        "cons": 0.0152,
         "disaster": 1.4,
         "normal": 1.0
       }
     },
-    "parameter_regime": "mult_cons0p016_normal1_disaster1p4",
-    "run_id": "default_multiplier_mult_cons0p016_normal1_disaster1p4_normal",
+    "parameter_regime": "mult_cons0p0152_normal1_disaster1p4",
+    "run_id": "default_multiplier_mult_cons0p0152_normal1_disaster1p4_normal",
     "runtime_source": "data/colleague_default_10x10",
     "selection": {
       "scenarios_a": [
@@ -561,7 +556,7 @@
   "stop_reason": "direct_optimal",
   "summary": {
     "alpha": 0.0,
-    "case_name": "default_multiplier_mult_cons0p016_normal1_disaster1p4_normal",
+    "case_name": "default_multiplier_mult_cons0p0152_normal1_disaster1p4_normal",
     "construction_cost": 66721.5857696624,
     "cut_count": 1,
     "disaster_master_term": 0.0,
@@ -570,16 +565,16 @@
     "iteration_count": 0,
     "lambda_times_FP": 0.0,
     "opened_bus_count": 5,
-    "parameter_regime": "mult_cons0p016_normal1_disaster1p4",
-    "run_id": "default_multiplier_mult_cons0p016_normal1_disaster1p4_normal",
+    "parameter_regime": "mult_cons0p0152_normal1_disaster1p4",
+    "run_id": "default_multiplier_mult_cons0p0152_normal1_disaster1p4_normal",
     "solver_status": "OPTIMAL",
     "stop_reason": "direct_optimal",
     "total_fast_chargers": 15,
-    "total_objective": 63349.03939286393,
+    "total_objective": 63296.0111378805,
     "total_slow_chargers": 113,
-    "unweighted_normal_term": 62281.49402054913,
+    "unweighted_normal_term": 62281.84303418136,
     "validation_level": "exact",
-    "weighted_normal_term": 62281.49402054913
+    "weighted_normal_term": 62281.843034181366
   },
   "validation_level": "exact"
 }

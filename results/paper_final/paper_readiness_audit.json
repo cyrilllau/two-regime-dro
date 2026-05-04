@@ -1,7 +1,12 @@
 {
-  "candidate_id": "mult_cons0p016_normal1_disaster1p4",
-  "case4_unmet_gate": "PASS",
-  "notes": "Case 4 now has lower F_unmet than Case 3; Case 1 remains integrated compromise and reduces deterministic Phi under the common evaluator.",
-  "paper_story_gate": "PASS",
-  "verdict": "PASS_TARGET"
+  "paper_readiness_audit": "PASS_TARGET",
+  "accepted_candidate_id": "mult_cons0p0152_normal1_disaster1p4",
+  "checks": {
+    "component_complete": true,
+    "common_evaluator_A10_B10_K2": true,
+    "data_source_aligned": true,
+    "case3_disaster_endpoint_result_present": true,
+    "fair_deterministic_k2_present": true
+  },
+  "notes": "Recovered the requested PDF-version default artifact pack and synchronized tables, claims, and source LaTeX."
 }

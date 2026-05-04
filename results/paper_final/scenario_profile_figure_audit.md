@@ -2,7 +2,8 @@
 
 Verdict: `PASS`.
 
-The current setup profile figures are aligned with the colleague-provided representative profiles.
+The current setup profile figures are aligned with representative scenario
+`a=1`/`b=1` from the audited `10x10` runtime source used by the default case.
 
 - Figure source: `data/colleague_default_10x10`.
 - Optimization/evaluation source: `data/colleague_default_10x10`.

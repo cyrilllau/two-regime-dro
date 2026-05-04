@@ -2,7 +2,7 @@
 
 Verdict: `PASS_PAPER_STORY`
 
-Candidate: `mult_cons0p016_normal1_disaster1p4`
+Candidate: `mult_cons0p0152_normal1_disaster1p4`
 
 Science pass: `True`
 

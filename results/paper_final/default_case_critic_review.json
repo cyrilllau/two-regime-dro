@@ -1,7 +1,16 @@
 {
-  "candidate_id": "mult_cons0p016_normal1_disaster1p4",
-  "case4_unmet_gate": "PASS",
-  "notes": "Case 4 now has lower F_unmet than Case 3; Case 1 remains integrated compromise and reduces deterministic Phi under the common evaluator.",
-  "paper_story_gate": "PASS",
-  "verdict": "PASS_TARGET"
+  "target": "default_case_recovered_pdf_version",
+  "verdict": "PASS_TARGET",
+  "accepted_candidate_id": "mult_cons0p0152_normal1_disaster1p4",
+  "runtime_source": "data/colleague_default_10x10",
+  "blocking_issues": [],
+  "checks": {
+    "data_source_aligned": true,
+    "component_complete": true,
+    "common_evaluator": "A=10,B=10,K=2,milp_worst_distribution",
+    "fair_deterministic_k2": true,
+    "topology_story": true,
+    "case3_disaster_endpoint": true
+  },
+  "next_objective": "Use this recovered default case as the source of truth before continuing EV sensitivity or scalability."
 }

@@ -1,7 +1,12 @@
 # Paper Readiness Audit
 
-Verdict: `PASS_TARGET`
+Result: **PASS_TARGET**
 
-Candidate: `mult_cons0p016_normal1_disaster1p4`
+Recovered candidate: `mult_cons0p0152_normal1_disaster1p4`. The default-case artifact pack now uses component-complete raw common-evaluator reporting under `A=10`, `B=10`, `K=2`, and the LaTeX source is synchronized to the requested PDF version.
 
-Case 4 `F_unmet=0.00` is below Case 3 `F_unmet=137,689.83`; Case 1 `Phi=5,223.70` remains below Case 4 `Phi=7,032.12`.
+Checks:
+- Component-complete Table III: PASS
+- Common evaluator: PASS
+- Fair deterministic mean-value `K_train=2`: PASS
+- Case 3 disaster endpoint present: PASS
+- Traceable source root: `results/default_case_targeted_transition_v8_focus_cert`
