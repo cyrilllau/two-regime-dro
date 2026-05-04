@@ -1,8 +1,9 @@
-claim,artifact,status
-"Default support is A=10, B=10, K=2",setup_parameter_table.csv; scenario_generation_manifest.json,PASS
-Table III uses raw component-complete common-evaluator costs,objective_components_tableIII.csv; summary.csv,PASS
-Case 1 reduces Case 2 Phi by 65.59% while keeping F_unmet zero,objective_components_tableIII.csv,PASS
-Case 3 has the lowest Phi but sacrifices normal service,objective_components_tableIII.csv,PASS
-Case 1 has lower Phi than fair deterministic K_train=2,deterministic_worst_distribution.csv,PASS
-Topology shift from Case 2 to Case 1 improves direct critical-bus coverage,default_topology_evidence.csv; figures/default_maps_milp.png,PASS
-Setup profile figures use the current default source,scenario_profile_source_inventory.csv; scenario_profile_figure_audit.md,PASS
+claim,artifact,status,claim_id,row_filter
+"Default support is A=10, B=10, K=2",setup_parameter_table.csv; scenario_generation_manifest.json,PASS,,
+Table III uses raw component-complete common-evaluator costs,objective_components_tableIII.csv; summary.csv,PASS,,
+Case 1 reduces Case 2 Phi by 65.59% while keeping F_unmet zero,objective_components_tableIII.csv,PASS,,
+Case 3 has the lowest Phi but sacrifices normal service,objective_components_tableIII.csv,PASS,,
+Case 1 has lower Phi than fair deterministic K_train=2,deterministic_worst_distribution.csv,PASS,,
+Topology shift from Case 2 to Case 1 improves direct critical-bus coverage,default_topology_evidence.csv; figures/default_maps_milp.png,PASS,,
+Setup profile figures use the current default source,scenario_profile_source_inventory.csv; scenario_profile_figure_audit.md,PASS,,
+EV penetration sensitivity uses the current accepted default regime and Table-IV component taxonomy.,results/paper_final/sensitivity_components_tableIV.csv,,ev_sensitivity_table_iv,"case_id in {Base, EV 1.5x, EV 2.0x}"

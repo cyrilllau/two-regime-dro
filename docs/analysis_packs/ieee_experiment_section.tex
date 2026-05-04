@@ -211,6 +211,63 @@ which is a 20.20\% reduction. The evaluated total cost also falls from
 because the deterministic first-stage saving is outweighed by poorer common
 replay performance.
 
+\subsection{EV Penetration Sensitivity}
+To test whether the planning logic remains interpretable under higher EV
+participation, the normal charging-demand profiles and disaster V2G
+availability profiles are scaled by 1.5 and 2.0 while the Table~\ref{tab:setup_parameters}
+economic parameters, $|A|=10$, $|B|=10$, $K=2$, and the objective multipliers
+are kept fixed. The resulting plans are again evaluated with the same
+component taxonomy as Table~\ref{tab:default_components}.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.9\textwidth]{results/paper_final/figures/fig8_like_sensitivity_maps.png}
+\caption{Planning maps for the base, 1.5x EV, and 2.0x EV penetration cases.}
+\label{fig:ev_sensitivity_maps}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\caption{EV penetration sensitivity under the current default regime.}
+\label{tab:ev_sensitivity}
+\begin{tabular}{lrrr}
+\toprule
+Metric & Base & EV 1.5x & EV 2.0x \\
+\midrule
+$F^{\mathrm{cons}}$ & 128,069.89 & 122,629.46 & 157,353.74 \\
+$F^{\mathrm{trans}}$ & 21,514.49 & 32,329.97 & 43,389.32 \\
+$F^{\mathrm{unmet}}$ & 0.00 & 0.00 & 0.00 \\
+$F^{\mathrm{sub}}$ & 40,809.78 & 46,001.48 & 51,193.18 \\
+$\Psi^{\mathrm{nor}}$ & 62,324.28 & 78,331.46 & 94,582.51 \\
+$\Phi^{\mathrm{dis}}$ & 5,223.70 & 3,881.20 & 3,299.38 \\
+$J_{\mathrm{eval}}$ & 173,264.00 & 178,625.84 & 224,551.31 \\
+Sites & 12 & 10 & 13 \\
+Slow/Fast EVSE & 172/15 & 235/22 & 218/29 \\
+Rated EVSE capacity (kW) & 1,954 & 2,745 & 2,976 \\
+Critical buses covered & 7/11 & 5/11 & 3/11 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:ev_sensitivity} shows that the model absorbs higher EV demand
+without unmet charging demand in all three cases. The normal-operation terms
+increase for the expected physical reasons: transportation cost rises with the
+larger charging population, and substation purchase cost rises from 40,809.78
+to 51,193.18 as the total served energy increases. The capacity response is
+not a simple monotone count of opened stations. At 1.5x, the model consolidates
+service into ten higher-capacity hubs and increases the installed slow/fast
+EVSE count to 235/22. At 2.0x, it expands back to thirteen sites and shifts
+more capacity into fast chargers. The rated EVSE capacity therefore grows
+monotonically from 1,954~kW to 2,745~kW and 2,976~kW, which is the relevant
+capacity metric for this sensitivity.
+
+The disaster component also improves, decreasing from 5,223.70 in the base
+case to 3,881.20 and 3,299.38. This trend is consistent with the way the
+sensitivity is generated: the higher-penetration cases increase both charging
+demand in the normal stage and available EV discharge capacity in the disaster
+stage. The resulting plans therefore pay for additional charging capacity while
+also gaining more V2G support under the common worst-distribution replay.
+
 \subsection{Certification and Reproducibility}
 Table~\ref{tab:certification} reports the certification status for the four
 default runs. The normal-only benchmark is solved directly to optimality. The

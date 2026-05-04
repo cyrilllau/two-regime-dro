@@ -1,0 +1,10 @@
+{
+  "best_gate": {
+    "candidate_id": "mult_cons0p0152_normal1_disaster1p4",
+    "failure_reasons": "missing_case_rows",
+    "passes_all": false,
+    "stage": "partial"
+  },
+  "evaluated_candidates": 1,
+  "verdict": "BUDGET_STOP_NO_TOPOLOGY_PASS"
+}

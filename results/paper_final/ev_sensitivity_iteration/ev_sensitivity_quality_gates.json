@@ -1,0 +1,32 @@
+{
+  "all_rows_certified": true,
+  "component_identities_pass": true,
+  "notes": [
+    "Total EVSE count is not the monotone capacity metric because EV 2.0x substitutes fast chargers for slow chargers.",
+    "Rated charger capacity is monotone and is the paper-facing capacity-expansion metric."
+  ],
+  "phi_values": [
+    5223.699133452031,
+    3881.197913414164,
+    3299.3767426868494
+  ],
+  "rated_capacity_kw": [
+    1954,
+    2745,
+    2976
+  ],
+  "rated_capacity_monotone": true,
+  "site_counts": [
+    12,
+    10,
+    13
+  ],
+  "target": "ev_penetration_sensitivity_current_default",
+  "total_chargers": [
+    187,
+    257,
+    247
+  ],
+  "unmet_zero_all_rows": true,
+  "verdict": "PASS_TARGET"
+}
