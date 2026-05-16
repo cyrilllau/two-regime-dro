@@ -150,6 +150,24 @@ IEEE33_BUBBLE_OFFSETS = {
     33: (0.0, 1.0),
 }
 
+IEEE33_LABEL_OFFSETS = {
+    19: (-0.28, 0.05),
+    20: (-0.28, -0.04),
+    21: (0.0, 0.28),
+    22: (0.0, 0.28),
+    23: (-0.28, 0.05),
+    24: (-0.14, 0.3),
+    25: (0.08, 0.3),
+    26: (-0.22, 0.3),
+    27: (0.0, 0.28),
+    28: (0.0, 0.28),
+    29: (0.0, 0.28),
+    30: (0.0, 0.28),
+    31: (0.0, 0.28),
+    32: (0.0, 0.28),
+    33: (0.0, 0.28),
+}
+
 PAPER_STYLE_PANEL_TITLES = {
     "integrated_mainline_paper_like": "(a) Case 1: Proposed model",
     "normal_only_paper_like": "(b) Case 2: Only normal operation considered",
@@ -190,10 +208,10 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
     installed_rows = [
         row for row in plan_rows if int(row["is_open"]) == 1
     ]
+    panel_title = PAPER_STYLE_PANEL_TITLES.get(run_id, run_id)
 
     axis.set_aspect("equal")
     axis.axis("off")
-    axis.set_title(PAPER_STYLE_PANEL_TITLES.get(run_id, run_id), fontsize=8.5, pad=4)
 
     for left, right in IEEE33_EDGES:
         x1, y1 = IEEE33_POSITIONS[left]
@@ -211,33 +229,35 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
         axis.scatter(
             critical_x,
             critical_y,
-            s=22,
+            s=15,
             facecolors="#c83c23",
             edgecolors="black",
-            linewidths=0.55,
+            linewidths=0.45,
             zorder=3,
         )
     if noncritical_x:
         axis.scatter(
             noncritical_x,
             noncritical_y,
-            s=22,
+            s=15,
             facecolors="white",
             edgecolors="black",
-            linewidths=0.55,
+            linewidths=0.45,
             zorder=2,
         )
 
     for bus in buses:
         x, y = IEEE33_POSITIONS[bus]
+        dx, dy = IEEE33_LABEL_OFFSETS.get(bus, (0.0, 0.28))
         axis.text(
-            x,
-            y + 0.33,
+            x + dx,
+            y + dy,
             str(bus),
             ha="center",
-            va="bottom",
-            fontsize=5.8,
+            va="center",
+            fontsize=4.7,
             zorder=4,
+            bbox={"facecolor": "white", "edgecolor": "none", "pad": 0.12, "alpha": 0.96},
         )
 
     bubble_points: list[tuple[float, float]] = []
@@ -259,19 +279,19 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
         axis.scatter(
             [x],
             [y],
-            s=12,
+            s=7,
             facecolors="none",
             edgecolors="#3f5523",
-            linewidths=0.6,
+            linewidths=0.45,
             zorder=4.5,
         )
         axis.scatter(
             [bx],
             [by],
-            s=138,
+            s=76,
             facecolors="#7caf3e",
             edgecolors="#3a5d1c",
-            linewidths=0.55,
+            linewidths=0.45,
             alpha=0.92,
             zorder=5,
         )
@@ -282,7 +302,7 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
             f"{slow}/{fast}",
             ha="center",
             va="center",
-            fontsize=5.4,
+            fontsize=4.0,
             fontweight="bold",
             color="#1f2f0f",
             zorder=6,
@@ -301,7 +321,7 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
             markerfacecolor="#c83c23",
             markeredgecolor="black",
             markeredgewidth=0.55,
-            markersize=4.4,
+            markersize=3.4,
             label="Critical load",
         ),
         Line2D(
@@ -312,7 +332,7 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
             markerfacecolor="white",
             markeredgecolor="black",
             markeredgewidth=0.55,
-            markersize=4.4,
+            markersize=3.4,
             label="Non-critical load",
         ),
         Line2D(
@@ -323,21 +343,31 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
             markerfacecolor="#7caf3e",
             markeredgecolor="#3a5d1c",
             markeredgewidth=0.55,
-            markersize=5.8,
+            markersize=4.2,
             label="EVCS(No. slow EVSE,\nNo. fast EVSE)",
         ),
     ]
     axis.legend(
         handles=legend_handles,
         loc="lower right",
-        fontsize=5.4,
+        fontsize=4.4,
         frameon=True,
         fancybox=False,
         framealpha=1.0,
-        borderpad=0.28,
-        handletextpad=0.35,
-        labelspacing=0.22,
+        borderpad=0.2,
+        handletextpad=0.22,
+        labelspacing=0.14,
         borderaxespad=0.25,
+    )
+    axis.text(
+        0.5,
+        -0.055,
+        panel_title,
+        transform=axis.transAxes,
+        ha="center",
+        va="top",
+        fontsize=6.4,
+        clip_on=False,
     )
 
 
@@ -460,7 +490,7 @@ def _plot_plan_maps(
 
     nrows = (len(selected) + ncols - 1) // ncols
     if ncols == 1:
-        figsize = (7.2, 1.72 * nrows + 0.12)
+        figsize = (7.2, 2.08 * nrows + 0.2)
     else:
         figsize = (7.3, 2.1 * nrows)
     fig, axes = plt.subplots(
@@ -475,7 +505,7 @@ def _plot_plan_maps(
     for axis, run_id in zip(axes.flatten(), selected):
         _plot_paper_style_panel(axis, run_id, plan_lookup)
 
-    fig.tight_layout(rect=(0.005, 0.005, 0.995, 0.995), pad=0.22, h_pad=0.25)
+    fig.tight_layout(rect=(0.005, 0.012, 0.995, 0.995), pad=0.2, h_pad=0.9)
     fig.savefig(path, dpi=220, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
 
