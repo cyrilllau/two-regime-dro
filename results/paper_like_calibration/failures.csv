@@ -1,2 +1,0 @@
-stage,candidate_id,run_id,validation_level,stop_reason,solver_status,final_violation_upper_bound,message
-stage2,S1_site_cost_up,disaster_only_paper_like_tuned,smoke_only,max_iterations,OPTIMAL,68546.42000001483,"Run completed a bounded smoke-only solve but did not certify; stop_reason=max_iterations, solver_status=OPTIMAL."

@@ -169,7 +169,8 @@ PAPER_STYLE_PANEL_TITLES = {
     "default_scale_v2_deterministic_k2": "Deterministic mean-value benchmark (K=2)",
     "ev_sensitivity_base": "(a) Base EV demand",
     "ev_sensitivity_1p5": "(b) EV penetration 1.5x",
-    "ev_sensitivity_2p0": "(c) EV penetration 2.0x",
+    "ev_sensitivity_2p0": "(b) EV penetration 2.0x",
+    "ev_sensitivity_3p0": "(c) EV penetration 3.0x",
 }
 
 

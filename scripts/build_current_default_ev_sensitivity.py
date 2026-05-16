@@ -41,20 +41,20 @@ CASES = [
         "source": "paper_final_default",
     },
     {
-        "case_id": "EV 1.5x",
-        "case_name": "EV penetration 1.5x",
-        "ev_multiplier": 1.5,
-        "runtime_source": "data/colleague_default_10x10_ev1p5",
-        "promoted_id": "ev_sensitivity_1p5",
-        "source": "results/ev_sensitivity_current_default_ev1p5/candidate_matrix.csv",
-    },
-    {
         "case_id": "EV 2.0x",
         "case_name": "EV penetration 2.0x",
         "ev_multiplier": 2.0,
         "runtime_source": "data/colleague_default_10x10_ev2p0",
         "promoted_id": "ev_sensitivity_2p0",
         "source": "results/ev_sensitivity_current_default_ev2p0/candidate_matrix.csv",
+    },
+    {
+        "case_id": "EV 3.0x",
+        "case_name": "EV penetration 3.0x",
+        "ev_multiplier": 3.0,
+        "runtime_source": "data/colleague_default_10x10_ev3p0",
+        "promoted_id": "ev_sensitivity_3p0",
+        "source": "results/ev_sensitivity_current_default_ev3p0/candidate_matrix.csv",
     },
 ]
 
@@ -278,14 +278,14 @@ def _quality(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "rated_capacity_kw": capacities,
         "phi_values": [_float(row, "Phi_dis") for row in rows],
         "notes": [
-            "Total EVSE count is not the monotone capacity metric because EV 2.0x substitutes fast chargers for slow chargers.",
+            "Total EVSE count is not the monotone capacity metric because higher-penetration cases can substitute fast chargers for slow chargers.",
             "Rated charger capacity is monotone and is the paper-facing capacity-expansion metric.",
         ],
     }
 
 
 def _write_reports(rows: Sequence[Mapping[str, Any]], quality: Mapping[str, Any]) -> None:
-    base, ev15, ev20 = rows
+    base, ev20, ev30 = rows
     text = f"""# EV Penetration Sensitivity
 
 Verdict: `PASS_TARGET`
@@ -293,11 +293,11 @@ Verdict: `PASS_TARGET`
 - Regime: current default `m_cons=0.0152`, `m_normal=1.0`, `m_disaster=1.4`.
 - Support: common `A=10`, `B=10`, `K=2`.
 - All rows are component complete and certified.
-- Rated EVSE capacity increases from `{base['rated_evse_capacity_kw']}` kW to `{ev15['rated_evse_capacity_kw']}` kW and `{ev20['rated_evse_capacity_kw']}` kW.
+- Rated EVSE capacity increases from `{base['rated_evse_capacity_kw']}` kW to `{ev20['rated_evse_capacity_kw']}` kW and `{ev30['rated_evse_capacity_kw']}` kW.
 - `F_unmet` remains zero for all three EV penetration levels.
-- `Phi_dis` changes from `{float(base['Phi_dis']):,.2f}` to `{float(ev15['Phi_dis']):,.2f}` and `{float(ev20['Phi_dis']):,.2f}`.
+- `Phi_dis` changes from `{float(base['Phi_dis']):,.2f}` to `{float(ev20['Phi_dis']):,.2f}` and `{float(ev30['Phi_dis']):,.2f}`.
 
-Paper interpretation: higher EV penetration is handled mainly by increasing installed rated capacity and shifting charger mix toward fast chargers at 2.0x, rather than by requiring monotone growth in raw station count or raw EVSE count.
+Paper interpretation: higher EV penetration is handled by increasing installed rated capacity and shifting charger mix toward fast chargers. The 3.0x case is a stronger stress case: it keeps unmet charging demand at zero, but its disaster cost rises relative to 2.0x because the larger charging system also creates a larger common-evaluator operating burden.
 """
     _write_json(PAPER_ROOT / "ev_sensitivity_quality_gates.json", quality)
     _write_json(PAPER_ROOT / "ev_sensitivity_critic_review.json", quality)
@@ -317,7 +317,7 @@ def _update_claim_trace() -> None:
         "claim_id": "ev_sensitivity_table_iv",
         "claim": "EV penetration sensitivity uses the current accepted default regime and Table-IV component taxonomy.",
         "artifact": "results/paper_final/sensitivity_components_tableIV.csv",
-        "row_filter": "case_id in {Base, EV 1.5x, EV 2.0x}",
+        "row_filter": "case_id in {Base, EV 2.0x, EV 3.0x}",
     })
     _write_rows(path, rows)
 
@@ -329,7 +329,7 @@ def main() -> None:
     _plot_components(rows)
     _plot_trends(rows)
     write_plan_map_figure(
-        run_ids=("ev_sensitivity_base", "ev_sensitivity_1p5", "ev_sensitivity_2p0"),
+        run_ids=("ev_sensitivity_base", "ev_sensitivity_2p0", "ev_sensitivity_3p0"),
         plans_dir=PAPER_ROOT / "plans",
         title="EV penetration sensitivity under current default regime",
         path=FIGURES_DIR / "fig8_like_sensitivity_maps.png",

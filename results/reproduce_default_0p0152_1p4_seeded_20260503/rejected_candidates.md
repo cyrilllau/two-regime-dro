@@ -1,3 +1,0 @@
-# Rejected Candidates
-
-- `mult_cons0p0152_normal1_disaster1p4`: case4_normal_service_better_than_case3;case1_sites_target_9_to_11

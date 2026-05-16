@@ -1,2 +1,0 @@
-comparator,comparator_label,Phi_proposed,Phi_comparator,Phi_absolute_reduction,Phi_percent_reduction,weighted_phi_reduction_pi_0p3,J_proposed,J_comparator,J_comparator_minus_proposed,sites_proposed,sites_comparator,slow_fast_proposed,slow_fast_comparator,claim_status
-deterministic_k2,Fair deterministic mean-value with K_train=2,5223.699133452031,6545.72094927071,1322.021815818679,20.19673350062336,396.6065447456037,173263.99690494427,196871.27047164433,23607.273566700052,12,10,172/15,101/12,PASS

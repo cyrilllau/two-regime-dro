@@ -16,6 +16,34 @@ class BendersIterationRecord:
     pre_cut_master_objective: float
     post_cut_master_objective: float | None
     separation_violation_value: float
+    candidate_source: str = "canonical"
+    canonical_master_objective: float | None = None
+    auxiliary_master_objective: float | None = None
+    unpenalized_candidate_objective: float | None = None
+    valid_lb_used: float | None = None
+    auxiliary_used_for_lb: bool = False
+    level_bundle_objective_upper_bound: float | None = None
+    level_bundle_center_policy: str | None = None
+    trust_region_z_radius: int | None = None
+    trust_region_z_distance: int | None = None
+    active_delta_pool_size: int | None = None
+    active_candidate_count: int | None = None
+    active_validated_cut_count: int | None = None
+    active_best_validated_violation: float | None = None
+    active_set_generation_seconds: float = 0.0
+    full_support_separation_called: bool = True
+    pricing_capture_count: int = 0
+    pricing_capture_best_violation: float | None = None
+    pricing_capture_seconds: float = 0.0
+    persistent_pricing_pool_size: int | None = None
+    broadcast_candidate_count: int = 0
+    broadcast_added_count: int = 0
+    pricing_violation_bound: float | None = None
+    pricing_derived_upper_bound: float | None = None
+    best_pricing_derived_upper_bound: float | None = None
+    certified_serious_step_type: str | None = None
+    certified_serious_null_count: int = 0
+    valid_gap_bound: float | None = None
     selected_outage_by_line_id: dict[str, int] = field(default_factory=dict)
     selected_outage_active_lines: tuple[str, ...] = field(default_factory=tuple)
     repeated_outage_flag: bool = False

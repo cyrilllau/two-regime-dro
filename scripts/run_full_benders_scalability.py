@@ -20,8 +20,9 @@ from scripts.run_separation_scalability import _summarize_milp  # noqa: E402
 DEFAULT_ACCEPTED_LOG = (
     REPO_ROOT
     / "results/paper_final/logs/"
-    "default_multiplier_mult_cons0p015_normal1_disaster1p25_proposed_run.json"
+    "default_scale_v2_proposed_run.json"
 )
+CURRENT_DEFAULT_REGIME = "accepted_default_mult_cons0p0152_normal1_disaster1p4"
 CRITICAL_BUSES = REPO_ROOT / "configs/critical_buses_paper_fig2.yaml"
 
 
@@ -53,6 +54,18 @@ def _read_accepted_config(path: Path) -> dict[str, Any]:
     config = dict(payload["run_config"] if "run_config" in payload else payload)
     if config.get("mode") != "integrated_mainline" or config.get("solver") != "benders":
         raise ValueError(f"{path} is not the accepted proposed Benders run config.")
+    multipliers = (
+        config.get("parameter_overrides", {}).get("objective_multipliers")
+        or config.get("objective_multipliers")
+        or {}
+    )
+    expected = {"cons": 0.0152, "normal": 1.0, "disaster": 1.4}
+    for key, value in expected.items():
+        if abs(float(multipliers.get(key, float("nan"))) - value) > 1.0e-9:
+            raise ValueError(
+                f"{path} is not the current default regime: expected {expected}, "
+                f"found {multipliers}."
+            )
     return config
 
 
@@ -82,7 +95,7 @@ def _build_config(
             "runtime_source": runtime_source,
             "mode": "integrated_mainline",
             "solver": "benders",
-            "parameter_regime": "accepted_default_mult_cons0p015_normal1_disaster1p25",
+            "parameter_regime": CURRENT_DEFAULT_REGIME,
             "selection": {
                 "scenarios_a": list(range(1, int(a_count) + 1)),
                 "scenarios_b": list(range(1, int(b_count) + 1)),
@@ -103,6 +116,8 @@ def _build_config(
         "separation_mip_gap": float(separation_mip_gap),
         "separation_top_cuts_per_iteration": int(top_cuts),
         "allow_master_suboptimal_incumbent": True,
+        "enable_cut_signature_dedup": True,
+        "enable_repeated_outage_guard": False,
         "omega_bound_upper": float(omega_bound_upper),
     }
     return config
@@ -142,15 +157,15 @@ def main() -> None:
     parser.add_argument("--output-root", default="results/paper_final")
     parser.add_argument("--b-values", default="5,10,20,50,100")
     parser.add_argument("--k-values", default="1,2,3,5,7,10")
-    parser.add_argument("--completion-k-values", default="7,10")
+    parser.add_argument("--completion-k-values", default="3,5,7,10")
     parser.add_argument("--a-count", type=int, default=10)
     parser.add_argument("--top-cuts", type=int, default=3)
     parser.add_argument("--max-iterations", type=int, default=100)
     parser.add_argument("--completion-max-iterations", type=int, default=300)
     parser.add_argument("--epsilon-cert", type=float, default=100.0)
     parser.add_argument("--master-time-limit-seconds", type=float, default=120.0)
-    parser.add_argument("--master-mip-gap", type=float, default=0.02)
-    parser.add_argument("--separation-time-limit-seconds", type=float, default=300.0)
+    parser.add_argument("--master-mip-gap", type=float, default=0.03)
+    parser.add_argument("--separation-time-limit-seconds", type=float, default=180.0)
     parser.add_argument("--separation-mip-gap", type=float, default=0.02)
     parser.add_argument("--omega-bound-upper", type=float, default=2.0e7)
     parser.add_argument("--skip-existing", action="store_true")
@@ -159,8 +174,8 @@ def main() -> None:
 
     accepted = _read_accepted_config(Path(args.accepted_log))
     output_root = Path(args.output_root)
-    standard_root = output_root / "full_benders_scaling_runs" / "milp"
-    completion_root = output_root / "full_benders_completion_runs" / "milp"
+    standard_root = output_root / "full_benders_scaling_runs" / "current_default_milp"
+    completion_root = output_root / "full_benders_completion_runs" / "current_default_milp"
     b_values = _parse_ints(args.b_values)
     k_values = _parse_ints(args.k_values)
     completion_k_values = set(_parse_ints(args.completion_k_values))
@@ -230,6 +245,9 @@ def main() -> None:
             "completion_max_iterations": int(args.completion_max_iterations),
             "matrix_entry_count": matrix_entry_count,
             "run_ids": [config["run_id"] for config in run_configs],
+            "parameter_regime": CURRENT_DEFAULT_REGIME,
+            "standard_run_root": str(standard_root),
+            "completion_run_root": str(completion_root),
             "policy": "full Benders convergence runs only; no exact enumeration",
         },
     )

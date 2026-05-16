@@ -1,2 +1,0 @@
-candidate_id,m_cons,m_normal,m_disaster,sites_case1,sites_case4,slow_case1,slow_case4,fast_case1,fast_case4,total_chargers_case1,total_chargers_case4,Phi_case1,Phi_case4,Phi_det_gap_pct,pass_case1_sites_exceed_det,pass_case1_slow_ge_det,pass_case1_fast_ge_det,pass_case1_total_chargers_gt_det,pass_case1_phi_lt_det,pass_case1_phi_reduction_target_5pct,deterministic_topology_pass
-mult_cons0p0152_normal1_disaster1p4,,,,,,,,,,,,,,,,,,,,,

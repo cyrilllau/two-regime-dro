@@ -16,12 +16,17 @@ from scripts.run_separation_scalability import _summarize_milp  # noqa: E402
 
 
 PAPER_ROOT = REPO_ROOT / "results" / "paper_final"
-RUN_ROOT = PAPER_ROOT / "full_benders_scaling_runs" / "milp" / "logs"
+RUN_ROOT = PAPER_ROOT / "full_benders_scaling_runs" / "current_default_milp" / "logs"
+COMPLETION_ROOT = PAPER_ROOT / "full_benders_completion_runs" / "current_default_milp" / "logs"
 FIGURES_DIR = PAPER_ROOT / "figures"
+CURRENT_DEFAULT_REGIME = "accepted_default_mult_cons0p0152_normal1_disaster1p4"
+EXPECTED_MULTIPLIERS = {"cons": 0.0152, "normal": 1.0, "disaster": 1.4}
 
 B_VALUES = (5, 10, 20, 50, 100)
 K_VALUES = (1, 2, 3, 5, 7, 10)
 COMPLETION_OVERRIDES = {
+    3: "full_benders_completion_A10_B010_K03_top003_max300",
+    5: "full_benders_completion_A10_B010_K05_top003_max300",
     7: "full_benders_completion_A10_B010_K07_top003_max300",
     10: "full_benders_completion_A10_B010_K10_top003_max300",
 }
@@ -49,13 +54,36 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
 
 def _summarize(run_id: str, *, log_dir: Path = RUN_ROOT) -> dict[str, Any]:
     path = log_dir / f"{run_id}_run.json"
+    _assert_current_default_log(path)
     row = _summarize_milp(path, run_id=run_id)
     row["paper_status"] = (
         "certified"
         if row["validation_level"] in {"exact", "epsilon_certified"}
         else "diagnostic_stress"
     )
+    row["parameter_regime"] = CURRENT_DEFAULT_REGIME
     return row
+
+
+def _assert_current_default_log(path: Path) -> None:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    config = payload.get("run_config", payload)
+    multipliers = (
+        config.get("parameter_overrides", {}).get("objective_multipliers")
+        or config.get("objective_multipliers")
+        or {}
+    )
+    for key, expected in EXPECTED_MULTIPLIERS.items():
+        if abs(float(multipliers.get(key, float("nan"))) - expected) > 1.0e-9:
+            raise ValueError(
+                f"{path} is not the current default regime: expected "
+                f"{EXPECTED_MULTIPLIERS}, found {multipliers}."
+            )
+    if str(config.get("parameter_regime")) != CURRENT_DEFAULT_REGIME:
+        raise ValueError(
+            f"{path} has unexpected parameter_regime="
+            f"{config.get('parameter_regime')!r}; expected {CURRENT_DEFAULT_REGIME!r}."
+        )
 
 
 def _log_exists(run_id: str, *, log_dir: Path = RUN_ROOT) -> bool:
@@ -74,12 +102,12 @@ def _build_rows() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     for k in K_VALUES:
         if k in COMPLETION_OVERRIDES and _log_exists(
             COMPLETION_OVERRIDES[k],
-            log_dir=PAPER_ROOT / "full_benders_completion_runs" / "milp" / "logs",
+            log_dir=COMPLETION_ROOT,
         ):
             run_id = COMPLETION_OVERRIDES[k]
             row = _summarize(
                 run_id,
-                log_dir=PAPER_ROOT / "full_benders_completion_runs" / "milp" / "logs",
+                log_dir=COMPLETION_ROOT,
             )
             row["source_run_role"] = "completion_high_budget"
         else:
@@ -262,6 +290,7 @@ def _write_review(b_rows: Sequence[Mapping[str, Any]], k_rows: Sequence[Mapping[
             "Rows that remain non-certified after the allotted budget are reported "
             "only as diagnostic stress evidence."
         ),
+        "parameter_regime": CURRENT_DEFAULT_REGIME,
         "artifacts": {
             "b_summary": str(PAPER_ROOT / "full_benders_b_scaling_summary.csv"),
             "k_summary": str(PAPER_ROOT / "full_benders_k_scaling_summary.csv"),

@@ -1,5 +1,0 @@
-source_case,case_name,open_buses,swapped_in_vs_normal,swapped_out_vs_normal,critical_direct_count,critical_direct_buses,critical_direct_or_neighbor_count,critical_direct_or_neighbor_buses
-proposed,Proposed integrated,3;6;8;11;14;17;18;21;26;29;30;32,8;11;14;17;18;21;26;29,19,7,8;11;14;17;26;29;32,11,2;5;8;11;14;17;20;23;26;29;32
-normal,Normal-only,3;6;19;30;32,,,1,32,7,2;5;20;23;26;29;32
-disaster,Disaster-only,8;11;14;17;18;20;22;23;25;26;29;30;32,8;11;14;17;18;20;22;23;25;26;29,3;6;19,9,8;11;14;17;20;23;26;29;32,9,8;11;14;17;20;23;26;29;32
-deterministic_k2,"Deterministic mean-value, K_train=2",6;8;10;11;14;18;21;29;30;32,8;10;11;14;18;21;29,3;19,5,8;11;14;29;32,9,5;8;11;14;17;20;26;29;32

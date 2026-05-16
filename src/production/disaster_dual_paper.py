@@ -124,8 +124,9 @@ def _coerce_nonnegative_int_map(
     label: str,
     keys: Sequence[int],
     binary: bool = False,
+    allow_fractional: bool = False,
 ) -> dict[int, int]:
-    normalized: dict[int, int] = {}
+    normalized: dict[int, int | float] = {}
     key_set = set(keys)
     invalid = sorted(key for key in raw if key not in key_set)
     if invalid:
@@ -135,7 +136,26 @@ def _coerce_nonnegative_int_map(
         if key not in raw:
             raise RuntimeDataValidationError(f"{label} is missing required id {key}.")
         value = raw[key]
-        if isinstance(value, bool) or not isinstance(value, int):
+        if isinstance(value, bool):
+            raise RuntimeDataValidationError(f"{label}[{key}] must be numeric, got {value!r}.")
+        if allow_fractional:
+            if not isinstance(value, (int, float)):
+                raise RuntimeDataValidationError(
+                    f"{label}[{key}] must be numeric, got {value!r}."
+                )
+            numeric = float(value)
+            if numeric < -1e-8:
+                raise RuntimeDataValidationError(
+                    f"{label}[{key}] must be nonnegative, got {value}."
+                )
+            if binary and numeric > 1.0 + 1e-8:
+                raise RuntimeDataValidationError(
+                    f"{label}[{key}] must be <= 1 for fractional binary relaxation, "
+                    f"got {value}."
+                )
+            normalized[int(key)] = max(0.0, min(1.0, numeric) if binary else numeric)
+            continue
+        if not isinstance(value, int):
             raise RuntimeDataValidationError(f"{label}[{key}] must be an int, got {value!r}.")
         if value < 0:
             raise RuntimeDataValidationError(f"{label}[{key}] must be nonnegative, got {value}.")
@@ -150,23 +170,28 @@ def _coerce_nonnegative_int_map(
 def _resolve_plan_maps(
     instance: CanonicalInstance,
     plan: FixedFirstStagePlanLike,
-) -> tuple[dict[int, int], dict[int, int], dict[int, int]]:
+    *,
+    allow_fractional: bool = False,
+) -> tuple[dict[int, int | float], dict[int, int | float], dict[int, int | float]]:
     buses = instance.sets.buses
     z_by_bus = _coerce_nonnegative_int_map(
         plan.z_by_bus,
         label="plan.z_by_bus",
         keys=buses,
         binary=True,
+        allow_fractional=allow_fractional,
     )
     n_sl_by_bus = _coerce_nonnegative_int_map(
         plan.n_sl_by_bus,
         label="plan.n_sl_by_bus",
         keys=buses,
+        allow_fractional=allow_fractional,
     )
     n_fa_by_bus = _coerce_nonnegative_int_map(
         plan.n_fa_by_bus,
         label="plan.n_fa_by_bus",
         keys=buses,
+        allow_fractional=allow_fractional,
     )
     return z_by_bus, n_sl_by_bus, n_fa_by_bus
 
@@ -335,12 +360,17 @@ def build_disaster_dual_paper_model(
     scenario_id: int,
     model_name: str = "disaster_dual_paper",
     log_to_console: bool = False,
+    allow_fractional_plan: bool = False,
 ) -> DisasterPaperDualModel:
     """Build the hand-coded paper dual for a fixed `(x, delta, b)` disaster sample."""
 
     _validate_selected_disaster_scenario(instance, scenario_id)
     cls_by_bus = _resolve_cls_by_bus(instance)
-    z_by_bus, n_sl_by_bus, n_fa_by_bus = _resolve_plan_maps(instance, plan)
+    z_by_bus, n_sl_by_bus, n_fa_by_bus = _resolve_plan_maps(
+        instance,
+        plan,
+        allow_fractional=allow_fractional_plan,
+    )
     outage_by_line_id = _resolve_outage_map(instance, outage)
 
     buses = instance.sets.buses

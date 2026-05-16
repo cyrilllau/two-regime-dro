@@ -7,7 +7,14 @@ from dataclasses import replace
 import pytest
 
 from src.instance.schema import ObjectiveMultipliers
-from src.production.master_problem import build_master_problem
+from src.instance.validators import RuntimeDataValidationError
+from src.production.master_problem import (
+    RestrictedMasterCut,
+    RestrictedMasterOutageColumnCut,
+    build_master_problem,
+    solve_master_problem,
+)
+from src.reference.disaster_primal_ref import build_fixed_first_stage_plan
 from tests.oracle.test_master_problem_toy_cases import build_round_07_toy_case
 
 
@@ -171,3 +178,139 @@ def test_master_problem_cut_rows_match_eq39_sign_patterns() -> None:
         u_link_row,
         phi_master.s_by_cut_id["phi_support"],
     ) == pytest.approx(1.0)
+
+
+def test_outage_column_rowwise_cut_rows_match_nccg_sign_patterns() -> None:
+    """NCCG active-column rows should avoid support-function blocks per row-wise cut."""
+
+    instance, _, _ = build_round_07_toy_case("master_problem_normal_averaging.yaml")
+    line_id = instance.sets.line_ids[0]
+    rowwise_cut = RestrictedMasterOutageColumnCut(
+        row_id="rw_delta_1",
+        column_id="delta_1",
+        active_line_ids=(line_id,),
+        cut=RestrictedMasterCut(
+            cut_id="rowwise_source",
+            beta=12.0,
+            gamma_z_by_bus={2: 3.0},
+            gamma_n_sl_by_bus={2: 4.0},
+            gamma_n_fa_by_bus={2: 5.0},
+            phi_by_line_id={line_id: 7.0},
+        ),
+    )
+    master = build_master_problem(
+        instance,
+        outage_column_cuts=(rowwise_cut,),
+        model_name="round_07_master_nccg_rowwise_cut",
+    )
+    model = master.model
+    theta_var = master.theta_by_outage_column_id["delta_1"]
+
+    support_row = model.getConstrByName("nccg_outage_support_delta_1")
+    assert support_row is not None
+    assert support_row.Sense == ">"
+    assert support_row.RHS == pytest.approx(0.0)
+    assert model.getCoeff(support_row, master.alpha_var) == pytest.approx(1.0)
+    assert model.getCoeff(support_row, master.lambda_by_line_id[line_id]) == pytest.approx(1.0)
+    assert model.getCoeff(support_row, theta_var) == pytest.approx(-1.0)
+
+    recourse_row = model.getConstrByName("nccg_rowwise_cut_rw_delta_1")
+    assert recourse_row is not None
+    assert recourse_row.Sense == ">"
+    assert recourse_row.RHS == pytest.approx(19.0)
+    assert model.getCoeff(recourse_row, theta_var) == pytest.approx(1.0)
+    assert model.getCoeff(recourse_row, master.first_stage.z_by_bus[2]) == pytest.approx(3.0)
+    assert model.getCoeff(recourse_row, master.first_stage.n_sl_by_bus[2]) == pytest.approx(
+        4.0
+    )
+    assert model.getCoeff(recourse_row, master.first_stage.n_fa_by_bus[2]) == pytest.approx(
+        5.0
+    )
+    assert "rowwise_source" not in master.s_by_cut_id
+    assert not any(
+        name.startswith("s_cut_rowwise_source") or name.startswith("u_cut_rowwise_source")
+        for name in {var.VarName for var in model.getVars()}
+    )
+
+
+def test_outage_column_cut_rejects_incompatible_metadata() -> None:
+    """NCCG row-wise cuts must be compatible with line support and outage budget."""
+
+    instance, _, _ = build_round_07_toy_case("master_problem_normal_averaging.yaml")
+    line_id = instance.sets.line_ids[0]
+    k0_instance = replace(
+        instance,
+        ambiguity=replace(instance.ambiguity, k_max_outages=0),
+    )
+    rowwise_cut = RestrictedMasterOutageColumnCut(
+        row_id="rw_over_budget",
+        column_id="delta_over_budget",
+        active_line_ids=(line_id,),
+        cut=RestrictedMasterCut(cut_id="rowwise_source", beta=0.0),
+    )
+
+    with pytest.raises(RuntimeDataValidationError, match="K=0"):
+        build_master_problem(
+            k0_instance,
+            outage_column_cuts=(rowwise_cut,),
+            model_name="round_07_master_nccg_invalid_budget",
+        )
+
+    inconsistent = (
+        RestrictedMasterOutageColumnCut(
+            row_id="rw_a",
+            column_id="delta_same",
+            active_line_ids=(),
+            cut=RestrictedMasterCut(cut_id="rowwise_a", beta=0.0),
+        ),
+        RestrictedMasterOutageColumnCut(
+            row_id="rw_b",
+            column_id="delta_same",
+            active_line_ids=(line_id,),
+            cut=RestrictedMasterCut(cut_id="rowwise_b", beta=0.0),
+        ),
+    )
+    with pytest.raises(RuntimeDataValidationError, match="incompatible patterns"):
+        build_master_problem(
+            instance,
+            outage_column_cuts=inconsistent,
+            model_name="round_07_master_nccg_incompatible_column",
+        )
+
+
+def test_level_bundle_auxiliary_master_keeps_original_objective_auditable() -> None:
+    """Level-bundle trial objective should not overwrite the original objective value."""
+
+    instance, cuts, _ = build_round_07_toy_case("master_problem_normal_averaging.yaml")
+    _, canonical = solve_master_problem(
+        instance,
+        cuts=cuts,
+        model_name="round_07_master_level_bundle_canonical",
+    )
+    center_plan = build_fixed_first_stage_plan(
+        instance,
+        z_by_bus=canonical.first_stage_solution.z_by_bus,
+        n_sl_by_bus=canonical.first_stage_solution.n_sl_by_bus,
+        n_fa_by_bus=canonical.first_stage_solution.n_fa_by_bus,
+    )
+    auxiliary_master, auxiliary = solve_master_problem(
+        instance,
+        cuts=cuts,
+        level_bundle_center_plan=center_plan,
+        level_bundle_center_alpha=canonical.alpha_value,
+        level_bundle_center_lambda_by_line_id=canonical.lambda_by_line_id,
+        level_bundle_objective_upper_bound=float(
+            canonical.original_total_objective_value or canonical.objective_value or 0.0
+        )
+        + 100.0,
+        model_name="round_07_master_level_bundle_auxiliary",
+    )
+
+    assert auxiliary_master.objective_mode == "level_bundle_auxiliary"
+    assert auxiliary_master.auxiliary_level_constraint is not None
+    assert auxiliary_master.total_objective_expression is not None
+    assert auxiliary.objective_value == pytest.approx(0.0)
+    assert auxiliary.original_total_objective_value == pytest.approx(
+        canonical.original_total_objective_value
+    )
+    assert auxiliary.objective_reconstruction_gap <= 1.0e-8

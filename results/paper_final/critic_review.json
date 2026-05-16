@@ -1,9 +1,0 @@
-{
-  "critic_review": "PASS_TARGET",
-  "accepted_candidate_id": "mult_cons0p0152_normal1_disaster1p4",
-  "blocking_failures": [],
-  "diagnosis": [
-    "Recovered requested PDF-version default case."
-  ],
-  "required_remediation": []
-}

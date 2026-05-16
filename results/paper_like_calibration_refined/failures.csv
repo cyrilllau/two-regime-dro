@@ -1,1 +1,0 @@
-run_id,case_name,parameter_regime,validation_level,stop_reason,solver_status,iteration_count,cut_count,final_violation_upper_bound,message

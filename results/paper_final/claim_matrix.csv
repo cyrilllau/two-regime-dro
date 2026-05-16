@@ -1,7 +1,0 @@
-claim,artifact,status
-"Default support is A=10, B=10, K=2",setup_parameter_table.csv; scenario_generation_manifest.json; objective_components_tableIII.csv,PASS
-Table III uses raw component-complete common-evaluator costs,objective_components_tableIII.csv; summary.csv,PASS
-Case 1 reduces Case 2 Phi by 68.86% while keeping F_unmet zero,objective_components_tableIII.csv,PASS
-"Case 3 has the lowest Phi, 16.56% below Case 1, but sacrifices normal service",objective_components_tableIII.csv,PASS
-Case 1 reduces deterministic K=2 Phi by 20.20% and installs more stations and higher slow/fast charger counts,deterministic_worst_distribution.csv; objective_components_tableIII.csv; default_topology_evidence.csv,PASS
-Case 3 normal-service sacrifice is visible with F_unmet/Psi=50.92%,objective_components_tableIII.csv,PASS

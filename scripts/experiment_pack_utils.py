@@ -38,6 +38,7 @@ from src.production.benders_engine import BendersEngineResult, run_benders_engin
 from src.production.cut_factory import compute_cut_signature_hash
 from src.production.master_problem import (
     RestrictedMasterCut,
+    RestrictedMasterOutageColumnCut,
     RestrictedMasterProblemSolution,
     solve_master_problem,
 )
@@ -772,6 +773,8 @@ def _validation_level_from_result(
         return "exact"
     if normalized_status == "OPTIMAL" and stop_reason == "certified_epsilon":
         return "epsilon_certified"
+    if normalized_status == "OPTIMAL" and stop_reason == "certified_epsilon_bound":
+        return "epsilon_certified"
     if solver == "benders" and normalized_status == "OPTIMAL":
         return "smoke_only"
     return "failed"
@@ -812,6 +815,31 @@ def _plan_rows(
             "is_open": int(solution.first_stage_solution.z_by_bus[bus]),
             "n_sl": int(solution.first_stage_solution.n_sl_by_bus[bus]),
             "n_fa": int(solution.first_stage_solution.n_fa_by_bus[bus]),
+            "is_critical": int(
+                bool(instance.is_critical_by_bus and instance.is_critical_by_bus[bus])
+            ),
+            "region": "",
+        }
+        for bus in instance.sets.buses
+    ]
+
+
+def _plan_rows_from_trial_certificate(
+    instance: CanonicalInstance,
+    trial_certificate_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Build plan CSV rows from a trial-certificate first-stage payload."""
+
+    first_stage_plan = dict(trial_certificate_payload.get("first_stage_plan", {}))
+    z_by_bus = dict(first_stage_plan.get("z_by_bus", {}))
+    n_sl_by_bus = dict(first_stage_plan.get("n_sl_by_bus", {}))
+    n_fa_by_bus = dict(first_stage_plan.get("n_fa_by_bus", {}))
+    return [
+        {
+            "bus": bus,
+            "is_open": int(z_by_bus.get(str(bus), z_by_bus.get(bus, 0))),
+            "n_sl": int(n_sl_by_bus.get(str(bus), n_sl_by_bus.get(bus, 0))),
+            "n_fa": int(n_fa_by_bus.get(str(bus), n_fa_by_bus.get(bus, 0))),
             "is_critical": int(
                 bool(instance.is_critical_by_bus and instance.is_critical_by_bus[bus])
             ),
@@ -955,6 +983,28 @@ def _cut_from_payload(
     )
 
 
+def _outage_column_cut_to_payload(row: RestrictedMasterOutageColumnCut) -> dict[str, Any]:
+    return {
+        "row_id": str(row.row_id),
+        "column_id": str(row.column_id),
+        "active_line_ids": [str(line_id) for line_id in row.active_line_ids],
+        "cut": _cut_to_payload(row.cut),
+    }
+
+
+def _outage_column_cut_from_payload(
+    payload: Mapping[str, Any],
+    *,
+    row_id_prefix: str = "",
+) -> RestrictedMasterOutageColumnCut:
+    return RestrictedMasterOutageColumnCut(
+        row_id=f"{row_id_prefix}{payload['row_id']}",
+        column_id=str(payload["column_id"]),
+        active_line_ids=tuple(str(line_id) for line_id in payload["active_line_ids"]),
+        cut=_cut_from_payload(payload["cut"], cut_id_prefix=row_id_prefix),
+    )
+
+
 def _cut_pool_metadata(
     instance: CanonicalInstance,
     run_config: Mapping[str, Any],
@@ -985,13 +1035,21 @@ def _write_cut_pool(
     instance: CanonicalInstance,
     run_config: Mapping[str, Any],
     cuts: Sequence[RestrictedMasterCut],
+    outage_column_cuts: Sequence[RestrictedMasterOutageColumnCut] = (),
 ) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     nontrivial_cuts = [cut for cut in cuts if not cut.is_trivial()]
+    nontrivial_outage_column_cuts = [
+        row for row in outage_column_cuts if not row.cut.is_trivial()
+    ]
     payload = {
         "metadata": _cut_pool_metadata(instance, run_config),
         "cut_count": len(nontrivial_cuts),
         "cuts": [_cut_to_payload(cut) for cut in nontrivial_cuts],
+        "outage_column_cut_count": len(nontrivial_outage_column_cuts),
+        "outage_column_cuts": [
+            _outage_column_cut_to_payload(row) for row in nontrivial_outage_column_cuts
+        ],
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
@@ -1006,36 +1064,91 @@ def _resolve_cut_pool_paths(benders_config: Mapping[str, Any]) -> list[Path]:
     return [Path(path) for path in raw_paths]
 
 
+def _read_active_outage_patterns(paths: Sequence[str | Path]) -> list[tuple[str, ...]]:
+    patterns: list[tuple[str, ...]] = []
+    seen: set[tuple[str, ...]] = set()
+    for raw_path in paths:
+        path = Path(raw_path)
+        if not path.exists():
+            continue
+        with path.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                raw_pattern = (
+                    row.get("pattern_key")
+                    or row.get("selected_outage_active_lines")
+                    or row.get("active_lines")
+                    or ""
+                )
+                if not raw_pattern:
+                    continue
+                pattern = tuple(
+                    sorted(
+                        line_id.strip()
+                        for line_id in str(raw_pattern).split(";")
+                        if line_id.strip()
+                    )
+                )
+                if not pattern or pattern in seen:
+                    continue
+                seen.add(pattern)
+                patterns.append(pattern)
+    return patterns
+
+
 def _load_initial_cuts_from_pools(
     instance: CanonicalInstance,
     run_config: Mapping[str, Any],
     benders_config: Mapping[str, Any],
-) -> tuple[list[RestrictedMasterCut], list[dict[str, Any]]]:
+) -> tuple[
+    list[RestrictedMasterCut],
+    list[RestrictedMasterOutageColumnCut],
+    list[dict[str, Any]],
+]:
     expected_metadata = _cut_pool_metadata(instance, run_config)
     loaded_cuts: list[RestrictedMasterCut] = []
+    loaded_outage_column_cuts: list[RestrictedMasterOutageColumnCut] = []
     audit_rows: list[dict[str, Any]] = []
     seen_signatures: set[str] = set()
+    seen_rowwise_keys: set[tuple[tuple[str, ...], str]] = set()
     for pool_index, path in enumerate(_resolve_cut_pool_paths(benders_config), start=1):
         if not path.exists():
             audit_rows.append({
                 "path": str(path),
                 "status": "rejected_missing",
                 "loaded_cut_count": 0,
+                "loaded_outage_column_cut_count": 0,
+                "duplicate_cut_count": 0,
+                "duplicate_outage_column_cut_count": 0,
+                "observed_cut_count": 0,
+                "observed_outage_column_cut_count": 0,
+                "metadata_match": False,
                 "reason": "path_not_found",
             })
             continue
         payload = json.loads(path.read_text(encoding="utf-8"))
         observed_metadata = dict(payload.get("metadata", {}))
+        metadata_match = _cut_pool_matches(expected=expected_metadata, observed=observed_metadata)
         if not _cut_pool_matches(expected=expected_metadata, observed=observed_metadata):
             audit_rows.append({
                 "path": str(path),
                 "status": "rejected_metadata_mismatch",
                 "loaded_cut_count": 0,
+                "loaded_outage_column_cut_count": 0,
+                "duplicate_cut_count": 0,
+                "duplicate_outage_column_cut_count": 0,
+                "observed_cut_count": int(payload.get("cut_count", 0) or 0),
+                "observed_outage_column_cut_count": int(
+                    payload.get("outage_column_cut_count", 0) or 0
+                ),
+                "metadata_match": metadata_match,
                 "reason": "runtime_source/mode/support/K/buses/lines mismatch",
             })
             continue
         pool_loaded = 0
+        pool_loaded_rowwise = 0
         pool_duplicate = 0
+        pool_duplicate_rowwise = 0
         for cut_payload in payload.get("cuts", ()):
             cut = _cut_from_payload(cut_payload, cut_id_prefix=f"seed{pool_index}_")
             signature = compute_cut_signature_hash(cut)
@@ -1045,14 +1158,36 @@ def _load_initial_cuts_from_pools(
             seen_signatures.add(signature)
             loaded_cuts.append(cut)
             pool_loaded += 1
+        for row_payload in payload.get("outage_column_cuts", ()):
+            row = _outage_column_cut_from_payload(
+                row_payload,
+                row_id_prefix=f"seed{pool_index}_",
+            )
+            rowwise_key = (
+                tuple(str(line_id) for line_id in row.active_line_ids),
+                str(compute_cut_signature_hash(row.cut)),
+            )
+            if rowwise_key in seen_rowwise_keys:
+                pool_duplicate_rowwise += 1
+                continue
+            seen_rowwise_keys.add(rowwise_key)
+            loaded_outage_column_cuts.append(row)
+            pool_loaded_rowwise += 1
         audit_rows.append({
             "path": str(path),
             "status": "accepted",
             "loaded_cut_count": pool_loaded,
+            "loaded_outage_column_cut_count": pool_loaded_rowwise,
             "duplicate_cut_count": pool_duplicate,
+            "duplicate_outage_column_cut_count": pool_duplicate_rowwise,
+            "observed_cut_count": int(payload.get("cut_count", 0) or 0),
+            "observed_outage_column_cut_count": int(
+                payload.get("outage_column_cut_count", 0) or 0
+            ),
+            "metadata_match": metadata_match,
             "reason": "",
         })
-    return loaded_cuts, audit_rows
+    return loaded_cuts, loaded_outage_column_cuts, audit_rows
 
 
 def build_summary_row(
@@ -1183,8 +1318,12 @@ def execute_run(
         "master_before_cut_lp_path": None,
         "master_after_cut_lp_path": None,
         "iteration_log_path": None,
+        "live_iteration_trace_path": None,
+        "live_iteration_jsonl_path": None,
         "cut_pool_path": None,
         "cut_pool_audit_path": None,
+        "trial_certificate_path": None,
+        "trial_plan_path": None,
     }
 
     instance: CanonicalInstance | None = None
@@ -1205,6 +1344,7 @@ def execute_run(
     message = ""
     exception_payload: dict[str, Any] | None = None
     cut_pool_audit_rows: list[dict[str, Any]] = []
+    trial_certificate_payload: dict[str, Any] | None = None
 
     try:
         base_instance = load_instance_for_run(run_config, critical_buses=critical_buses)
@@ -1231,8 +1371,19 @@ def execute_run(
                     Path("/tmp") / f"{run_id}_master_after_cut.lp"
                 )
             artifact_paths["iteration_log_path"] = str(logs_dir / f"{run_id}_iteration_log.json")
+            if bool(benders_config.get("enable_live_iteration_trace", False)):
+                artifact_paths["live_iteration_trace_path"] = str(
+                    logs_dir / f"{run_id}_live_iteration_trace.csv"
+                )
+                artifact_paths["live_iteration_jsonl_path"] = str(
+                    logs_dir / f"{run_id}_live_iteration_trace.jsonl"
+                )
             warm_start_plan = _resolve_warm_start_plan(instance, benders_config)
-            initial_cuts, cut_pool_audit_rows = _load_initial_cuts_from_pools(
+            (
+                initial_cuts,
+                initial_outage_column_cuts,
+                cut_pool_audit_rows,
+            ) = _load_initial_cuts_from_pools(
                 instance,
                 run_config,
                 benders_config,
@@ -1248,7 +1399,12 @@ def execute_run(
                         "path",
                         "status",
                         "loaded_cut_count",
+                        "loaded_outage_column_cut_count",
                         "duplicate_cut_count",
+                        "duplicate_outage_column_cut_count",
+                        "observed_cut_count",
+                        "observed_outage_column_cut_count",
+                        "metadata_match",
                         "reason",
                     ]
                     writer = csv.DictWriter(handle, fieldnames=fieldnames)
@@ -1280,6 +1436,7 @@ def execute_run(
                     if benders_config.get("master_mip_gap") in (None, "")
                     else float(benders_config["master_mip_gap"])
                 ),
+                master_gurobi_params=dict(benders_config.get("master_gurobi_params", {})),
                 separation_time_limit_seconds=(
                     None
                     if benders_config.get("separation_time_limit_seconds") in (None, "")
@@ -1290,6 +1447,9 @@ def execute_run(
                     if benders_config.get("separation_mip_gap") in (None, "")
                     else float(benders_config["separation_mip_gap"])
                 ),
+                separation_gurobi_params=dict(
+                    benders_config.get("separation_gurobi_params", {})
+                ),
                 allow_master_suboptimal_incumbent=bool(
                     benders_config.get("allow_master_suboptimal_incumbent", False)
                 ),
@@ -1297,6 +1457,207 @@ def execute_run(
                 max_iterations=int(benders_config.get("max_iterations", 25)),
                 separation_top_cuts_per_iteration=int(
                     benders_config.get("separation_top_cuts_per_iteration", 1)
+                ),
+                separation_pool_cuts_per_iteration=int(
+                    benders_config.get("separation_pool_cuts_per_iteration", 0)
+                ),
+                adaptive_top_cuts_switch_violation=(
+                    None
+                    if benders_config.get("adaptive_top_cuts_switch_violation") in {None, ""}
+                    else float(benders_config.get("adaptive_top_cuts_switch_violation"))
+                ),
+                adaptive_top_cuts_after_switch=int(
+                    benders_config.get("adaptive_top_cuts_after_switch", 1)
+                ),
+                allow_nonoptimal_separation_cuts=bool(
+                    benders_config.get("allow_nonoptimal_separation_cuts", False)
+                ),
+                nonoptimal_separation_cut_tolerance=(
+                    None
+                    if benders_config.get("nonoptimal_separation_cut_tolerance") in {None, ""}
+                    else float(benders_config.get("nonoptimal_separation_cut_tolerance"))
+                ),
+                enable_pareto_core_cuts=bool(
+                    benders_config.get("enable_pareto_core_cuts", False)
+                ),
+                stabilization_mode=(
+                    None
+                    if benders_config.get("stabilization_mode") in {None, "", "none"}
+                    else str(benders_config.get("stabilization_mode"))
+                ),
+                stabilization_z_radius=(
+                    None
+                    if benders_config.get("stabilization_z_radius") in {None, ""}
+                    else int(benders_config.get("stabilization_z_radius"))
+                ),
+                stabilization_charger_sl_radius=(
+                    None
+                    if benders_config.get("stabilization_charger_sl_radius") in {None, ""}
+                    else int(benders_config.get("stabilization_charger_sl_radius"))
+                ),
+                stabilization_charger_fa_radius=(
+                    None
+                    if benders_config.get("stabilization_charger_fa_radius") in {None, ""}
+                    else int(benders_config.get("stabilization_charger_fa_radius"))
+                ),
+                stabilization_center_update_policy=str(
+                    benders_config.get("stabilization_center_update_policy", "fixed")
+                    or "fixed"
+                ),
+                enable_level_bundle_trial=bool(
+                    benders_config.get("enable_level_bundle_trial", False)
+                ),
+                level_bundle_objective_slack_abs=float(
+                    benders_config.get("level_bundle_objective_slack_abs", 5000.0)
+                ),
+                level_bundle_objective_slack_fraction=float(
+                    benders_config.get("level_bundle_objective_slack_fraction", 0.05)
+                ),
+                level_bundle_rho_n=float(
+                    benders_config.get("level_bundle_rho_n", 0.2)
+                ),
+                level_bundle_rho_alpha=float(
+                    benders_config.get("level_bundle_rho_alpha", 0.05)
+                ),
+                level_bundle_rho_lambda=float(
+                    benders_config.get("level_bundle_rho_lambda", 1.0)
+                ),
+                enable_active_set_cuts=bool(
+                    benders_config.get("enable_active_set_cuts", False)
+                ),
+                active_delta_max=int(benders_config.get("active_delta_max", 50)),
+                active_neighbor_radius=int(
+                    benders_config.get("active_neighbor_radius", 1)
+                ),
+                active_max_candidates_per_iteration=int(
+                    benders_config.get("active_max_candidates_per_iteration", 5)
+                ),
+                active_cuts_per_iteration=int(
+                    benders_config.get("active_cuts_per_iteration", 3)
+                ),
+                active_select_top_violations=bool(
+                    benders_config.get("active_select_top_violations", False)
+                ),
+                active_min_hamming_distance=int(
+                    benders_config.get("active_min_hamming_distance", 0)
+                ),
+                initial_active_outage_patterns=_read_active_outage_patterns(
+                    (
+                        [benders_config["initial_active_outage_pattern_paths"]]
+                        if isinstance(
+                            benders_config.get("initial_active_outage_pattern_paths"),
+                            str,
+                        )
+                        else benders_config.get("initial_active_outage_pattern_paths", [])
+                    )
+                ),
+                initial_outage_column_cuts=initial_outage_column_cuts,
+                enable_exact_outage_rows=bool(
+                    benders_config.get("enable_exact_outage_rows", False)
+                ),
+                exact_rows_per_iteration=int(
+                    benders_config.get("exact_rows_per_iteration", 0)
+                ),
+                exact_row_max=int(benders_config.get("exact_row_max", 30)),
+                exact_rows_include_active=bool(
+                    benders_config.get("exact_rows_include_active", True)
+                ),
+                enable_nccg_outage_columns=bool(
+                    benders_config.get("enable_nccg_outage_columns", False)
+                ),
+                nccg_keep_global_cuts=bool(
+                    benders_config.get("nccg_keep_global_cuts", False)
+                ),
+                nccg_complete_active_columns=bool(
+                    benders_config.get("nccg_complete_active_columns", False)
+                ),
+                nccg_completion_tolerance=float(
+                    benders_config.get("nccg_completion_tolerance", 100.0)
+                ),
+                nccg_completion_max_cuts_per_iteration=int(
+                    benders_config.get("nccg_completion_max_cuts_per_iteration", 5)
+                ),
+                nccg_completion_order=str(
+                    benders_config.get("nccg_completion_order", "oldest") or "oldest"
+                ),
+                enable_persistent_pricing_pool=bool(
+                    benders_config.get("enable_persistent_pricing_pool", False)
+                ),
+                pricing_capture_passes=int(
+                    benders_config.get("pricing_capture_passes", 0)
+                ),
+                pricing_capture_diversity_radius=int(
+                    benders_config.get("pricing_capture_diversity_radius", 4)
+                ),
+                cross_column_broadcast=bool(
+                    benders_config.get("cross_column_broadcast", False)
+                ),
+                broadcast_top_columns=int(
+                    benders_config.get("broadcast_top_columns", 30)
+                ),
+                broadcast_violation_tolerance=float(
+                    benders_config.get("broadcast_violation_tolerance", 100.0)
+                ),
+                enable_certified_serious_step=bool(
+                    benders_config.get("enable_certified_serious_step", False)
+                ),
+                serious_level_kappa=float(
+                    benders_config.get("serious_level_kappa", 0.35)
+                ),
+                serious_eta_ub=float(benders_config.get("serious_eta_ub", 0.01)),
+                serious_tau_ub=float(benders_config.get("serious_tau_ub", 10.0)),
+                serious_eta_violation=float(
+                    benders_config.get("serious_eta_violation", 0.15)
+                ),
+                serious_chi=float(benders_config.get("serious_chi", 0.05)),
+                serious_null_limit=int(benders_config.get("serious_null_limit", 3)),
+                enable_target_face_bundle_cuts=bool(
+                    benders_config.get("enable_target_face_bundle_cuts", False)
+                ),
+                target_face_candidate_limit=int(
+                    benders_config.get("target_face_candidate_limit", 30)
+                ),
+                target_face_cuts_per_iteration=int(
+                    benders_config.get("target_face_cuts_per_iteration", 6)
+                ),
+                target_face_neighbor_radius=int(
+                    benders_config.get("target_face_neighbor_radius", 1)
+                ),
+                target_face_add_violation_fraction=float(
+                    benders_config.get("target_face_add_violation_fraction", 0.01)
+                ),
+                target_face_tolerance_rel=float(
+                    benders_config.get("target_face_tolerance_rel", 1e-6)
+                ),
+                enable_cluster_face_bundle_cuts=bool(
+                    benders_config.get("enable_cluster_face_bundle_cuts", False)
+                ),
+                cluster_face_candidate_limit=int(
+                    benders_config.get("cluster_face_candidate_limit", 30)
+                ),
+                cluster_face_cuts_per_iteration=int(
+                    benders_config.get("cluster_face_cuts_per_iteration", 2)
+                ),
+                cluster_face_add_violation_fraction=float(
+                    benders_config.get("cluster_face_add_violation_fraction", 0.01)
+                ),
+                cluster_face_tolerance_rel=float(
+                    benders_config.get("cluster_face_tolerance_rel", 1e-6)
+                ),
+                enable_lambda_face_prox_trial=bool(
+                    benders_config.get("enable_lambda_face_prox_trial", False)
+                ),
+                lambda_face_level_slack_abs=float(
+                    benders_config.get("lambda_face_level_slack_abs", 500.0)
+                ),
+                lambda_face_level_slack_fraction=float(
+                    benders_config.get("lambda_face_level_slack_fraction", 0.05)
+                ),
+                lambda_face_rho_alpha=float(
+                    benders_config.get("lambda_face_rho_alpha", 0.05)
+                ),
+                enable_alpha_lambda_warm_start=bool(
+                    benders_config.get("enable_alpha_lambda_warm_start", True)
                 ),
                 enable_cut_signature_dedup=bool(
                     benders_config.get("enable_cut_signature_dedup", False)
@@ -1308,6 +1669,14 @@ def execute_run(
                 master_before_cut_lp_path=artifact_paths["master_before_cut_lp_path"],
                 master_after_cut_lp_path=artifact_paths["master_after_cut_lp_path"],
                 iteration_log_path=artifact_paths["iteration_log_path"],
+                live_iteration_trace_path=artifact_paths["live_iteration_trace_path"],
+                live_iteration_jsonl_path=artifact_paths["live_iteration_jsonl_path"],
+                adaptive_stall_window_iterations=int(
+                    benders_config.get("adaptive_stall_window_iterations", 0)
+                ),
+                adaptive_stall_min_relative_improvement=float(
+                    benders_config.get("adaptive_stall_min_relative_improvement", 0.0)
+                ),
             )
             artifact_paths["cut_pool_path"] = str(logs_dir / f"{run_id}_cut_pool.json")
             _write_cut_pool(
@@ -1315,7 +1684,25 @@ def execute_run(
                 instance=instance,
                 run_config=run_config,
                 cuts=[result.cut for result in benders_result.generated_cut_results],
+                outage_column_cuts=benders_result.final_master.outage_column_cuts,
             )
+            if benders_result.trial_certificate is not None:
+                trial_certificate_payload = asdict(benders_result.trial_certificate)
+                artifact_paths["trial_certificate_path"] = str(
+                    logs_dir / f"{run_id}_trial_certificate.json"
+                )
+                write_json(
+                    artifact_paths["trial_certificate_path"],
+                    trial_certificate_payload,
+                )
+                trial_plan_rows = _plan_rows_from_trial_certificate(
+                    instance,
+                    trial_certificate_payload,
+                )
+                artifact_paths["trial_plan_path"] = str(
+                    plans_dir / f"{run_id}_trial_plan.csv"
+                )
+                write_plan_csv(artifact_paths["trial_plan_path"], trial_plan_rows)
             solution = benders_result.final_solution
             stop_reason = str(benders_result.stop_reason)
             solver_status = str(solution.model_status)
@@ -1424,6 +1811,7 @@ def execute_run(
         "lower_bound_sequence": lower_bound_sequence,
         "cut_count_sequence": cut_count_sequence,
         "iteration_log": iteration_payload,
+        "trial_certificate": trial_certificate_payload,
         "cut_pool_audit": cut_pool_audit_rows,
         "metadata": {} if instance is None else dict(instance.metadata),
         "exception": exception_payload,

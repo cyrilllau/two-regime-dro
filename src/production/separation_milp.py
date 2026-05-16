@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Mapping, Protocol, Sequence
+from numbers import Real
+from typing import Any, Mapping, Protocol, Sequence
 
 from gurobipy import GRB, Model, quicksum
 
@@ -101,14 +102,14 @@ class SeparationMilpSolution:
     reconstruction_gap: float
 
 
-def _coerce_nonnegative_int_map(
-    raw: Mapping[int, int],
+def _coerce_nonnegative_numeric_map(
+    raw: Mapping[int, int | float],
     *,
     label: str,
     keys: Sequence[int],
     binary: bool = False,
-) -> dict[int, int]:
-    normalized: dict[int, int] = {}
+) -> dict[int, float]:
+    normalized: dict[int, float] = {}
     key_set = set(keys)
     invalid = sorted(key for key in raw if key not in key_set)
     if invalid:
@@ -117,35 +118,36 @@ def _coerce_nonnegative_int_map(
         if key not in raw:
             raise RuntimeDataValidationError(f"{label} is missing required id {key}.")
         value = raw[key]
-        if isinstance(value, bool) or not isinstance(value, int):
-            raise RuntimeDataValidationError(f"{label}[{key}] must be an int, got {value!r}.")
-        if value < 0:
+        if isinstance(value, bool) or not isinstance(value, Real):
+            raise RuntimeDataValidationError(f"{label}[{key}] must be numeric, got {value!r}.")
+        numeric = float(value)
+        if numeric < -1e-9:
             raise RuntimeDataValidationError(f"{label}[{key}] must be nonnegative, got {value}.")
-        if binary and value not in (0, 1):
+        if binary and (numeric < -1e-9 or numeric > 1.0 + 1e-9):
             raise RuntimeDataValidationError(
-                f"{label}[{key}] must be binary in {{0,1}}, got {value}."
+                f"{label}[{key}] must be in [0,1] for fractional separation, got {value}."
             )
-        normalized[int(key)] = int(value)
+        normalized[int(key)] = max(0.0, numeric)
     return normalized
 
 
 def _resolve_plan_maps(
     instance: CanonicalInstance,
     plan: FixedFirstStagePlanLike,
-) -> tuple[dict[int, int], dict[int, int], dict[int, int]]:
+) -> tuple[dict[int, float], dict[int, float], dict[int, float]]:
     buses = instance.sets.buses
-    z_by_bus = _coerce_nonnegative_int_map(
+    z_by_bus = _coerce_nonnegative_numeric_map(
         plan.z_by_bus,
         label="plan.z_by_bus",
         keys=buses,
         binary=True,
     )
-    n_sl_by_bus = _coerce_nonnegative_int_map(
+    n_sl_by_bus = _coerce_nonnegative_numeric_map(
         plan.n_sl_by_bus,
         label="plan.n_sl_by_bus",
         keys=buses,
     )
-    n_fa_by_bus = _coerce_nonnegative_int_map(
+    n_fa_by_bus = _coerce_nonnegative_numeric_map(
         plan.n_fa_by_bus,
         label="plan.n_fa_by_bus",
         keys=buses,
@@ -614,9 +616,11 @@ def build_separation_milp(
     budget_k: int | None = None,
     scenario_ids: Sequence[int] | None = None,
     forbidden_outage_patterns: Sequence[Sequence[str]] | None = None,
+    forbidden_outage_hamming_balls: Sequence[tuple[Sequence[str], int]] | None = None,
     model_name: str = "separation_milp",
     time_limit_seconds: float | None = None,
     mip_gap: float | None = None,
+    gurobi_params: Mapping[str, Any] | None = None,
     log_to_console: bool = False,
 ) -> SeparationMilpModel:
     """Build the fixed-`(x, alpha, lambda)` separation MILP for Eq. (41)."""
@@ -637,7 +641,14 @@ def build_separation_milp(
     normalized_lambda = _resolve_lambda_by_line_id(line_ids, lambda_by_line_id)
     normalized_omega_bounds = _resolve_omega_bounds(line_ids, omega_bounds_by_line_id)
     selected_scenarios = _resolve_scenarios(instance, scenario_ids)
-    forbidden_patterns = tuple(tuple(str(line_id) for line_id in pattern) for pattern in (forbidden_outage_patterns or ()))
+    forbidden_patterns = tuple(
+        tuple(str(line_id) for line_id in pattern)
+        for pattern in (forbidden_outage_patterns or ())
+    )
+    forbidden_hamming_balls = tuple(
+        (tuple(str(line_id) for line_id in pattern), int(radius))
+        for pattern, radius in (forbidden_outage_hamming_balls or ())
+    )
     line_id_set = set(line_ids)
     invalid_forbidden = sorted(
         {
@@ -652,6 +663,25 @@ def build_separation_milp(
             "forbidden_outage_patterns contains invalid line ids: "
             f"{tuple(invalid_forbidden)}."
         )
+    invalid_hamming = sorted(
+        {
+            line_id
+            for pattern, _ in forbidden_hamming_balls
+            for line_id in pattern
+            if line_id not in line_id_set
+        }
+    )
+    if invalid_hamming:
+        raise RuntimeDataValidationError(
+            "forbidden_outage_hamming_balls contains invalid line ids: "
+            f"{tuple(invalid_hamming)}."
+        )
+    for pattern, radius in forbidden_hamming_balls:
+        if radius < 0:
+            raise RuntimeDataValidationError(
+                "forbidden_outage_hamming_balls radius must be nonnegative, "
+                f"got {radius!r} for pattern {pattern!r}."
+            )
 
     model = Model(model_name)
     model.Params.OutputFlag = 1 if log_to_console else 0
@@ -659,6 +689,9 @@ def build_separation_milp(
         model.Params.TimeLimit = float(time_limit_seconds)
     if mip_gap is not None:
         model.Params.MIPGap = float(mip_gap)
+    for key, value in dict(gurobi_params or {}).items():
+        if value not in (None, ""):
+            setattr(model.Params, str(key), value)
 
     delta_vars = {
         line_id: model.addVar(vtype=GRB.BINARY, name=f"delta_{line_id}")
@@ -711,6 +744,16 @@ def build_separation_milp(
             >= 1,
             name=f"forbid_outage_pattern_{index:03d}",
         )
+    for index, (pattern, radius) in enumerate(forbidden_hamming_balls):
+        if radius <= 0:
+            continue
+        active = set(pattern)
+        model.addConstr(
+            quicksum(1 - delta_vars[line_id] for line_id in active)
+            + quicksum(delta_vars[line_id] for line_id in line_ids if line_id not in active)
+            >= int(radius),
+            name=f"forbid_outage_hamming_ball_{index:03d}",
+        )
     for line_id in line_ids:
         model.addConstr(
             omega_vars[line_id]
@@ -761,12 +804,25 @@ def build_separation_milp(
     )
 
 
+def _solution_value(var: object, *, use_pool_solution: bool) -> float:
+    return float(var.Xn if use_pool_solution else var.X)
+
+
 def extract_separation_milp_solution(
     separation_model: SeparationMilpModel,
+    *,
+    solution_number: int | None = None,
 ) -> SeparationMilpSolution:
     """Extract a structured solution from an optimized separation MILP."""
 
     model = separation_model.model
+    use_pool_solution = solution_number is not None
+    if solution_number is not None:
+        if int(solution_number) < 0:
+            raise RuntimeDataValidationError(
+                f"solution_number must be nonnegative, got {solution_number!r}."
+            )
+        model.Params.SolutionNumber = int(solution_number)
     status_code = int(model.Status)
     status_name = str(model.Status)
     if status_code == GRB.OPTIMAL:
@@ -783,7 +839,11 @@ def extract_separation_milp_solution(
         status_name = "SUBOPTIMAL"
 
     sol_count = int(getattr(model, "SolCount", 0))
-    objective_value = float(model.ObjVal) if sol_count > 0 else None
+    objective_value = (
+        float(model.PoolObjVal if use_pool_solution else model.ObjVal)
+        if sol_count > 0
+        else None
+    )
     obj_bound = None
     mip_gap = None
     node_count = None
@@ -834,15 +894,15 @@ def extract_separation_milp_solution(
         )
 
     delta_by_line_id = {
-        line_id: int(round(float(var.X)))
+        line_id: int(round(_solution_value(var, use_pool_solution=use_pool_solution)))
         for line_id, var in separation_model.delta_vars.items()
     }
     omega_by_line_id = {
-        line_id: float(var.X)
+        line_id: _solution_value(var, use_pool_solution=use_pool_solution)
         for line_id, var in separation_model.omega_vars.items()
     }
     tau_by_line_id = {
-        line_id: float(var.X)
+        line_id: _solution_value(var, use_pool_solution=use_pool_solution)
         for line_id, var in separation_model.tau_vars.items()
     }
     omega_lower_slack_by_line_id = {
@@ -875,16 +935,46 @@ def extract_separation_milp_solution(
     for scenario_id, block in separation_model.sample_blocks.items():
         provisional = SeparationSampleDualSolution(
             scenario_id=scenario_id,
-            eq27_lambda_values={key: float(var.X) for key, var in block.eq27_lambda_vars.items()},
-            eq28_slow_values={key: float(var.X) for key, var in block.eq28_slow_vars.items()},
-            eq28_fast_values={key: float(var.X) for key, var in block.eq28_fast_vars.items()},
-            eq29_slow_values={key: float(var.X) for key, var in block.eq29_slow_vars.items()},
-            eq29_fast_values={key: float(var.X) for key, var in block.eq29_fast_vars.items()},
-            eq30_slow_values={key: float(var.X) for key, var in block.eq30_slow_vars.items()},
-            eq30_fast_values={key: float(var.X) for key, var in block.eq30_fast_vars.items()},
-            eq31_sigma_values={key: float(var.X) for key, var in block.eq31_sigma_vars.items()},
-            eq32_upper_values={key: float(var.X) for key, var in block.eq32_upper_vars.items()},
-            eq32_lower_values={key: float(var.X) for key, var in block.eq32_lower_vars.items()},
+            eq27_lambda_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq27_lambda_vars.items()
+            },
+            eq28_slow_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq28_slow_vars.items()
+            },
+            eq28_fast_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq28_fast_vars.items()
+            },
+            eq29_slow_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq29_slow_vars.items()
+            },
+            eq29_fast_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq29_fast_vars.items()
+            },
+            eq30_slow_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq30_slow_vars.items()
+            },
+            eq30_fast_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq30_fast_vars.items()
+            },
+            eq31_sigma_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq31_sigma_vars.items()
+            },
+            eq32_upper_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq32_upper_vars.items()
+            },
+            eq32_lower_values={
+                key: _solution_value(var, use_pool_solution=use_pool_solution)
+                for key, var in block.eq32_lower_vars.items()
+            },
             samplewise_decomposition=SamplewisePaperDualDecomposition(beta_b=0.0),
             group_activity_counts={},
         )
@@ -929,6 +1019,7 @@ def extract_separation_milp_solution(
         separation_model.instance,
         separation_model.plan,
     )
+
     average_base_value = float(
         sum(
             _evaluate_base_value(
@@ -984,6 +1075,49 @@ def extract_separation_milp_solution(
     )
 
 
+def extract_separation_milp_solution_pool(
+    separation_model: SeparationMilpModel,
+    *,
+    max_solutions: int,
+    min_objective: float = 0.0,
+    unique_outage_patterns: bool = True,
+) -> tuple[SeparationMilpSolution, ...]:
+    """Extract multiple incumbent separation solutions from Gurobi's solution pool.
+
+    Each returned solution is feasible for the same full-support separation MILP.
+    Callers still need the best-solution objective/bound for certification.
+    """
+
+    limit = int(max_solutions)
+    if limit <= 0:
+        return tuple()
+    sol_count = int(getattr(separation_model.model, "SolCount", 0))
+    selected: list[SeparationMilpSolution] = []
+    seen_patterns: set[tuple[str, ...]] = set()
+    for solution_number in range(sol_count):
+        solution = extract_separation_milp_solution(
+            separation_model,
+            solution_number=solution_number,
+        )
+        if float(solution.objective_value or 0.0) <= float(min_objective):
+            continue
+        pattern = tuple(
+            sorted(
+                line_id
+                for line_id, value in solution.delta_by_line_id.items()
+                if int(value) == 1
+            )
+        )
+        if unique_outage_patterns and pattern in seen_patterns:
+            continue
+        seen_patterns.add(pattern)
+        selected.append(solution)
+        if len(selected) >= limit:
+            break
+    separation_model.model.Params.SolutionNumber = 0
+    return tuple(selected)
+
+
 def solve_separation_milp(
     instance: CanonicalInstance,
     *,
@@ -994,9 +1128,11 @@ def solve_separation_milp(
     budget_k: int | None = None,
     scenario_ids: Sequence[int] | None = None,
     forbidden_outage_patterns: Sequence[Sequence[str]] | None = None,
+    forbidden_outage_hamming_balls: Sequence[tuple[Sequence[str], int]] | None = None,
     model_name: str = "separation_milp",
     time_limit_seconds: float | None = None,
     mip_gap: float | None = None,
+    gurobi_params: Mapping[str, Any] | None = None,
     require_optimal: bool = True,
     log_to_console: bool = False,
 ) -> tuple[SeparationMilpModel, SeparationMilpSolution]:
@@ -1011,9 +1147,11 @@ def solve_separation_milp(
         budget_k=budget_k,
         scenario_ids=scenario_ids,
         forbidden_outage_patterns=forbidden_outage_patterns,
+        forbidden_outage_hamming_balls=forbidden_outage_hamming_balls,
         model_name=model_name,
         time_limit_seconds=time_limit_seconds,
         mip_gap=mip_gap,
+        gurobi_params=gurobi_params,
         log_to_console=log_to_console,
     )
     separation_model.model.optimize()

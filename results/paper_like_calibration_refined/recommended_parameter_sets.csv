@@ -1,3 +1,0 @@
-profile,priority,ev_penetration_scale,cfix,ccons_sl,ccons_fa,ctrans_scalar,nbar_sl,nbar_fa,opened_bus_count,total_slow_chargers,total_fast_chargers,source_run_id,why_selected
-recommended_baseline,balanced,0.50,614400.0,2700.35,12000.0,0.032625,25,10,8,181,12,normal_only_paper_like_refined_scale_050,"Best balance between paper-like station count and conservative demand scaling. Keeps the exact anchor in the 6-8 station range without pushing demand as low as 0.45."
-recommended_figure_anchor,closest_to_fig6,0.45,614400.0,2700.35,12000.0,0.032625,25,10,7,163,11,normal_only_paper_like_refined_scale_045,"Closest exact anchor to the paper Fig. 6 Case 1 station count. Use when visual similarity to the paper matters more than staying conservative on local demand scaling."

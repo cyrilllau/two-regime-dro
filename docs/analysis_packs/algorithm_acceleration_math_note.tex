@@ -1,0 +1,306 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Aset}{\mathcal A}
+\newcommand{\Bset}{\mathcal B}
+\newcommand{\Lset}{\mathcal L}
+\newcommand{\Sset}{\mathcal S}
+\newcommand{\Uset}{\mathcal U}
+\newcommand{\Cset}{\mathcal C}
+\newcommand{\RMP}{\mathrm{RMP}}
+\newcommand{\LB}{\mathrm{LB}}
+\newcommand{\UB}{\mathrm{UB}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\phidis}{\Phi^{\mathrm{dis}}}
+\newcommand{\psinor}{\Psi^{\mathrm{nor}}}
+
+\title{Certificate-Preserving Benders Acceleration for the Two-Regime DRO EVCS Model}
+\author{Internal Mathematical Note}
+\date{May 5, 2026}
+
+\begin{document}
+\maketitle
+
+\section{Purpose}
+
+This note records the mathematical algorithmic modifications added on top of
+the baseline two-regime DRO EVCS planning model.  The changes are not changes
+to the planning model itself.  They are changes to the Benders implementation
+used to solve the disaster-resilience DRO substructure more reliably for larger
+outage budgets $K$.
+
+The important design principle is:
+\begin{quote}
+\emph{Intermediate acceleration may use stabilized or active-set trial points
+to generate valid cuts, but convergence is claimed only after a canonical
+restricted master solution passes a full-support MILP separation audit.}
+\end{quote}
+
+This separates cut-generation heuristics from the final certificate.
+
+\section{Baseline Benders Form}
+
+Let
+\[
+    x := (z,n^{\mathrm{sl}},n^{\mathrm{fa}})
+\]
+denote the first-stage EVCS siting and sizing vector.  A disaster support
+element is denoted by
+\[
+    s=(b,\delta), \qquad
+    b\in\Bset,\quad
+    \delta\in\Uset_K
+    :=\left\{\delta\in\{0,1\}^{|\Lset|}:
+    \sum_{\ell\in\Lset}\delta_\ell\le K\right\}.
+\]
+Thus the full disaster support is
+\[
+    \Sset_K = \Bset\times \Uset_K .
+\]
+
+For a fixed support element $s$, let $Q_s(x)$ be the second-stage disaster
+recourse value.  The DRO master contains dual-like ambiguity variables
+\[
+    \rho := (\alpha,\lambda)
+\]
+and an affine support-side expression $H_s(\rho)$.  Abstractly, the exact
+master contains infinitely or combinatorially many inequalities of the form
+\begin{equation}
+    H_s(\rho) \ge Q_s(x), \qquad \forall s\in\Sset_K .
+    \label{eq:exact-master}
+\end{equation}
+The restricted master keeps only a finite cut set $\Cset_t$:
+\begin{equation}
+    (x_t,\rho_t)\in
+    \arg\min_{x,\rho}
+    \left\{
+    F^{\mathrm{cons}}(x)
+    +(1-\pi_f)\Psi^{\mathrm{nor}}(x)
+    +\pi_f D(\rho)
+    :
+    H_s(\rho)\ge \widehat Q_s(x),\ s\in\Cset_t
+    \right\}.
+    \label{eq:rmp}
+\end{equation}
+
+The separation oracle solves
+\begin{equation}
+    V(x_t,\rho_t)
+    :=
+    \max_{s\in\Sset_K}
+    \left\{Q_s(x_t)-H_s(\rho_t)\right\}.
+    \label{eq:full-separation}
+\end{equation}
+If $V(x_t,\rho_t)\le\eps$, the current canonical master solution is
+$\eps$-certified.  Otherwise, the oracle returns a violated support element and
+a recourse dual solution from which a valid Benders cut is generated.
+
+\section{Cut Validity}
+
+For a fixed support element $s$, the disaster recourse LP has a dual
+representation of the form
+\begin{equation}
+    Q_s(x)
+    =
+    \max_{\pi\in\Pi_s}
+    \left\{
+    a_s^\top \pi + x^\top B_s^\top\pi
+    \right\},
+    \label{eq:recourse-dual}
+\end{equation}
+where $\Pi_s$ is the feasible dual polyhedron for support $s$.  Therefore, for
+any dual feasible $\widehat\pi\in\Pi_s$,
+\begin{equation}
+    Q_s(x)\ge
+    a_s^\top \widehat\pi + x^\top B_s^\top\widehat\pi
+    \quad \forall x .
+\end{equation}
+The corresponding master cut is
+\begin{equation}
+    H_s(\rho)
+    \ge
+    a_s^\top \widehat\pi + x^\top B_s^\top\widehat\pi .
+    \label{eq:benders-cut}
+\end{equation}
+
+\begin{proposition}[Intermediate Cuts Are Safe]
+Any cut of the form \eqref{eq:benders-cut} generated from a valid support
+element $s\in\Sset_K$ and a dual feasible vector $\widehat\pi\in\Pi_s$ is valid
+for the exact master \eqref{eq:exact-master}, regardless of how $s$ was found.
+\end{proposition}
+
+\begin{proof}
+For all $x$, dual feasibility gives
+$a_s^\top \widehat\pi+x^\top B_s^\top\widehat\pi\le Q_s(x)$.  Since the exact
+master requires $H_s(\rho)\ge Q_s(x)$, it also implies
+$H_s(\rho)\ge a_s^\top \widehat\pi+x^\top B_s^\top\widehat\pi$.  Hence adding
+\eqref{eq:benders-cut} cannot remove any feasible solution of the exact master.
+\end{proof}
+
+This proposition is the basis for the acceleration strategy: active sets,
+stabilized trial points, or target-face tie-breaking may be used to find useful
+valid cuts, but they cannot by themselves certify convergence.
+
+\section{Algorithmic Modifications}
+
+\subsection{Auxiliary Stabilized Trial Master}
+
+The baseline restricted master may move to first-stage plans that are poorly
+protected by the current cut pool, causing large oscillations.  To reduce this,
+we added an auxiliary local-branch trial master.  Let $\bar x$ be a center plan.
+The canonical master \eqref{eq:rmp} is still solved and remains the only source
+of the lower bound.  Separately, the auxiliary trial master solves the same
+restricted master with local restrictions such as
+\begin{align}
+    \sum_i |z_i-\bar z_i| &\le r_z, \label{eq:z-trust}\\
+    \sum_i |n^{\mathrm{sl}}_i-\bar n^{\mathrm{sl}}_i| &\le r_{\mathrm{sl}},
+    \label{eq:sl-trust}\\
+    \sum_i |n^{\mathrm{fa}}_i-\bar n^{\mathrm{fa}}_i| &\le r_{\mathrm{fa}}.
+    \label{eq:fa-trust}
+\end{align}
+The resulting trial point $x_t^{\mathrm{tr}}$ is used only for separation and
+cut generation.  Its auxiliary objective value is not reported as a lower
+bound.
+
+\subsection{Active-Outage-Set Valid Cut Generation}
+
+The full outage set $\Uset_K$ grows rapidly with $K$.  We maintain a small pool
+$\mathcal P_t\subseteq \Uset_K$ containing recently active outage patterns and
+their local neighborhoods, e.g.,
+\[
+    \mathcal N(\delta)
+    =
+    \{\delta': d_H(\delta,\delta')\le r,\;
+    \mathbf 1^\top \delta'\le K\}.
+\]
+For each candidate $(b,\delta')\in\Bset\times\mathcal P_t$, the algorithm may
+solve the fixed-support recourse dual and add \eqref{eq:benders-cut} if the
+resulting violation is positive.  These cuts are valid because
+$\Bset\times\mathcal P_t\subseteq\Sset_K$.
+
+The active set is therefore a cut generator, not a certifier.  Certification
+still requires \eqref{eq:full-separation} over the full $\Sset_K$.
+
+\subsection{Target-Face Bundle Cuts}
+
+When separation returns a support element $s$ and the dual recourse problem is
+degenerate, an arbitrary optimal dual solution may give a weak cut.  We added a
+fixed-support target-face tie-break.  At a source plan $x^0$, first compute
+\[
+    q^0_s := Q_s(x^0).
+\]
+Then restrict the dual solution to the optimal face at $x^0$:
+\[
+    \mathcal F_s(x^0)
+    :=
+    \left\{
+    \pi\in\Pi_s:
+    a_s^\top\pi + (x^0)^\top B_s^\top\pi
+    \ge q^0_s-\tau
+    \right\},
+\]
+where $\tau$ is a small numerical tolerance.  A target-face cut is generated by
+solving
+\begin{equation}
+    \widehat\pi^{\mathrm{tf}}
+    \in
+    \arg\max_{\pi\in\mathcal F_s(x^0)}
+    \left\{
+    a_s^\top\pi + (\widetilde x)^\top B_s^\top\pi
+    \right\},
+    \label{eq:target-face}
+\end{equation}
+where $\widetilde x$ is a target point or core-like reference plan.  Since
+$\mathcal F_s(x^0)\subseteq\Pi_s$, the generated cut is still of the valid form
+\eqref{eq:benders-cut}.  The purpose is not to change the model, but to select
+a dual solution that is more informative away from the source point.
+
+\subsection{Canonical Certificate Audit}
+
+The final implemented workflow has two phases:
+\begin{enumerate}
+    \item \textbf{Cut-generation phase.}  Use stabilized trial points,
+    active-set cuts, and target-face bundle cuts to build a stronger cut pool.
+    If a stabilized trial point reaches $V(x,\rho)\le\eps$, the row is still
+    labeled diagnostic unless it is reproduced by a canonical audit.
+    \item \textbf{Canonical audit phase.}  Resolve the unrestricted canonical
+    restricted master with the generated cut pool, disable stabilization, and
+    run full-support MILP separation.  Only if the optimal separation bound is
+    below $\eps$ is the row labeled $\eps$-certified.
+\end{enumerate}
+
+This prevents auxiliary trial objectives from being confused with valid lower
+bounds and keeps the convergence claim tied to the original DRO master.
+
+\section{What Changed in the Code}
+
+The implementation adds explicit switches for:
+\begin{itemize}
+    \item live iteration tracing and certificate diagnostics;
+    \item warm starts and same-support cut-pool loading;
+    \item local-branch trial masters on $z$ and charger counts;
+    \item active outage pools and neighborhood cut generation;
+    \item target-face bundle cut strengthening;
+    \item canonical audit runs that disable stabilization before certification.
+\end{itemize}
+The EVCS model, common evaluator, and final full-support separation oracle are
+not relaxed.
+
+\section{Observed Effect on the K=10 Stress Row}
+
+The accepted default instance uses $|\Aset|=10$, $|\Bset|=10$, and $K=10$ for
+this algorithmic stress comparison.  The objective multipliers are
+\[
+    (m_{\mathrm{cons}},m_{\mathrm{normal}},m_{\mathrm{dis}})
+    =(0.0152,1.0,1.4).
+\]
+
+\begin{table}[h]
+\centering
+\caption{Effect of certificate-preserving acceleration for $K=10$.}
+\small
+\begin{tabular}{lrrrrl}
+\toprule
+Method & Iter. & Cuts & Runtime (s) & Final/best violation & Status \\
+\midrule
+Baseline Benders & 20 & 20 & 212.40 & 107030.75 & Diagnostic \\
+Local-branch stabilized & 20 & -- & 220.35 & 28095.28 & Diagnostic \\
+Active-set valid cuts & 20 & 76 & 225.49 & 16861.29 & Diagnostic \\
+Stabilized + active-set + target-face & 145 & 1016 & 10125.63 & 46.997 & Generator run \\
+Canonical full-support audit & 1 & 1015 & 130.25 & 46.997 & $\eps$-certified \\
+\bottomrule
+\end{tabular}
+\label{tab:k10-acceleration}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{../../results/paper_final/figures/k10_algorithm_acceleration_before_after.png}
+\caption{Before--after comparison for the $K=10$ stress row.  The baseline
+Benders implementation remains far above the certification tolerance.  The
+combined stabilized trial, active-set valid cuts, and target-face bundle cuts
+drive the full-support violation below $\eps=100$; the subsequent canonical
+audit reproduces the same violation without relying on the auxiliary stabilized
+objective.}
+\label{fig:k10-acceleration}
+\end{figure}
+
+\section{Claim Boundary}
+
+The certified result is currently $A=10$, $B=10$, $K=10$ for the accepted
+default regime.  A larger diagnostic probe with $K=16$ is executable and
+reduced the violation to $1895.79$ after 120 iterations, but it is not
+certified.  Therefore, $K=16$ should be used only to diagnose the remaining
+cut-strength and global convergence bottleneck, not as a paper convergence
+claim.
+
+\end{document}

@@ -1,8 +1,0 @@
-{
-  "best_fit_ev_penetration_scale": 0.45,
-  "best_fit_run_id": "normal_only_paper_like_refined_scale_045",
-  "failures_csv": "results/paper_like_calibration_refined/failures.csv",
-  "figure_path": "results/paper_like_calibration_refined/figures/refined_exact_comparison.png",
-  "report_path": "docs/analysis_packs/paper_like_fig6_refined_pack.md",
-  "summary_csv": "results/paper_like_calibration_refined/summary.csv"
-}

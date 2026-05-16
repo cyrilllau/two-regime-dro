@@ -208,3 +208,41 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project generated artifacts and local experiment outputs
+/results/*
+!/results/README.md
+/reports/
+/tmp/
+
+# Solver dumps and large optimization state
+/artifacts/baselines/
+*.lp
+*.mps
+*.sol
+*.mst
+*_cut_pool.json
+*cut_pool.json
+*_iteration_log.json
+*live_iteration_trace.csv
+
+# Generated/synthetic data. Keep canonical small inputs tracked explicitly.
+/data/*synth*/
+/data/archive/
+/data/colleague_default/
+/data/colleague_default_10x10_ev1p5/
+/data/runtime_12_synth_100/
+
+# LaTeX build outputs
+docs/analysis_packs/*.aux
+docs/analysis_packs/*.bbl
+docs/analysis_packs/*.blg
+docs/analysis_packs/*.fdb_latexmk
+docs/analysis_packs/*.fls
+docs/analysis_packs/*.log
+docs/analysis_packs/*.out
+docs/analysis_packs/*.synctex.gz
+docs/analysis_packs/*.toc
+docs/analysis_packs/build/
+docs/analysis_packs/*_standalone.pdf
+docs/analysis_packs/algorithm_acceleration_math_note.pdf

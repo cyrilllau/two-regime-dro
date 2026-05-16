@@ -1,0 +1,12 @@
+{
+  "ev_profile_multiplier": 3.0,
+  "scaled_files": [
+    "normal_ev_demand_slow.csv",
+    "normal_ev_demand_fast.csv",
+    "disaster_ev_discharge_slow.csv",
+    "disaster_ev_discharge_fast.csv"
+  ],
+  "source": "data/colleague_default_10x10",
+  "target": "data/colleague_default_10x10_ev3p0",
+  "unchanged": "normal/disaster load scenarios, parameters.json, Table-I economic parameters, scenario support A=10/B=10/K=2"
+}

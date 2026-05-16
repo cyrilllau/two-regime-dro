@@ -1,5 +1,0 @@
-case_id,case_name,run_log,runtime_source,normal_scenario_count,disaster_scenario_count,K,m_cons,m_normal,m_disaster,validation_level
-Case 1,Proposed integrated,results/paper_final/logs/default_scale_v2_proposed_run.json,data/colleague_default_10x10,10,10,2,0.0152,1.0,1.4,epsilon_certified
-Case 2,Normal-only,results/paper_final/logs/default_scale_v2_normal_run.json,data/colleague_default_10x10,10,10,2,0.0152,1.0,1.4,exact
-Case 3,Disaster-only,results/paper_final/logs/default_scale_v2_disaster_run.json,data/colleague_default_10x10,10,10,2,0.0152,1.0,1.4,epsilon_certified
-Case 4,"Deterministic mean-value, K_train=2",results/paper_final/logs/default_scale_v2_deterministic_k2_run.json,data/colleague_default_10x10,10,10,2,0.0152,1.0,1.4,epsilon_certified
