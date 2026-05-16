@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import csv
 import json
-import math
 from pathlib import Path
 from typing import Sequence
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 
 def _read_summary_rows(summary_csv_path: str | Path) -> list[dict[str, str]]:
@@ -175,9 +175,9 @@ PAPER_STYLE_PANEL_TITLES = {
 
 
 def _draw_ieee33_substation(axis) -> None:
-    axis.plot([-0.65, -0.1], [0.0, 0.0], color="black", linewidth=1.2, zorder=1)
-    axis.plot([-0.75, -0.75], [-0.28, 0.28], color="black", linewidth=1.2, zorder=1)
-    axis.plot([-0.9, -0.9], [-0.42, 0.42], color="black", linewidth=1.2, zorder=1)
+    axis.plot([-0.65, -0.1], [0.0, 0.0], color="black", linewidth=0.9, zorder=1)
+    axis.plot([-0.75, -0.75], [-0.24, 0.24], color="black", linewidth=0.9, zorder=1)
+    axis.plot([-0.9, -0.9], [-0.36, 0.36], color="black", linewidth=0.9, zorder=1)
 
 
 def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> None:
@@ -193,12 +193,12 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
 
     axis.set_aspect("equal")
     axis.axis("off")
-    axis.set_title(PAPER_STYLE_PANEL_TITLES.get(run_id, run_id), fontsize=13, pad=10)
+    axis.set_title(PAPER_STYLE_PANEL_TITLES.get(run_id, run_id), fontsize=8.5, pad=4)
 
     for left, right in IEEE33_EDGES:
         x1, y1 = IEEE33_POSITIONS[left]
         x2, y2 = IEEE33_POSITIONS[right]
-        axis.plot([x1, x2], [y1, y2], color="black", linewidth=1.1, zorder=1)
+        axis.plot([x1, x2], [y1, y2], color="black", linewidth=0.75, zorder=1)
     _draw_ieee33_substation(axis)
 
     buses = sorted(IEEE33_POSITIONS)
@@ -211,23 +211,21 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
         axis.scatter(
             critical_x,
             critical_y,
-            s=54,
+            s=22,
             facecolors="#c83c23",
             edgecolors="black",
-            linewidths=0.8,
+            linewidths=0.55,
             zorder=3,
-            label="Critical load",
         )
     if noncritical_x:
         axis.scatter(
             noncritical_x,
             noncritical_y,
-            s=54,
+            s=22,
             facecolors="white",
             edgecolors="black",
-            linewidths=0.8,
+            linewidths=0.55,
             zorder=2,
-            label="Non-critical load",
         )
 
     for bus in buses:
@@ -238,11 +236,11 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
             str(bus),
             ha="center",
             va="bottom",
-            fontsize=9,
+            fontsize=5.8,
             zorder=4,
         )
 
-    evse_label_added = False
+    bubble_points: list[tuple[float, float]] = []
     for row in installed_rows:
         bus = int(row["bus"])
         slow = int(row["n_sl"])
@@ -250,59 +248,96 @@ def _plot_paper_style_panel(axis, run_id: str, plan_lookup: dict[str, Path]) -> 
         x, y = IEEE33_POSITIONS[bus]
         dx, dy = IEEE33_BUBBLE_OFFSETS.get(bus, (0.0, 1.0))
         bx, by = x + dx, y + dy
-        bubble_size = 430 + 7 * math.sqrt(max(slow + 4 * fast, 1))
         axis.plot(
             [x, bx],
             [y, by],
             color="#3f5523",
-            linewidth=1.45,
-            alpha=0.98,
+            linewidth=0.75,
+            alpha=0.94,
             zorder=4,
         )
         axis.scatter(
             [x],
             [y],
-            s=26,
+            s=12,
             facecolors="none",
             edgecolors="#3f5523",
-            linewidths=1.0,
+            linewidths=0.6,
             zorder=4.5,
         )
         axis.scatter(
             [bx],
             [by],
-            s=bubble_size,
+            s=138,
             facecolors="#7caf3e",
             edgecolors="#3a5d1c",
-            linewidths=1.0,
+            linewidths=0.55,
             alpha=0.92,
             zorder=5,
-            label="EVCS(No. slow EVSE,\nNo. fast EVSE)" if not evse_label_added else None,
         )
-        evse_label_added = True
+        bubble_points.append((bx, by))
         axis.text(
             bx,
             by,
             f"{slow}/{fast}",
             ha="center",
             va="center",
-            fontsize=9,
+            fontsize=5.4,
             fontweight="bold",
             color="#1f2f0f",
             zorder=6,
         )
 
-    axis.set_xlim(-1.2, 23.7)
-    axis.set_ylim(-4.8, 4.6)
+    x_values = [point[0] for point in IEEE33_POSITIONS.values()] + [point[0] for point in bubble_points] + [-0.9]
+    y_values = [point[1] for point in IEEE33_POSITIONS.values()] + [point[1] for point in bubble_points] + [-0.42, 0.42]
+    axis.set_xlim(min(x_values) - 0.55, max(x_values) + 0.55)
+    axis.set_ylim(min(y_values) - 0.52, max(y_values) + 0.45)
+    legend_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="none",
+            markerfacecolor="#c83c23",
+            markeredgecolor="black",
+            markeredgewidth=0.55,
+            markersize=4.4,
+            label="Critical load",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="none",
+            markerfacecolor="white",
+            markeredgecolor="black",
+            markeredgewidth=0.55,
+            markersize=4.4,
+            label="Non-critical load",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="none",
+            markerfacecolor="#7caf3e",
+            markeredgecolor="#3a5d1c",
+            markeredgewidth=0.55,
+            markersize=5.8,
+            label="EVCS(No. slow EVSE,\nNo. fast EVSE)",
+        ),
+    ]
     axis.legend(
+        handles=legend_handles,
         loc="lower right",
-        fontsize=8.3,
+        fontsize=5.4,
         frameon=True,
         fancybox=False,
         framealpha=1.0,
-        borderpad=0.55,
-        handletextpad=0.5,
-        labelspacing=0.35,
+        borderpad=0.28,
+        handletextpad=0.35,
+        labelspacing=0.22,
+        borderaxespad=0.25,
     )
 
 
@@ -425,9 +460,9 @@ def _plot_plan_maps(
 
     nrows = (len(selected) + ncols - 1) // ncols
     if ncols == 1:
-        figsize = (17.4, 5.0 * nrows + 0.8)
+        figsize = (7.2, 1.72 * nrows + 0.12)
     else:
-        figsize = (16.6, 5.1 * nrows)
+        figsize = (7.3, 2.1 * nrows)
     fig, axes = plt.subplots(
         nrows=nrows,
         ncols=ncols,
@@ -440,8 +475,7 @@ def _plot_plan_maps(
     for axis, run_id in zip(axes.flatten(), selected):
         _plot_paper_style_panel(axis, run_id, plan_lookup)
 
-    fig.suptitle(title, fontsize=15, y=0.992)
-    fig.tight_layout(rect=(0.01, 0.01, 0.995, 0.982), pad=0.9)
+    fig.tight_layout(rect=(0.005, 0.005, 0.995, 0.995), pad=0.22, h_pad=0.25)
     fig.savefig(path, dpi=220, bbox_inches="tight", pad_inches=0.05)
     plt.close(fig)
 
